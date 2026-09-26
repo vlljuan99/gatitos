@@ -31,13 +31,22 @@ jobs:
             exit 1
           fi
 
+      # La clave se escribe sin «\r»: si se pegó desde Windows puede traer
+      # saltos de línea CRLF y OpenSSH no aceptaría el fichero.
       - name: Preparar SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.HETZNER_SSH_KEY }}
-
-      - name: Verificar host
-        run: ssh-keyscan -H 167.233.99.156 >> ~/.ssh/known_hosts
+        env:
+          HETZNER_SSH_KEY: ${{ secrets.HETZNER_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$HETZNER_SSH_KEY" | tr -d '\r' > ~/.ssh/hetzner
+          chmod 600 ~/.ssh/hetzner
+          ssh-keygen -y -f ~/.ssh/hetzner > /dev/null || {
+            echo "::error title=HETZNER_SSH_KEY no válida::El secreto no es una clave privada SSH. Pega el fichero completo, incluidas las líneas BEGIN y END."
+            exit 1
+          }
+          ssh-keyscan -H 167.233.99.156 >> ~/.ssh/known_hosts
+          printf 'Host 167.233.99.156\n  IdentityFile ~/.ssh/hetzner\n  IdentitiesOnly yes\n' >> ~/.ssh/config
 
       # Primer despliegue: crea /opt/bigotes/app.env con la cuenta de
       # administración inicial (secretos BIGOTES_ADMIN_*). Si ya existe, no se toca.
