@@ -7,6 +7,33 @@ import { db } from './db.js';
 
 const line = (max) => z.string().trim().max(max);
 
+// Enlaces que la web publica como href: vacíos o direcciones http(s)
+// absolutas. «paypal.me/bigotes» se guarda como «https://paypal.me/bigotes»;
+// sin esto el navegador lo trataría como una ruta de la propia web.
+const webUrl = (example) =>
+  line(300)
+    .transform((value) => (value && !/^[a-z][a-z0-9+.-]*:/i.test(value) ? `https://${value}` : value))
+    .refine((value) => {
+      if (!value) return true;
+      try {
+        const url = new URL(value);
+        return ['http:', 'https:'].includes(url.protocol) && url.hostname.includes('.');
+      } catch {
+        return false;
+      }
+    }, `Escribe un enlace completo, por ejemplo ${example}`);
+
+// Instagram se guarda como nombre de usuario, venga como «@usuario» o como enlace.
+const instagramHandle = line(200)
+  .transform((value) =>
+    value
+      .replace(/^https?:\/\//i, '')
+      .replace(/^(www\.)?instagram\.com\//i, '')
+      .replace(/^@/, '')
+      .replace(/[/?#].*$/, ''),
+  )
+  .refine((value) => /^[A-Za-z0-9._]{0,30}$/.test(value), 'Escribe el usuario de Instagram, por ejemplo @bigotes');
+
 const DEFAULT_FEE =
   'La adopción tiene una cuota que ayuda a cubrir parte de los gastos veterinarios (vacunas, microchip, desparasitación y esterilización). Te contamos el importe y lo que incluye en la entrevista.';
 
@@ -131,8 +158,8 @@ export const CONTENT = {
       email: z.union([z.literal(''), z.email('Escribe un email válido')]),
       phone: line(30),
       whatsapp: line(30),
-      instagram: line(60),
-      facebook: line(200),
+      instagram: instagramHandle,
+      facebook: webUrl('https://facebook.com/bigotes'),
       address: line(200),
       hours: line(200),
     }),
@@ -151,8 +178,8 @@ export const CONTENT = {
       intro: line(1000),
       bizum: line(40),
       iban: line(40),
-      teaming: line(300),
-      paypal: line(300),
+      teaming: webUrl('https://www.teaming.net/bigotes'),
+      paypal: webUrl('https://paypal.me/bigotes'),
     }),
     defaults: {
       intro:

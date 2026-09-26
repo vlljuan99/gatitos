@@ -72,6 +72,44 @@ describe('acceso', () => {
   });
 });
 
+describe('enlaces de la web', () => {
+  // La web usa estos campos como href: tienen que ser direcciones absolutas.
+  test('los enlaces de donaciones se completan y se validan', async () => {
+    const base = (await admin.get('/api/admin/contenidos')).data.content.donations;
+    const ok = await admin.put('/api/admin/contenidos/donations', {
+      ...base,
+      paypal: 'paypal.me/bigotes',
+      teaming: 'https://www.teaming.net/bigotes',
+    });
+    assert.equal(ok.status, 200, JSON.stringify(ok.data));
+    assert.equal(ok.data.value.paypal, 'https://paypal.me/bigotes');
+    assert.equal(ok.data.value.teaming, 'https://www.teaming.net/bigotes');
+
+    for (const bad of ['javascript:alert(1)', 'hola', 'mailto:a@b.es']) {
+      const res = await admin.put('/api/admin/contenidos/donations', { ...base, paypal: bad });
+      assert.equal(res.status, 400, bad);
+      assert.ok(res.data.fields.paypal, bad);
+    }
+  });
+
+  test('facebook como enlace e instagram como usuario', async () => {
+    const base = (await admin.get('/api/admin/contenidos')).data.content.contact;
+    for (const [instagram, expected] of [
+      ['@bigotes_almendralejo', 'bigotes_almendralejo'],
+      ['https://www.instagram.com/bigotes.gatos/', 'bigotes.gatos'],
+      ['instagram.com/bigotes', 'bigotes'],
+    ]) {
+      const res = await admin.put('/api/admin/contenidos/contact', { ...base, instagram, facebook: 'facebook.com/bigotes' });
+      assert.equal(res.status, 200, JSON.stringify(res.data));
+      assert.equal(res.data.value.instagram, expected);
+      assert.equal(res.data.value.facebook, 'https://facebook.com/bigotes');
+    }
+    const bad = await admin.put('/api/admin/contenidos/contact', { ...base, instagram: 'no vale esto' });
+    assert.equal(bad.status, 400);
+    assert.ok(bad.data.fields.instagram);
+  });
+});
+
 describe('gatitos', () => {
   test('alta, edición y cambio rápido de estado', async () => {
     const created = await helper.post('/api/admin/gatitos', {
