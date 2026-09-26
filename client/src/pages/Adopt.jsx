@@ -34,17 +34,17 @@ function Progress({ step }) {
   return (
     <div className="px-4">
       <div className="flex items-center justify-between text-sm font-bold">
-        <span className="text-fresa-oscuro">
+        <span className="text-canela-oscuro">
           Paso {step + 1} de {STEPS.length}
         </span>
         <span className="text-cacao-suave">
           {STEPS[step].emoji} {STEPS[step].title}
         </span>
       </div>
-      <div className="relative mt-2 h-3 rounded-full bg-fresa-claro" role="progressbar" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={step + 1} aria-label="Progreso de la solicitud">
-        <motion.div className="h-3 rounded-full bg-fresa" initial={false} animate={{ width: `${pct}%` }} />
+      <div className="relative mt-2 h-3 rounded-full bg-canela-claro" role="progressbar" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={step + 1} aria-label="Progreso de la solicitud">
+        <motion.div className="h-3 rounded-full bg-canela" initial={false} animate={{ width: `${pct}%` }} />
         <motion.span
-          className="absolute -top-1.5 grid size-6 -translate-x-1/2 place-items-center rounded-full bg-nata text-fresa shadow-suave"
+          className="absolute -top-1.5 grid size-6 -translate-x-1/2 place-items-center rounded-full bg-nata text-canela shadow-suave"
           initial={false}
           animate={{ left: `${pct}%` }}
           aria-hidden
@@ -65,8 +65,8 @@ function CatPicker({ cats, value, onChange, favoriteSlugs, error }) {
   const option = (selected) =>
     cx(
       'relative flex cursor-pointer flex-col overflow-hidden rounded-3xl border-4 bg-nata text-left shadow-suave transition',
-      'has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-fresa',
-      selected ? 'border-fresa' : 'border-transparent',
+      'has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-canela',
+      selected ? 'border-canela' : 'border-transparent',
     );
   return (
     <fieldset>
@@ -89,10 +89,10 @@ function CatPicker({ cats, value, onChange, favoriteSlugs, error }) {
               <CatPhoto cat={cat} sizes="(min-width: 768px) 30vw, 45vw" className="aspect-square w-full" alt="" />
               <span className="flex items-center gap-1.5 p-3 font-display text-lg font-semibold">
                 {cat.name}
-                {favoriteSlugs.includes(cat.slug) && <Heart className="size-4 text-fresa" fill="currentColor" aria-label="(favorito)" />}
+                {favoriteSlugs.includes(cat.slug) && <Heart className="size-4 text-canela" fill="currentColor" aria-label="(favorito)" />}
               </span>
               {selected && (
-                <span className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-fresa text-white">
+                <span className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-canela text-white">
                   <Check className="size-5" strokeWidth={3} />
                 </span>
               )}
@@ -111,7 +111,7 @@ function Success({ cat }) {
         initial={{ scale: 0.5, rotate: -10 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ type: 'spring', stiffness: 220, damping: 12 }}
-        className="mx-auto grid size-32 place-items-center rounded-full bg-fresa-claro text-6xl"
+        className="mx-auto grid size-32 place-items-center rounded-full bg-canela-claro text-6xl"
         aria-hidden
       >
         💌
@@ -227,7 +227,7 @@ export default function Adopt() {
           <p className="text-sm">
             Solicitud para <strong className="font-display text-base">{chosen.name}</strong>
           </p>
-          <button type="button" className="ml-auto text-sm font-bold text-fresa-oscuro underline" onClick={() => go(0)}>
+          <button type="button" className="ml-auto text-sm font-bold text-canela-oscuro underline" onClick={() => go(0)}>
             Cambiar
           </button>
         </div>
@@ -342,7 +342,7 @@ export default function Adopt() {
             </Checkbox>
             <Checkbox checked={values.privacy} onChange={(v) => set('privacy', v)} error={errors.privacy}>
               He leído la{' '}
-              <Link to="/privacidad" target="_blank" className="font-bold text-fresa-oscuro underline">
+              <Link to="/privacidad" target="_blank" className="font-bold text-canela-oscuro underline">
                 política de privacidad
               </Link>{' '}
               y acepto que Bigotes use estos datos para gestionar mi solicitud.

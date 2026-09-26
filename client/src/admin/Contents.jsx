@@ -25,7 +25,7 @@ function ListEditor({ items, onChange, empty, render, addLabel }) {
             <Button variant="ghost" size="sm" disabled={index === items.length - 1} onClick={() => move(index, 1)} aria-label="Bajar">
               <ArrowDown className="size-4" />
             </Button>
-            <Button variant="ghost" size="sm" className="ml-auto text-fresa-oscuro" onClick={() => onChange(items.filter((_, i) => i !== index))}>
+            <Button variant="ghost" size="sm" className="ml-auto text-canela-oscuro" onClick={() => onChange(items.filter((_, i) => i !== index))}>
               <Trash2 className="size-4" /> Quitar
             </Button>
           </div>

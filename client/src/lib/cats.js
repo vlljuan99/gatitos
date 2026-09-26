@@ -88,5 +88,5 @@ export const PERSONALITY_TAGS = [
 ];
 
 /** Color pastel estable por gatito, para ilustraciones y fondos. */
-const TONES = ['fresa', 'lavanda', 'menta', 'mantequilla', 'melocoton', 'cielo'];
+const TONES = ['canela', 'lavanda', 'menta', 'mantequilla', 'melocoton', 'cielo'];
 export const toneFor = (id = 0) => TONES[Math.abs(Number(id)) % TONES.length];

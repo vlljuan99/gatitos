@@ -61,7 +61,7 @@ function VolunteerForm() {
       </Checkbox>
       <Checkbox checked={values.privacy} onChange={(v) => set('privacy', v)} error={errors.privacy}>
         He leído la{' '}
-        <Link to="/privacidad" target="_blank" className="font-bold text-fresa-oscuro underline">
+        <Link to="/privacidad" target="_blank" className="font-bold text-canela-oscuro underline">
           política de privacidad
         </Link>{' '}
         y acepto que Bigotes use estos datos para contactarme.
@@ -110,7 +110,7 @@ function DonationMethod({ icon: Icon, title, tone, children, value, href, hrefLa
       <p className="mt-2 text-sm text-cacao-suave">{children}</p>
       {value && <CopyValue value={value} />}
       {href && (
-        <a href={href} target="_blank" rel="noreferrer" className="mt-2 font-bold text-fresa-oscuro underline">
+        <a href={href} target="_blank" rel="noreferrer" className="mt-2 font-bold text-canela-oscuro underline">
           {hrefLabel}
         </a>
       )}
@@ -145,7 +145,7 @@ export default function Collaborate() {
 
       <section id="donar" className="mt-14 scroll-mt-20 px-4" aria-labelledby="donaciones">
         <div className="flex items-center gap-3">
-          <PiggyBank className="size-8 text-fresa" aria-hidden />
+          <PiggyBank className="size-8 text-canela" aria-hidden />
           <h2 id="donaciones" className="font-display text-2xl font-semibold">
             Donaciones
           </h2>
@@ -179,7 +179,7 @@ export default function Collaborate() {
         </h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <Card className="flex gap-4">
-            <Share2 className="size-7 shrink-0 text-fresa" aria-hidden />
+            <Share2 className="size-7 shrink-0 text-canela" aria-hidden />
             <div>
               <h3 className="font-display text-lg font-semibold">Comparte sus fichas</h3>
               <p className="text-cacao-suave">
@@ -188,7 +188,7 @@ export default function Collaborate() {
             </div>
           </Card>
           <Card className="flex gap-4">
-            <Megaphone className="size-7 shrink-0 text-fresa" aria-hidden />
+            <Megaphone className="size-7 shrink-0 text-canela" aria-hidden />
             <div>
               <h3 className="font-display text-lg font-semibold">Habla de nosotros</h3>
               <p className="text-cacao-suave">

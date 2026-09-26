@@ -1,34 +1,25 @@
+// Logo de la asociación, vectorizado a partir del original (brand/). Se sirve
+// como SVG estático desde /public para que se cachee y no engorde el JS.
+
+/** Carita de gato del logo (la «O» con orejas y nariz de corazón). */
 export function LogoMark({ className = 'size-9' }) {
-  return (
-    <svg viewBox="0 0 64 64" className={className} aria-hidden>
-      <path d="M13 27 L12 7 L28 17 Z" fill="#ffd2b0" stroke="#3a2a30" strokeWidth="3" strokeLinejoin="round" />
-      <path d="M51 27 L52 7 L36 17 Z" fill="#ffd2b0" stroke="#3a2a30" strokeWidth="3" strokeLinejoin="round" />
-      <path d="M15.5 21 L15 12 L22.5 17 Z" fill="#f6a6b8" />
-      <path d="M48.5 21 L49 12 L41.5 17 Z" fill="#f6a6b8" />
-      <ellipse cx="32" cy="35" rx="21" ry="18" fill="#ffd2b0" stroke="#3a2a30" strokeWidth="3" />
-      <ellipse cx="24" cy="32" rx="3" ry="3.6" fill="#3a2a30" />
-      <ellipse cx="40" cy="32" rx="3" ry="3.6" fill="#3a2a30" />
-      <circle cx="25" cy="30.8" r="1" fill="#fff" />
-      <circle cx="41" cy="30.8" r="1" fill="#fff" />
-      <ellipse cx="18" cy="39" rx="3.5" ry="2.2" fill="#f6a6b8" />
-      <ellipse cx="46" cy="39" rx="3.5" ry="2.2" fill="#f6a6b8" />
-      <path d="M29.5 37.5 Q32 36.5 34.5 37.5 Q32 40.5 29.5 37.5Z" fill="#d6336c" />
-      <path d="M32 39.5 Q30.5 43 27.5 41.8 M32 39.5 Q33.5 43 36.5 41.8" stroke="#3a2a30" strokeWidth="1.8" fill="none" strokeLinecap="round" />
-      <g stroke="#3a2a30" strokeWidth="1.8" strokeLinecap="round">
-        <path d="M22 38.5 L3 35" />
-        <path d="M22 41 L3.5 43.5" />
-        <path d="M42 38.5 L61 35" />
-        <path d="M42 41 L60.5 43.5" />
-      </g>
-    </svg>
-  );
+  return <img src="/logo-cara.svg" alt="" aria-hidden className={`object-contain ${className}`} />;
 }
 
-export function Logo({ className = '' }) {
+/** Palabra «Bigotes» del logo, para cabeceras. */
+export function Logo({ className = 'h-9' }) {
+  return <img src="/logo-texto.svg" alt="Bigotes" className={`w-auto ${className}`} width="163" height="40" />;
+}
+
+/** Logo completo con el lema: «Asociación para la ayuda al gato callejero». */
+export function LogoFull({ className = 'w-64' }) {
   return (
-    <span className={`inline-flex items-center gap-2 ${className}`}>
-      <LogoMark />
-      <span className="font-display text-2xl font-semibold tracking-tight text-fresa-oscuro">Bigotes</span>
-    </span>
+    <img
+      src="/logo-completo.svg"
+      alt="Bigotes, asociación para la ayuda al gato callejero. Protección, cuidado y orientación ciudadana."
+      className={`h-auto ${className}`}
+      width="411"
+      height="159"
+    />
   );
 }

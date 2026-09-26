@@ -13,7 +13,7 @@ const INITIAL = { name: '', email: '', phone: '', subject: '', body: '', privacy
 function Channel({ icon: Icon, label, href, children }) {
   const content = (
     <>
-      <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-fresa-claro text-fresa-oscuro">
+      <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-canela-claro text-canela-oscuro">
         <Icon className="size-5" aria-hidden />
       </span>
       <span>
@@ -115,7 +115,7 @@ export default function Contact() {
               <TextArea label="Mensaje" rows={5} {...field('body')} />
               <Checkbox checked={values.privacy} onChange={(v) => set('privacy', v)} error={errors.privacy}>
                 He leído la{' '}
-                <Link to="/privacidad" target="_blank" className="font-bold text-fresa-oscuro underline">
+                <Link to="/privacidad" target="_blank" className="font-bold text-canela-oscuro underline">
                   política de privacidad
                 </Link>{' '}
                 y acepto que Bigotes use estos datos para responderme.

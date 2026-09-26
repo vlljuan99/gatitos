@@ -3,7 +3,7 @@ import { useSite } from '../components/Layout.jsx';
 import { ButtonLink, Card, ErrorState, PageHeader, Spinner, cx } from '../components/ui.jsx';
 import { useTitle } from '../lib/useTitle.js';
 
-const STEP_TONES = ['bg-fresa-claro', 'bg-menta', 'bg-lavanda', 'bg-mantequilla', 'bg-melocoton', 'bg-cielo'];
+const STEP_TONES = ['bg-canela-claro', 'bg-menta', 'bg-lavanda', 'bg-mantequilla', 'bg-melocoton', 'bg-cielo'];
 const STEP_EMOJIS = ['🧺', '🩺', '🏠', '😻', '📝', '💌', '✨', '🐾'];
 
 export function Faq({ items }) {
@@ -14,7 +14,7 @@ export function Faq({ items }) {
           <details className="group rounded-3xl bg-nata shadow-suave">
             <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 font-bold [&::-webkit-details-marker]:hidden">
               {item.q}
-              <ChevronDown className="size-5 shrink-0 text-fresa transition group-open:rotate-180" aria-hidden />
+              <ChevronDown className="size-5 shrink-0 text-canela transition group-open:rotate-180" aria-hidden />
             </summary>
             <p className="whitespace-pre-line px-5 pb-5 text-cacao-suave">{item.a}</p>
           </details>
@@ -51,7 +51,7 @@ export default function HowWeWork() {
                 {STEP_EMOJIS[i % STEP_EMOJIS.length]}
               </span>
               <div>
-                <p className="text-sm font-bold text-fresa-oscuro">Paso {i + 1}</p>
+                <p className="text-sm font-bold text-canela-oscuro">Paso {i + 1}</p>
                 <h3 className="font-display text-xl font-semibold">{step.title}</h3>
                 <p className="mt-1 text-cacao-suave">{step.text}</p>
               </div>
@@ -68,7 +68,7 @@ export default function HowWeWork() {
           <ul className="mt-4 grid gap-3">
             {adoption.requirements.map((req) => (
               <li key={req} className="flex gap-3">
-                <span className="mt-0.5 text-fresa" aria-hidden>
+                <span className="mt-0.5 text-canela" aria-hidden>
                   🐾
                 </span>
                 <span>{req}</span>
@@ -102,7 +102,7 @@ export default function HowWeWork() {
       )}
 
       <section className="mt-12 px-4">
-        <div className="rounded-[2rem] bg-fresa p-6 text-center text-white md:p-10">
+        <div className="rounded-[2rem] bg-canela p-6 text-center text-white md:p-10">
           <h2 className="font-display text-3xl font-semibold">¿Lo tienes claro?</h2>
           <p className="mt-2 text-lg opacity-95">Rellena la solicitud y te contamos los siguientes pasos.</p>
           <ButtonLink to="/adoptar" variant="secondary" size="lg" className="mt-5">

@@ -3,7 +3,7 @@ import { toneFor } from '../lib/cats.js';
 
 // Fondo pastel mientras la foto carga (clases estáticas para Tailwind).
 const LOADING_BG = {
-  fresa: 'bg-fresa-claro',
+  canela: 'bg-canela-claro',
   lavanda: 'bg-lavanda',
   menta: 'bg-menta',
   mantequilla: 'bg-mantequilla',

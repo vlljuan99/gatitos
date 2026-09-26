@@ -85,7 +85,7 @@ export default function CatsList() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Buscar por nombre"
-          className="w-full rounded-full border-2 border-borde bg-nata py-3 pl-12 pr-4 focus:border-fresa focus:outline-none"
+          className="w-full rounded-full border-2 border-borde bg-nata py-3 pl-12 pr-4 focus:border-canela focus:outline-none"
         />
       </label>
       <Tabs

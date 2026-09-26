@@ -1,7 +1,7 @@
 # Bigotes 🐾
 
-Web de **Bigotes**, asociación de rescate y adopción de gatitos en Almendralejo
-(Badajoz). Pensada primero para el móvil: mona, cuqui y hecha para que la gente
+Web de **Bigotes, asociación para la ayuda al gato callejero** en Almendralejo
+(Badajoz): protección, cuidado y orientación ciudadana. Pensada primero para el móvil: mona, cuqui y hecha para que la gente
 se enamore de un gatito y lo adopte.
 
 ## Qué tiene
@@ -88,6 +88,7 @@ server/src/
   content.js    Textos editables con sus valores por defecto
   routes/       API pública y del panel
 server/scripts/ seed-demo, create-user, generate-brand
+brand/          Logo original de la asociación (el vectorizado está en client/public)
 deploy/         Compose, Caddy y scripts del servidor
 e2e/            Pruebas de extremo a extremo
 ```

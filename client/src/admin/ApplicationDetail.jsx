@@ -19,7 +19,7 @@ function ContactButton({ href, icon: Icon, label, external }) {
       rel="noreferrer"
       className="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl bg-nata text-xs font-bold shadow-suave"
     >
-      <Icon className="size-5 text-fresa-oscuro" /> {label}
+      <Icon className="size-5 text-canela-oscuro" /> {label}
     </a>
   );
 }
@@ -40,7 +40,7 @@ function Answers({ application }) {
               return (
                 <div key={item.key}>
                   <dt className="text-sm text-cacao-suave">{item.label}</dt>
-                  <dd className={cx('whitespace-pre-line font-semibold', warn && 'text-fresa-oscuro')}>
+                  <dd className={cx('whitespace-pre-line font-semibold', warn && 'text-canela-oscuro')}>
                     {warn && <CircleAlert className="mr-1 inline size-4 align-[-2px]" aria-label="Atención" />}
                     {String(value)}
                   </dd>
@@ -192,7 +192,7 @@ export default function ApplicationDetail() {
                 aria-pressed={app.status === s.value}
                 className={cx(
                   'min-h-11 rounded-2xl border-2 px-3 font-bold transition',
-                  app.status === s.value ? 'border-cacao bg-cacao text-white' : 'border-borde bg-nata hover:border-fresa-pastel',
+                  app.status === s.value ? 'border-cacao bg-cacao text-white' : 'border-borde bg-nata hover:border-canela-pastel',
                 )}
               >
                 {s.single}
@@ -225,7 +225,7 @@ export default function ApplicationDetail() {
           <h2 className="font-display text-lg font-semibold">Notas del equipo</h2>
           <p className="text-sm text-cacao-suave">Solo las ve el equipo. Apunta aquí llamadas, visitas, dudas…</p>
           {app.notes.length > 0 && (
-            <ol className="mt-4 grid gap-3 border-l-2 border-fresa-claro pl-4">
+            <ol className="mt-4 grid gap-3 border-l-2 border-canela-claro pl-4">
               {app.notes.map((n) => (
                 <li key={n.id}>
                   <p className="text-xs font-bold text-cacao-suave">
@@ -243,7 +243,7 @@ export default function ApplicationDetail() {
               rows={2}
               placeholder="Escribe una nota…"
               aria-label="Nueva nota"
-              className="min-w-0 flex-1 rounded-2xl border-2 border-borde bg-nata px-4 py-2 focus:border-fresa focus:outline-none"
+              className="min-w-0 flex-1 rounded-2xl border-2 border-borde bg-nata px-4 py-2 focus:border-canela focus:outline-none"
             />
             <Button type="submit" disabled={!note.trim() || busy} aria-label="Añadir nota" className="self-end">
               <Send className="size-5" />

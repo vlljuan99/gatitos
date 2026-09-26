@@ -22,7 +22,7 @@ const monthsAgo = (n) => {
 };
 const daysAgo = (n) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
 
-const ROSA = { background: '#ffd9e2', accent: '#f6a6b8' };
+const ROSA = { background: '#f3ebe8', accent: '#d9c6c0' };
 const LAVANDA = { background: '#e4dcfa', accent: '#b9a6ee' };
 const MENTA = { background: '#cdefe3', accent: '#8fd3b8' };
 const MELOCOTON = { background: '#ffe1c7', accent: '#f7b78a' };

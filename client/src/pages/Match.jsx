@@ -104,7 +104,7 @@ const SwipeCard = forwardRef(function SwipeCard({ cat, depth, enterFrom, onDecid
           <>
             <motion.div
               style={{ opacity: loveOpacity }}
-              className="absolute left-5 top-6 -rotate-12 rounded-2xl border-4 border-fresa bg-nata/85 px-3 py-1 font-display text-2xl font-bold text-fresa"
+              className="absolute left-5 top-6 -rotate-12 rounded-2xl border-4 border-canela bg-nata/85 px-3 py-1 font-display text-2xl font-bold text-canela"
               aria-hidden
             >
               ¡ME ENCANTA!
@@ -157,7 +157,7 @@ function MatchSheet({ cat, onClose }) {
             className="relative mx-auto size-40"
           >
             <CatPhoto cat={cat} sizes="160px" eager className="size-40 rounded-full border-4 border-nata shadow-flotante" />
-            <span className="absolute -bottom-1 -right-1 grid size-14 place-items-center rounded-full bg-fresa text-white shadow-suave">
+            <span className="absolute -bottom-1 -right-1 grid size-14 place-items-center rounded-full bg-canela text-white shadow-suave">
               <Heart className="size-7" fill="currentColor" />
             </span>
           </motion.div>
@@ -349,7 +349,7 @@ export default function Match() {
           <RoundButton label="Siguiente" onClick={() => topCard.current?.fly('next')} className="bg-nata text-cielo-oscuro">
             <PawPrint className="size-8" />
           </RoundButton>
-          <RoundButton label="Me encanta" onClick={() => topCard.current?.fly('like')} className="bg-fresa text-white">
+          <RoundButton label="Me encanta" onClick={() => topCard.current?.fly('like')} className="bg-canela text-white">
             <Heart className="size-8" fill="currentColor" />
           </RoundButton>
           <RoundButton label="Ver ficha" size="sm" className="mt-3 bg-nata text-cacao-suave" to={current ? `/gatitos/${current.slug}` : '/gatitos'}>

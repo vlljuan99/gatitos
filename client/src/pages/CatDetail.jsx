@@ -72,7 +72,7 @@ function Gallery({ cat }) {
 
 function CompatIcon({ value }) {
   if (value === 'si') return <Check className="size-5 text-menta-oscuro" aria-label="Sí" />;
-  if (value === 'no') return <X className="size-5 text-fresa-oscuro" aria-label="No" />;
+  if (value === 'no') return <X className="size-5 text-canela-oscuro" aria-label="No" />;
   return <CircleHelp className="size-5 text-cacao-suave" aria-label="No lo sabemos todavía" />;
 }
 

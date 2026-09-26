@@ -8,7 +8,7 @@ import { volunteerAreaLabel } from '../lib/forms.js';
 import { AdminPage, isAdmin, refreshAfterChange, StatusPill, Tabs, timeAgo, useAdminApi, useAuth, useConfirm } from './common.jsx';
 
 function ActionButton({ onClick, href, icon: Icon, children, external }) {
-  const className = 'inline-flex min-h-10 items-center gap-1.5 rounded-full bg-crema px-3 text-sm font-bold hover:bg-fresa-claro';
+  const className = 'inline-flex min-h-10 items-center gap-1.5 rounded-full bg-crema px-3 text-sm font-bold hover:bg-canela-claro';
   if (href) {
     return (
       <a href={href} className={className} target={external ? '_blank' : undefined} rel="noreferrer">

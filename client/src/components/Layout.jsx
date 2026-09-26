@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Cat, ChevronRight, Heart, House, Menu, Sparkles } from 'lucide-react';
-import { Logo, LogoMark } from './Logo.jsx';
+import { Logo, LogoFull, LogoMark } from './Logo.jsx';
 import { Sheet } from './Sheet.jsx';
 import { buttonClass, cx } from './ui.jsx';
 import { useFavorites } from '../lib/favorites.js';
@@ -21,7 +21,7 @@ const MAIN_LINKS = [
 ];
 
 const MORE_LINKS = [
-  { to: '/adoptar', label: 'Quiero adoptar', emoji: '🏡', tone: 'bg-fresa-claro' },
+  { to: '/adoptar', label: 'Quiero adoptar', emoji: '🏡', tone: 'bg-canela-claro' },
   { to: '/como-trabajamos', label: 'Cómo trabajamos', emoji: '🩺', tone: 'bg-menta' },
   { to: '/finales-felices', label: 'Finales felices', emoji: '💕', tone: 'bg-lavanda' },
   { to: '/colabora', label: 'Colabora', emoji: '🙋', tone: 'bg-mantequilla' },
@@ -33,7 +33,7 @@ function FavoritesBadge({ count, className }) {
   return (
     <span
       className={cx(
-        'absolute grid min-w-5 place-items-center rounded-full bg-fresa px-1 text-[11px] font-bold leading-5 text-white',
+        'absolute grid min-w-5 place-items-center rounded-full bg-canela px-1 text-[11px] font-bold leading-5 text-white',
         className,
       )}
     >
@@ -48,7 +48,7 @@ function Header() {
     <header className="sticky top-0 z-30 border-b border-borde/70 bg-crema/90 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 md:h-16">
         <Link to="/" aria-label="Bigotes, ir al inicio">
-          <Logo />
+          <Logo className="h-8 md:h-10" />
         </Link>
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Principal">
           {MAIN_LINKS.map((link) => (
@@ -57,8 +57,8 @@ function Header() {
               to={link.to}
               className={({ isActive }) =>
                 cx(
-                  'rounded-full px-3 py-2 font-bold transition hover:bg-fresa-claro',
-                  isActive ? 'text-fresa-oscuro' : 'text-cacao',
+                  'rounded-full px-3 py-2 font-bold transition hover:bg-canela-claro',
+                  isActive ? 'text-canela-oscuro' : 'text-cacao',
                 )
               }
             >
@@ -69,7 +69,7 @@ function Header() {
         <div className="flex items-center gap-2">
           <Link
             to="/favoritos"
-            className="relative hidden size-11 place-items-center rounded-full text-fresa hover:bg-fresa-claro md:grid"
+            className="relative hidden size-11 place-items-center rounded-full text-canela hover:bg-canela-claro md:grid"
             aria-label={`Favoritos (${slugs.length})`}
           >
             <Heart className="size-6" />
@@ -87,7 +87,7 @@ function Header() {
 function BottomNav({ onMore }) {
   const { slugs } = useFavorites();
   const item = ({ isActive }) =>
-    cx('flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-bold transition', isActive ? 'text-fresa-oscuro' : 'text-cacao-suave');
+    cx('flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-bold transition', isActive ? 'text-canela-oscuro' : 'text-cacao-suave');
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-40 rounded-t-[1.75rem] border-t border-borde bg-nata/95 px-2 pb-safe shadow-flotante backdrop-blur md:hidden"
@@ -107,7 +107,7 @@ function BottomNav({ onMore }) {
                 whileTap={{ scale: 0.9 }}
                 className={cx(
                   'grid size-14 place-items-center rounded-full border-4 border-nata text-white shadow-suave',
-                  isActive ? 'bg-fresa-oscuro' : 'bg-fresa',
+                  isActive ? 'bg-canela-oscuro' : 'bg-canela',
                 )}
               >
                 <Sparkles className="size-6" />
@@ -186,7 +186,7 @@ export function SocialLinks({ contact, className }) {
           target="_blank"
           rel="noreferrer"
           aria-label={label}
-          className="grid size-11 place-items-center rounded-full bg-nata text-fresa-oscuro shadow-suave hover:bg-fresa-claro"
+          className="grid size-11 place-items-center rounded-full bg-nata text-canela-oscuro shadow-suave hover:bg-canela-claro"
         >
           <Icon />
         </a>
@@ -198,18 +198,18 @@ export function SocialLinks({ contact, className }) {
 function Footer() {
   const { data } = useSite();
   return (
-    <footer className="mt-16 bg-fresa-claro/60 pb-28 md:pb-10">
+    <footer className="mt-16 bg-canela-claro/60 pb-28 md:pb-10">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 pt-10 md:grid-cols-3">
         <div>
-          <Logo />
-          <p className="mt-3 max-w-xs text-cacao-suave">
+          <LogoFull className="w-full max-w-xs" />
+          <p className="mt-4 max-w-xs text-cacao-suave">
             Rescatamos gatitos en Almendralejo y les buscamos una familia para siempre.
           </p>
           <SocialLinks contact={data?.content.contact} className="mt-4" />
         </div>
         <nav aria-label="Pie de página" className="grid grid-cols-2 gap-2 font-bold md:col-span-2 md:grid-cols-3">
           {[...MAIN_LINKS, { to: '/adoptar', label: 'Quiero adoptar' }, { to: '/favoritos', label: 'Favoritos' }].map((link) => (
-            <Link key={link.to} to={link.to} className="py-1 hover:text-fresa-oscuro">
+            <Link key={link.to} to={link.to} className="py-1 hover:text-canela-oscuro">
               {link.label}
             </Link>
           ))}

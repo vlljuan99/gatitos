@@ -27,7 +27,7 @@ export function Field({ label, hint, error, optional, children, id: givenId, as 
       )}
       {typeof children === 'function' ? children({ id, describedBy, invalid: Boolean(error) }) : children}
       {error && (
-        <p id={`${id}-error`} className="flex items-center gap-1.5 text-sm font-semibold text-fresa-oscuro" role="alert">
+        <p id={`${id}-error`} className="flex items-center gap-1.5 text-sm font-semibold text-canela-oscuro" role="alert">
           <CircleAlert className="size-4 shrink-0" aria-hidden /> {error}
         </p>
       )}
@@ -38,8 +38,8 @@ export function Field({ label, hint, error, optional, children, id: givenId, as 
 const inputClass = (invalid) =>
   cx(
     'w-full rounded-2xl border-2 bg-nata px-4 py-3 text-base text-cacao placeholder:text-cacao-suave/70 transition',
-    'focus:border-fresa focus:outline-none',
-    invalid ? 'border-fresa-oscuro' : 'border-borde',
+    'focus:border-canela focus:outline-none',
+    invalid ? 'border-canela-oscuro' : 'border-borde',
   );
 
 export function TextInput({ label, hint, error, optional, value, onChange, type = 'text', ...props }) {
@@ -94,8 +94,8 @@ export function Choice({ label, hint, error, optional, options, value, onChange,
                 key={option.value}
                 className={cx(
                   'flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 px-4 py-2 text-center font-bold transition',
-                  'has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-fresa',
-                  selected ? 'border-fresa bg-fresa-claro text-fresa-oscuro' : 'border-borde bg-nata hover:border-fresa-pastel',
+                  'has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-canela',
+                  selected ? 'border-canela bg-canela-claro text-canela-oscuro' : 'border-borde bg-nata hover:border-canela-pastel',
                 )}
               >
                 <input
@@ -130,8 +130,8 @@ export function MultiChoice({ label, hint, error, options, value = [], onChange 
                 key={option.value}
                 className={cx(
                   'flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl border-2 px-4 py-2 font-bold transition',
-                  'has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-fresa',
-                  selected ? 'border-fresa bg-fresa-claro text-fresa-oscuro' : 'border-borde bg-nata hover:border-fresa-pastel',
+                  'has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-canela',
+                  selected ? 'border-canela bg-canela-claro text-canela-oscuro' : 'border-borde bg-nata hover:border-canela-pastel',
                 )}
               >
                 <input
@@ -162,8 +162,8 @@ export function Checkbox({ checked, onChange, error, children }) {
         htmlFor={id}
         className={cx(
           'flex cursor-pointer items-start gap-3 rounded-2xl border-2 bg-nata p-4 transition',
-          'has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-fresa',
-          checked ? 'border-fresa' : error ? 'border-fresa-oscuro' : 'border-borde',
+          'has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-canela',
+          checked ? 'border-canela' : error ? 'border-canela-oscuro' : 'border-borde',
         )}
       >
         <input
@@ -177,7 +177,7 @@ export function Checkbox({ checked, onChange, error, children }) {
         <span
           className={cx(
             'mt-0.5 grid size-6 shrink-0 place-items-center rounded-lg border-2 transition',
-            checked ? 'border-fresa bg-fresa text-white' : 'border-cacao/30 bg-nata',
+            checked ? 'border-canela bg-canela text-white' : 'border-cacao/30 bg-nata',
           )}
           aria-hidden
         >
@@ -186,7 +186,7 @@ export function Checkbox({ checked, onChange, error, children }) {
         <span className="text-[15px] leading-snug">{children}</span>
       </label>
       {error && (
-        <p className="flex items-center gap-1.5 px-1 text-sm font-semibold text-fresa-oscuro" role="alert">
+        <p className="flex items-center gap-1.5 px-1 text-sm font-semibold text-canela-oscuro" role="alert">
           <CircleAlert className="size-4 shrink-0" aria-hidden /> {error}
         </p>
       )}
@@ -209,7 +209,7 @@ export function Honeypot({ value, onChange }) {
 export function FormError({ children }) {
   if (!children) return null;
   return (
-    <div className="flex items-start gap-2 rounded-2xl bg-fresa-claro p-4 font-semibold text-fresa-oscuro" role="alert">
+    <div className="flex items-start gap-2 rounded-2xl bg-canela-claro p-4 font-semibold text-canela-oscuro" role="alert">
       <CircleAlert className="mt-0.5 size-5 shrink-0" aria-hidden />
       <span>{children}</span>
     </div>

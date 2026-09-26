@@ -14,7 +14,7 @@ import {
   UserCog,
   Users,
 } from 'lucide-react';
-import { Logo, LogoMark } from '../components/Logo.jsx';
+import { Logo, LogoFull, LogoMark } from '../components/Logo.jsx';
 import { Sheet } from '../components/Sheet.jsx';
 import { FormError, TextInput } from '../components/form.jsx';
 import { Button, Spinner, cx } from '../components/ui.jsx';
@@ -54,11 +54,11 @@ function Login({ onLogin }) {
   }
 
   return (
-    <div className="grid min-h-dvh place-items-center bg-fresa-claro/60 px-4 py-10">
+    <div className="grid min-h-dvh place-items-center bg-canela-claro px-4 py-10">
       <form onSubmit={submit} className="w-full max-w-sm rounded-[2rem] bg-crema p-6 shadow-flotante">
         <div className="text-center">
-          <LogoMark className="mx-auto size-20" />
-          <h1 className="mt-3 font-display text-3xl font-semibold">Panel de Bigotes</h1>
+          <LogoFull className="mx-auto w-full max-w-72" />
+          <h1 className="mt-5 font-display text-2xl font-semibold">Panel del equipo</h1>
           <p className="mt-1 text-cacao-suave">Solo para el equipo de la asociación</p>
         </div>
         <div className="mt-6 grid gap-4">
@@ -80,7 +80,7 @@ function Login({ onLogin }) {
 function Badge({ count }) {
   if (!count) return null;
   return (
-    <span className="grid min-w-5 place-items-center rounded-full bg-fresa px-1 text-[11px] font-bold leading-5 text-white">
+    <span className="grid min-w-5 place-items-center rounded-full bg-canela px-1 text-[11px] font-bold leading-5 text-white">
       {count > 99 ? '99+' : count}
     </span>
   );
@@ -108,9 +108,9 @@ function Shell({ user, onLogout, children }) {
   const moreBadge = items.filter((i) => !i.main).reduce((sum, i) => sum + (i.badge ?? 0), 0);
 
   const sideLink = ({ isActive }) =>
-    cx('flex min-h-11 items-center gap-3 rounded-2xl px-3 font-bold transition', isActive ? 'bg-fresa-claro text-fresa-oscuro' : 'hover:bg-cacao/5');
+    cx('flex min-h-11 items-center gap-3 rounded-2xl px-3 font-bold transition', isActive ? 'bg-canela-claro text-canela-oscuro' : 'hover:bg-cacao/5');
   const bottomLink = ({ isActive }) =>
-    cx('relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-bold', isActive ? 'text-fresa-oscuro' : 'text-cacao-suave');
+    cx('relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-bold', isActive ? 'text-canela-oscuro' : 'text-cacao-suave');
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[16rem_1fr]">
@@ -181,19 +181,19 @@ function Shell({ user, onLogout, children }) {
             .map(({ to, label, icon: Icon, badge }) => (
               <li key={to}>
                 <Link to={to} className="flex min-h-14 items-center gap-3 rounded-2xl bg-nata px-4 font-bold shadow-suave">
-                  <Icon className="size-5 text-fresa" /> <span className="flex-1">{label}</span> <Badge count={badge} />
+                  <Icon className="size-5 text-canela" /> <span className="flex-1">{label}</span> <Badge count={badge} />
                   <ChevronRight className="size-5 text-cacao-suave" />
                 </Link>
               </li>
             ))}
           <li>
             <a href="/" target="_blank" rel="noreferrer" className="flex min-h-14 items-center gap-3 rounded-2xl bg-nata px-4 font-bold shadow-suave">
-              <ExternalLink className="size-5 text-fresa" /> <span className="flex-1">Ver la web</span>
+              <ExternalLink className="size-5 text-canela" /> <span className="flex-1">Ver la web</span>
             </a>
           </li>
           <li>
             <button type="button" onClick={onLogout} className="flex min-h-14 w-full items-center gap-3 rounded-2xl bg-nata px-4 font-bold shadow-suave">
-              <LogOut className="size-5 text-fresa" /> Salir
+              <LogOut className="size-5 text-canela" /> Salir
             </button>
           </li>
         </ul>

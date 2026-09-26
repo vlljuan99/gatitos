@@ -6,11 +6,11 @@ const cx = (...classes) => classes.filter(Boolean).join(' ');
 export { cx };
 
 const VARIANTS = {
-  primary: 'bg-fresa text-white shadow-suave hover:bg-fresa-oscuro active:scale-[0.98]',
-  secondary: 'bg-nata text-cacao border-2 border-borde hover:border-fresa-pastel active:scale-[0.98]',
-  soft: 'bg-fresa-claro text-fresa-oscuro hover:bg-fresa-pastel/50 active:scale-[0.98]',
+  primary: 'bg-canela text-white shadow-suave hover:bg-canela-oscuro active:scale-[0.98]',
+  secondary: 'bg-nata text-cacao border-2 border-borde hover:border-canela-pastel active:scale-[0.98]',
+  soft: 'bg-canela-claro text-canela-oscuro hover:bg-canela-pastel/50 active:scale-[0.98]',
   ghost: 'text-cacao hover:bg-cacao/5',
-  danger: 'bg-nata text-fresa-oscuro border-2 border-fresa-claro hover:bg-fresa-claro',
+  danger: 'bg-nata text-canela-oscuro border-2 border-canela-claro hover:bg-canela-claro',
 };
 const SIZES = {
   sm: 'min-h-9 px-3.5 text-sm gap-1.5',
@@ -47,7 +47,7 @@ export function ButtonLink({ variant, size, block, className, children, ...props
 }
 
 const TONE_CLASSES = {
-  fresa: 'bg-fresa-claro text-fresa-oscuro',
+  canela: 'bg-canela-claro text-canela-oscuro',
   lavanda: 'bg-lavanda text-lavanda-oscuro',
   menta: 'bg-menta text-menta-oscuro',
   mantequilla: 'bg-mantequilla text-mantequilla-oscuro',
@@ -57,7 +57,7 @@ const TONE_CLASSES = {
 };
 export const toneClass = (tone) => TONE_CLASSES[tone] ?? TONE_CLASSES.neutro;
 
-export function Tag({ tone = 'fresa', className, children }) {
+export function Tag({ tone = 'canela', className, children }) {
   return (
     <span className={cx('inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold', toneClass(tone), className)}>
       {children}
@@ -74,8 +74,8 @@ export function Chip({ selected, className, children, ...props }) {
       className={cx(
         'inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border-2 px-4 text-sm font-bold transition',
         selected
-          ? 'border-fresa bg-fresa text-white'
-          : 'border-borde bg-nata text-cacao hover:border-fresa-pastel',
+          ? 'border-canela bg-canela text-white'
+          : 'border-borde bg-nata text-cacao hover:border-canela-pastel',
         className,
       )}
       {...props}
@@ -116,7 +116,7 @@ export function SectionTitle({ children, action, className }) {
 export function Spinner({ label = 'Cargando…' }) {
   return (
     <div className="flex flex-col items-center gap-3 py-16 text-cacao-suave" role="status">
-      <LoaderCircle className="size-8 animate-spin text-fresa" aria-hidden />
+      <LoaderCircle className="size-8 animate-spin text-canela" aria-hidden />
       <span>{label}</span>
     </div>
   );

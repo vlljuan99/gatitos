@@ -122,7 +122,7 @@ export default function Team() {
                   <span
                     className={cx(
                       'shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold',
-                      person.role === 'admin' ? 'bg-fresa-claro text-fresa-oscuro' : 'bg-lavanda text-lavanda-oscuro',
+                      person.role === 'admin' ? 'bg-canela-claro text-canela-oscuro' : 'bg-lavanda text-lavanda-oscuro',
                     )}
                   >
                     {person.roleLabel}
@@ -164,7 +164,7 @@ export default function Team() {
 
       <Card className="mt-6">
         <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
-          <UserPlus className="size-5 text-fresa" /> Añadir a alguien
+          <UserPlus className="size-5 text-canela" /> Añadir a alguien
         </h2>
         <form onSubmit={add} className="mt-4 grid gap-4" noValidate>
           <TextInput label="Nombre" value={form.name} onChange={(v) => setForm({ ...form, name: v })} error={errors.name} />

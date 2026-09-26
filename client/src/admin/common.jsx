@@ -58,7 +58,7 @@ export function Tabs({ tabs, value, onChange }) {
         >
           {tab.label}
           {tab.count > 0 && (
-            <span className={cx('rounded-full px-1.5 text-xs', value === tab.value ? 'bg-white/20' : 'bg-fresa-claro text-fresa-oscuro')}>
+            <span className={cx('rounded-full px-1.5 text-xs', value === tab.value ? 'bg-white/20' : 'bg-canela-claro text-canela-oscuro')}>
               {tab.count}
             </span>
           )}
@@ -73,8 +73,8 @@ const STATUS_TONES = {
   disponible: 'bg-menta text-menta-oscuro',
   reservado: 'bg-mantequilla text-mantequilla-oscuro',
   adoptado: 'bg-lavanda text-lavanda-oscuro',
-  nueva: 'bg-fresa-claro text-fresa-oscuro',
-  nuevo: 'bg-fresa-claro text-fresa-oscuro',
+  nueva: 'bg-canela-claro text-canela-oscuro',
+  nuevo: 'bg-canela-claro text-canela-oscuro',
   entrevista: 'bg-cielo text-cielo-oscuro',
   visita: 'bg-melocoton text-melocoton-oscuro',
   aprobada: 'bg-menta text-menta-oscuro',

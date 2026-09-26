@@ -20,7 +20,7 @@ export function FavoriteButton({ cat, className, size = 'md' }) {
       aria-label={active ? `Quitar a ${cat.name} de favoritos` : `Me encanta ${cat.name}`}
       className={cx(
         'grid place-items-center rounded-full shadow-suave backdrop-blur transition',
-        active ? 'bg-fresa text-white' : 'bg-nata/90 text-fresa',
+        active ? 'bg-canela text-white' : 'bg-nata/90 text-canela',
         dims,
         className,
       )}

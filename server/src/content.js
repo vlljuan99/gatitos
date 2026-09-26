@@ -47,7 +47,7 @@ export const CONTENT = {
     defaults: {
       heroTitle: 'Cada gatito merece un hogar lleno de mimos',
       heroText:
-        'Somos Bigotes, una asociación de Almendralejo que rescata gatitos y les busca una familia para siempre. ¿Será la tuya?',
+        'Somos Bigotes, asociación para la ayuda al gato callejero en Almendralejo. Rescatamos y cuidamos gatitos y les buscamos una familia para siempre. ¿Será la tuya?',
       rescuedBase: 0,
     },
   },
@@ -57,7 +57,7 @@ export const CONTENT = {
     }),
     defaults: {
       intro:
-        'Bigotes es una asociación de Almendralejo formada por personas voluntarias que no quieren ver a ningún gatito en la calle. Rescatamos, curamos, cuidamos en casas de acogida y buscamos familias responsables que les den todo el cariño que se merecen.',
+        'Bigotes es una asociación de Almendralejo para la ayuda al gato callejero, formada por personas voluntarias. Trabajamos en tres frentes: protección de los gatos que viven en la calle, cuidado (veterinario, casas de acogida y adopción responsable) y orientación a los vecinos y vecinas que se encuentran con un gato y no saben qué hacer.',
     },
   },
   process: {
@@ -207,7 +207,7 @@ export const CONTENT = {
       email: z.union([z.literal(''), z.email('Escribe un email válido')]),
     }),
     defaults: {
-      holder: 'Asociación Bigotes',
+      holder: 'Bigotes, Asociación para la Ayuda al Gato Callejero',
       cif: '',
       registry: '',
       address: 'Almendralejo (Badajoz)',

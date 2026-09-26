@@ -6,7 +6,7 @@ import { FavoriteButton } from './FavoriteButton.jsx';
 import { Tag } from './ui.jsx';
 
 export function SexIcon({ sex, className = 'size-4' }) {
-  if (sex === 'hembra') return <Venus className={`${className} text-fresa`} aria-label="Hembra" />;
+  if (sex === 'hembra') return <Venus className={`${className} text-canela`} aria-label="Hembra" />;
   if (sex === 'macho') return <Mars className={`${className} text-cielo-oscuro`} aria-label="Macho" />;
   return null;
 }

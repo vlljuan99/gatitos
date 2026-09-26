@@ -23,7 +23,7 @@ function CatList({ cats, empty }) {
           <Link to={`/admin/gatitos/${cat.id}`} className="flex items-center gap-3 rounded-2xl p-1 hover:bg-crema">
             <CatPhoto cat={cat} sizes="48px" className="size-12 rounded-xl" alt="" />
             <span className="flex-1 font-bold">{cat.name}</span>
-            <span className="text-sm font-bold text-fresa-oscuro">{cat.likes} 💕</span>
+            <span className="text-sm font-bold text-canela-oscuro">{cat.likes} 💕</span>
           </Link>
         </li>
       ))}
@@ -47,7 +47,7 @@ export default function Dashboard() {
       {data && (
         <>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <Tile to="/admin/solicitudes" icon={ClipboardList} count={data.applications.new} label="solicitudes nuevas" tone="bg-fresa-claro text-fresa-oscuro" />
+            <Tile to="/admin/solicitudes" icon={ClipboardList} count={data.applications.new} label="solicitudes nuevas" tone="bg-canela-claro text-canela-oscuro" />
             <Tile to="/admin/mensajes" icon={Inbox} count={data.messages.new} label="mensajes sin leer" tone="bg-cielo text-cielo-oscuro" />
             <Tile to="/admin/voluntariado" icon={HeartHandshake} count={data.volunteers.new} label="voluntarios nuevos" tone="bg-lavanda text-lavanda-oscuro" />
             <Tile to="/admin/solicitudes" icon={ClipboardList} count={data.applications.open} label="adopciones en marcha" tone="bg-menta text-menta-oscuro" />

@@ -30,7 +30,7 @@ export function ToastProvider({ children }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10 }}
               className={`pointer-events-auto flex max-w-md items-center gap-3 rounded-full px-5 py-3 font-semibold shadow-flotante ${
-                toast.tone === 'error' ? 'bg-fresa-oscuro text-white' : 'bg-cacao text-white'
+                toast.tone === 'error' ? 'bg-canela-oscuro text-white' : 'bg-cacao text-white'
               }`}
             >
               <span>{toast.message}</span>

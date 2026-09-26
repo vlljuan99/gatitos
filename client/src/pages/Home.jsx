@@ -21,7 +21,7 @@ function Polaroids({ cats }) {
   const tilts = ['-rotate-6', 'rotate-3', '-rotate-2'];
   const positions = ['left-0 top-6', 'right-0 top-0', 'left-1/2 -translate-x-1/2 top-24'];
   if (picks.length === 0) {
-    return <CatIllustration tone="fresa" seed={0} className="mx-auto size-56 rounded-[3rem] shadow-suave" />;
+    return <CatIllustration tone="canela" seed={0} className="mx-auto size-56 rounded-[3rem] shadow-suave" />;
   }
   return (
     <div className="relative mx-auto h-72 w-full max-w-xs md:h-96 md:max-w-sm" aria-hidden>
@@ -63,11 +63,11 @@ export default function Home() {
   return (
     <>
       <section className="relative overflow-hidden px-4 pt-6 pb-10 md:grid md:grid-cols-2 md:items-center md:gap-8 md:pt-16">
-        <div className="pointer-events-none absolute -right-20 -top-16 size-64 rounded-full bg-fresa-claro" aria-hidden />
+        <div className="pointer-events-none absolute -right-20 -top-16 size-64 rounded-full bg-canela-claro" aria-hidden />
         <div className="pointer-events-none absolute -left-24 top-72 size-48 rounded-full bg-lavanda" aria-hidden />
         <div className="relative">
-          <p className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-nata px-3 py-1 text-sm font-bold text-fresa-oscuro shadow-suave">
-            🐾 Asociación de Almendralejo
+          <p className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-nata px-3 py-1 text-sm font-bold text-canela-oscuro shadow-suave">
+            🐾 Ayuda al gato callejero · Almendralejo
           </p>
           <h1 className="font-display text-4xl font-semibold leading-[1.05] md:text-6xl">
             {home?.heroTitle ?? 'Cada gatito merece un hogar lleno de mimos'}
@@ -90,7 +90,7 @@ export default function Home() {
       {stats && (
         <section className="px-4" aria-label="Nuestros números">
           <div className="grid grid-cols-3 gap-2 md:gap-4">
-            <Stat value={stats.rescued} label="gatitos rescatados" tone="bg-fresa-claro text-fresa-oscuro" />
+            <Stat value={stats.rescued} label="gatitos rescatados" tone="bg-canela-claro text-canela-oscuro" />
             <Stat value={stats.adoptedThisYear} label={`adoptados en ${stats.year}`} tone="bg-menta text-menta-oscuro" />
             <Stat value={stats.available} label="buscan hogar" tone="bg-mantequilla text-mantequilla-oscuro" />
           </div>
@@ -102,7 +102,7 @@ export default function Home() {
           <SectionTitle
             className="px-4"
             action={
-              <Link to="/gatitos" className="flex items-center gap-1 font-bold text-fresa-oscuro">
+              <Link to="/gatitos" className="flex items-center gap-1 font-bold text-canela-oscuro">
                 Ver todos <ArrowRight className="size-4" />
               </Link>
             }
@@ -129,14 +129,14 @@ export default function Home() {
               </span>
               <div>
                 <h3 className="font-display text-lg font-semibold">
-                  <span className="text-fresa-oscuro">{i + 1}.</span> {step.title}
+                  <span className="text-canela-oscuro">{i + 1}.</span> {step.title}
                 </h3>
                 <p className="text-cacao-suave">{step.text}</p>
               </div>
             </li>
           ))}
         </ol>
-        <Link to="/como-trabajamos" className="mt-4 inline-flex items-center gap-1 font-bold text-fresa-oscuro">
+        <Link to="/como-trabajamos" className="mt-4 inline-flex items-center gap-1 font-bold text-canela-oscuro">
           Cómo trabajamos y requisitos <ArrowRight className="size-4" />
         </Link>
       </section>
@@ -145,7 +145,7 @@ export default function Home() {
         <section className="mt-12 px-4">
           <SectionTitle
             action={
-              <Link to="/finales-felices" className="flex items-center gap-1 font-bold text-fresa-oscuro">
+              <Link to="/finales-felices" className="flex items-center gap-1 font-bold text-canela-oscuro">
                 Ver más <ArrowRight className="size-4" />
               </Link>
             }

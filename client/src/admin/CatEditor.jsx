@@ -150,13 +150,13 @@ function PersonalityFields({ form }) {
             maxLength={30}
             placeholder="Otra: «le encantan las cajas»"
             aria-label="Añadir otra etiqueta"
-            className="min-w-0 flex-1 rounded-full border-2 border-borde bg-nata px-4 py-2 focus:border-fresa focus:outline-none"
+            className="min-w-0 flex-1 rounded-full border-2 border-borde bg-nata px-4 py-2 focus:border-canela focus:outline-none"
           />
           <Button variant="soft" size="sm" onClick={addCustom} aria-label="Añadir etiqueta">
             <Plus className="size-4" />
           </Button>
         </div>
-        {errors.personality && <p className="mt-2 text-sm font-semibold text-fresa-oscuro">{errors.personality}</p>}
+        {errors.personality && <p className="mt-2 text-sm font-semibold text-canela-oscuro">{errors.personality}</p>}
       </fieldset>
       <TextInput
         label="Frase corta"
@@ -270,7 +270,7 @@ function PhotoPicker({ onFiles, disabled, remaining }) {
         type="button"
         disabled={disabled || remaining <= 0}
         onClick={() => input.current?.click()}
-        className="flex min-h-28 w-full flex-col items-center justify-center gap-1 rounded-3xl border-4 border-dashed border-fresa-pastel bg-fresa-claro/40 p-4 font-bold text-fresa-oscuro transition hover:bg-fresa-claro disabled:opacity-50"
+        className="flex min-h-28 w-full flex-col items-center justify-center gap-1 rounded-3xl border-4 border-dashed border-canela-pastel bg-canela-claro/40 p-4 font-bold text-canela-oscuro transition hover:bg-canela-claro disabled:opacity-50"
       >
         <ImagePlus className="size-8" aria-hidden />
         {remaining > 0 ? 'Añadir fotos' : `Máximo ${MAX_PHOTOS} fotos`}
@@ -310,7 +310,7 @@ function PhotoTile({ src, index, total, onMove, onRemove, alt }) {
             <ChevronRight className="size-5" />
           </button>
         </div>
-        <button type="button" onClick={() => onRemove(index)} className="grid size-9 place-items-center rounded-full bg-nata/90 text-fresa-oscuro" aria-label="Quitar foto">
+        <button type="button" onClick={() => onRemove(index)} className="grid size-9 place-items-center rounded-full bg-nata/90 text-canela-oscuro" aria-label="Quitar foto">
           <Trash2 className="size-4" />
         </button>
       </div>
@@ -398,7 +398,7 @@ function NewCat() {
     <AdminPage title="Nuevo gatito" back="/admin/gatitos" subtitle={`Paso ${step + 1} de ${WIZARD.length} · ${WIZARD[step]}`}>
       <div className="mb-5 flex gap-1.5" aria-hidden>
         {WIZARD.map((label, i) => (
-          <span key={label} className={cx('h-2 flex-1 rounded-full transition', i <= step ? 'bg-fresa' : 'bg-fresa-claro')} />
+          <span key={label} className={cx('h-2 flex-1 rounded-full transition', i <= step ? 'bg-canela' : 'bg-canela-claro')} />
         ))}
       </div>
 
