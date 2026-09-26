@@ -1,0 +1,24 @@
+name: Monitor production
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23,53 * * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  availability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Comprobar web y base de datos
+        env:
+          APP_URL: https://bigotes.167-233-99-156.sslip.io
+        run: |
+          HOME_STATUS=$(curl --retry 2 --retry-delay 3 -sS -o /dev/null -w "%{http_code}" "$APP_URL/")
+          HEALTH_BODY=$(curl --retry 2 --retry-delay 3 -fsS "$APP_URL/api/health")
+          jq -e '.ok == true and .database.ok == true and (.database.migration | type == "number")' <<<"$HEALTH_BODY"
+          [[ "$HOME_STATUS" == "200" ]]
+          echo "Bigotes disponible: $(jq -r '.commit' <<<"$HEALTH_BODY") · migración $(jq -r '.database.migration' <<<"$HEALTH_BODY")"

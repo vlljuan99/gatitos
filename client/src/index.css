@@ -1,0 +1,79 @@
+@import 'tailwindcss';
+/* Tipografías servidas desde la propia web (sin Google Fonts): así no se
+   envía la IP de nadie a terceros y no hace falta aviso de cookies. */
+@import '@fontsource-variable/fredoka';
+@import '@fontsource-variable/nunito';
+
+@theme {
+  --font-display: 'Fredoka Variable', ui-rounded, system-ui, sans-serif;
+  --font-sans: 'Nunito Variable', ui-rounded, system-ui, sans-serif;
+
+  /* Paleta «Bigotes»: fondos pastel y textos oscuros con contraste AA. */
+  --color-crema: #fff7ef;
+  --color-nata: #ffffff;
+  --color-borde: #f1e2d7;
+  --color-cacao: #3a2a30;
+  --color-cacao-suave: #6e5a60;
+
+  --color-fresa: #d6336c;
+  --color-fresa-oscuro: #b8325a;
+  --color-fresa-claro: #ffe3ea;
+  --color-fresa-pastel: #f6a6b8;
+
+  --color-menta: #d7f3e8;
+  --color-menta-oscuro: #1d6b52;
+  --color-lavanda: #ebe4fd;
+  --color-lavanda-oscuro: #5b43a8;
+  --color-mantequilla: #fff1c2;
+  --color-mantequilla-oscuro: #7a5200;
+  --color-melocoton: #ffe4d1;
+  --color-melocoton-oscuro: #9a3412;
+  --color-cielo: #dcefff;
+  --color-cielo-oscuro: #1e5f8a;
+
+  --shadow-suave: 0 2px 0 rgb(58 42 48 / 0.06), 0 8px 24px -8px rgb(58 42 48 / 0.18);
+  --shadow-flotante: 0 12px 32px -10px rgb(58 42 48 / 0.35);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-crema text-cacao font-sans antialiased;
+    min-height: 100dvh;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display text-balance;
+  }
+  :focus-visible {
+    @apply outline-3 outline-offset-2 outline-fresa;
+  }
+  ::selection {
+    @apply bg-fresa-claro;
+  }
+}
+
+@utility pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

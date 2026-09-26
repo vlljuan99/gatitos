@@ -1,0 +1,8 @@
+bigotes.167-233-99-156.sslip.io {
+	encode zstd gzip
+	reverse_proxy bigotes-app:4000
+	# El panel reduce las fotos en el móvil y las sube de una en una.
+	request_body {
+		max_size 25MB
+	}
+}
