@@ -10,36 +10,36 @@ El fichero `/opt/bigotes/.deploy.env` registra qué imagen ejecuta Compose y
 
 ## Primer despliegue (una sola vez)
 
-1. En el servidor, crea la carpeta y el fichero de entorno:
+Todo lo del servidor lo hace el workflow. Solo hacen falta estos secretos en
+GitHub (*Settings → Secrets and variables → Actions → New repository secret*):
 
-   ```bash
-   ssh root@167.233.99.156
-   mkdir -p /opt/bigotes && cd /opt/bigotes
-   nano app.env        # copia deploy/app.env.example y rellénalo
-   chmod 600 app.env
-   ```
+| Secreto | Qué es |
+|---|---|
+| `HETZNER_SSH_KEY` | La clave privada SSH del VPS (la misma que usan tri-dnd y el resto). |
+| `BIGOTES_ADMIN_EMAIL` | Email de la cuenta de administración del panel. |
+| `BIGOTES_ADMIN_PASSWORD` | Su contraseña inicial (8 caracteres o más, sin comillas simples). |
+| `BIGOTES_ADMIN_NAME` | Opcional: el nombre que verá en el panel. |
 
-   Rellena como mínimo `PUBLIC_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` y
-   `ADMIN_NAME`: al arrancar sin nadie en el equipo se crea esa cuenta de
-   administración. Después puedes quitar la contraseña de `app.env` y
-   cambiarla desde «Mi cuenta» en el panel.
+Después se lanza **Deploy to Hetzner** desde la pestaña Actions. En el primer
+despliegue el workflow comprueba que existe el Caddy compartido de tilestudio
+(`/opt/tilestudio/sites` y la red `tilestudio_default`) y crea
+`/opt/bigotes/app.env` (permisos 600) con `PUBLIC_URL` y la cuenta de
+administración; al arrancar sin nadie en el equipo, la app crea esa cuenta. En
+los despliegues siguientes `app.env` ya existe y no se toca: para cambiar algo
+(p. ej. los avisos por email) se edita a mano en el servidor. La contraseña se
+cambia desde «Mi cuenta» en el panel.
 
-2. Comprueba que el `Caddyfile` de tilestudio importa los sitios sueltos
-   (`import sites/*.caddy`), igual que para tri-dnd.
+Si falta algún secreto, el workflow falla en los primeros segundos con un
+mensaje que dice cuál.
 
-3. En GitHub, el repositorio necesita el secreto `HETZNER_SSH_KEY` (la misma
-   clave que usan los otros proyectos del VPS).
+Opcional: cargar los gatitos de demostración para enseñar la web a la
+asociación (se pueden borrar después desde el panel):
 
-4. Lanza el workflow **Deploy to Hetzner** a mano desde la pestaña Actions.
+```bash
+docker exec -w /app/server bigotes-app npm run seed:demo
+```
 
-5. Opcional: carga los gatitos de demostración para enseñar la web a la
-   asociación (se pueden borrar después desde el panel):
-
-   ```bash
-   docker exec -w /app/server bigotes-app npm run seed:demo
-   ```
-
-Si prefieres crear la administración a mano en vez de con `app.env`:
+Para crear más cuentas de administración desde el servidor:
 
 ```bash
 docker exec -w /app/server bigotes-app npm run create-user -- --email ana@ejemplo.es --name Ana --role admin
