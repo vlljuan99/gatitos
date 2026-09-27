@@ -1,3 +1,6 @@
+import { execFileSync, spawnSync } from 'node:child_process';
+import os from 'node:os';
+import path from 'node:path';
 import { expect, test } from '@playwright/test';
 
 // PNG de 1×1 píxel: suficiente para probar la subida desde el «móvil».
@@ -18,7 +21,7 @@ test('una cuidabigotes sube un gatito nuevo en un minuto', async ({ page, reques
   await login(page, 'cuidabigotes@bigotes.local');
   await page.getByRole('link', { name: /Nuevo gatito/ }).click();
 
-  await page.locator('input[type=file]').setInputFiles({ name: 'garfield.png', mimeType: 'image/png', buffer: PHOTO });
+  await page.locator('input[type=file][accept="image/*"]').setInputFiles({ name: 'garfield.png', mimeType: 'image/png', buffer: PHOTO });
   await expect(page.getByRole('img', { name: 'Foto 1' })).toBeVisible();
   await page.getByRole('button', { name: /Siguiente/ }).click();
 
@@ -92,4 +95,52 @@ test('la administración lleva una solicitud por sus etapas', async ({ page, req
   await expect(page.getByText(/Entrevista → Aprobada/)).toBeVisible();
   const canelo = (await (await request.get('/api/gatitos/canelo')).json()).cat;
   expect(canelo.status).toBe('reservado');
+});
+
+test('un bigote mayor da de alta a alguien desde el resumen', async ({ page }) => {
+  await login(page, 'admin@bigotes.local');
+  await page.getByRole('link', { name: /Añadir al equipo/ }).click();
+
+  const sheet = page.getByRole('dialog', { name: 'Añadir al equipo' });
+  await sheet.getByLabel('Nombre').fill('Lola Martín');
+  await sheet.getByLabel('Email').fill('lola@bigotes.local');
+  await sheet.getByText('Bigote mayor').click();
+  await expect(sheet.getByText(/da de alta al equipo/)).toBeVisible();
+  await sheet.getByRole('button', { name: /Crear acceso/ }).click();
+
+  const password = page.getByRole('dialog', { name: 'Contraseña temporal' });
+  await expect(password.getByText(/^[a-z]+-[0-9a-f]{6}-[a-z]+$/)).toBeVisible();
+  await password.getByRole('button', { name: 'Cerrar' }).click();
+  await expect(page.getByText('lola@bigotes.local')).toBeVisible();
+  await expect(page.getByRole('listitem').filter({ hasText: 'Lola Martín' }).getByText('👑 Bigote mayor')).toBeVisible();
+});
+
+const hasFfmpeg = spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' }).status === 0;
+
+test('vídeos: se suben desde la ficha y salen en la web', async ({ page }) => {
+  test.skip(!hasFfmpeg, 'ffmpeg no está instalado');
+  const file = path.join(os.tmpdir(), 'bigotes-e2e-video.mp4');
+  execFileSync('ffmpeg', [
+    '-hide_banner', '-loglevel', 'error', '-y',
+    '-f', 'lavfi', '-i', 'testsrc=size=720x1280:rate=30', '-t', '2',
+    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', file,
+  ]);
+
+  await login(page, 'cuidabigotes@bigotes.local');
+  await page.getByRole('navigation', { name: 'Panel' }).getByRole('link', { name: /Gatitos/ }).click();
+  await page.getByRole('link', { name: /Morena/ }).first().click();
+  await expect(page.getByRole('heading', { name: 'Morena', level: 1 })).toBeVisible();
+
+  await page.locator('input[type=file][accept="video/*"]').setInputFiles(file);
+  await expect(page.getByText('Preparando el vídeo…')).toBeVisible();
+  await expect(page.getByText(/Vídeo listo/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Ver vídeo 1 de Morena' })).toBeVisible();
+
+  await page.goto('/gatitos');
+  await expect(page.getByRole('link', { name: /Morena/ }).getByText('Vídeo')).toBeVisible();
+  await page.goto('/gatitos/morena');
+  await page.getByRole('button', { name: 'Ver vídeo' }).click();
+  const video = page.getByLabel('Vídeo de Morena');
+  await expect(video).toBeInViewport();
+  expect(await video.getAttribute('poster')).toMatch(/-poster\.webp$/);
 });

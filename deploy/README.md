@@ -39,7 +39,10 @@ asociación (se pueden borrar después desde el panel):
 docker exec -w /app/server bigotes-app npm run seed:demo
 ```
 
-Para crear más cuentas de administración desde el servidor:
+El resto del equipo (cuidabigotes y otros bigotes mayores) se da de alta desde
+el panel: **Equipo → Añadir a alguien**, o «Añadir al equipo» en el resumen.
+Si alguna vez nadie pudiera entrar, se puede crear una cuenta de administración
+desde el servidor:
 
 ```bash
 docker exec -w /app/server bigotes-app npm run create-user -- --email ana@ejemplo.es --name Ana --role admin
@@ -53,10 +56,10 @@ El workflow manual `Deploy to Hetzner` es la única vía normal:
 2. Ejecuta las pruebas unitarias, el build de Vite, las pruebas E2E en móvil y
    `npm audit` de producción.
 3. Construye `bigotes:<sha>` en el VPS con metadatos OCI.
-4. Antes de reiniciar, crea un backup online e íntegro de SQLite y archiva las
-   fotos y el secreto de sesión.
-5. Levanta la imagen por SHA, recarga Caddy y comprueba web, SQLite, SHA y
-   las etiquetas para compartir.
+4. Antes de reiniciar, crea un backup online e íntegro de SQLite y guarda las
+   fotos, los vídeos y el secreto de sesión.
+5. Levanta la imagen por SHA, recarga Caddy y comprueba web, SQLite, SHA,
+   las etiquetas para compartir y que la imagen trae ffmpeg (vídeos).
 6. Si la comprobación falla, vuelve automáticamente a la imagen anterior. El
    job queda en rojo para que el incidente se vea.
 
@@ -64,12 +67,21 @@ Los backups viven en `/opt/bigotes/backups/<fecha>-<sha-corto>/`:
 
 - `bigotes.db`, copiado con la API online de SQLite y validado con
   `PRAGMA integrity_check`;
-- `files.tar.gz`, con las fotos (`uploads/`) y el secreto de sesión;
-- `SHA256SUMS`, para verificar ambos.
+- `uploads/`, las fotos y los vídeos tal como estaban. Son **enlaces duros**
+  a los ficheros de `data/uploads` (que nunca se reescriben), así que cada
+  backup no ocupa más disco salvo por lo que se haya borrado después;
+- `files.tar.gz`, con el secreto de sesión (en los backups anteriores a los
+  vídeos, también las fotos);
+- `SHA256SUMS`, para verificar la base de datos y el secreto.
 
-No hay borrado automático de backups ni de imágenes. **Las fotos son lo más
-valioso**: conviene copiar `/opt/bigotes/backups` fuera del VPS (por ejemplo,
-a una Storage Box de Hetzner) antes de decidir una retención.
+Los vídeos se preparan en `data/tmp/` y solo pasan a `data/uploads/videos/`
+cuando están listos; el original (con la ubicación GPS del móvil) se borra y
+nunca se sirve.
+
+No hay borrado automático de backups ni de imágenes. **Las fotos y los vídeos
+son lo más valioso**: conviene copiar `/opt/bigotes/backups` fuera del VPS
+(por ejemplo, a una Storage Box de Hetzner, con `rsync -aH` para respetar los
+enlaces duros) antes de decidir una retención.
 
 ## Rollback del código
 
@@ -96,6 +108,9 @@ cp -a data "backups/estado-fallido-$(date -u +%Y%m%dT%H%M%SZ)"
 cp "backups/$BACKUP_ID/bigotes.db" data/bigotes.db
 rm -f data/bigotes.db-wal data/bigotes.db-shm
 test ! -f "backups/$BACKUP_ID/files.tar.gz" || tar -xzf "backups/$BACKUP_ID/files.tar.gz" -C data
+if [[ -d "backups/$BACKUP_ID/uploads" ]]; then
+  rm -rf data/uploads && cp -al "backups/$BACKUP_ID/uploads" data/uploads
+fi
 chown -R 1000:1000 data
 docker compose --env-file .deploy.env up -d app
 curl --fail https://bigotes.167-233-99-156.sslip.io/api/health

@@ -125,6 +125,24 @@ export const migrations = [
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
   `,
+
+  // v2 — vídeos de los gatitos. Se preparan en segundo plano (ffmpeg), así
+  // que cada vídeo pasa por «procesando» antes de estar «listo» para la web.
+  `
+  CREATE TABLE cat_videos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cat_id INTEGER NOT NULL REFERENCES cats(id) ON DELETE CASCADE,
+    file_key TEXT NOT NULL UNIQUE,
+    status TEXT NOT NULL DEFAULT 'procesando' CHECK (status IN ('procesando', 'listo', 'error')),
+    width INTEGER,
+    height INTEGER,
+    duration REAL,
+    error TEXT NOT NULL DEFAULT '',
+    position INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX idx_cat_videos_cat ON cat_videos(cat_id, position);
+  `,
 ];
 
 export function runMigrations(database = db) {

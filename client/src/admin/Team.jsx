@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Copy, KeyRound, UserCheck, UserPlus, UserX } from 'lucide-react';
 import { WhatsAppIcon } from '../components/BrandIcons.jsx';
 import { Choice, FormError, TextInput } from '../components/form.jsx';
@@ -6,12 +7,10 @@ import { Sheet } from '../components/Sheet.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { Button, Card, ErrorState, Spinner, buttonClass, cx } from '../components/ui.jsx';
 import { api, ApiError } from '../lib/api.js';
-import { AdminPage, refreshAfterChange, timeAgo, useAdminApi, useAuth, useConfirm } from './common.jsx';
+import { AdminPage, refreshAfterChange, ROLE_INFO, timeAgo, useAdminApi, useAuth, useConfirm } from './common.jsx';
 
-const ROLE_OPTIONS = [
-  { value: 'cuidabigotes', label: 'Cuidabigotes' },
-  { value: 'admin', label: 'Administración' },
-];
+const ROLE_OPTIONS = ['cuidabigotes', 'admin'].map((role) => ({ value: role, label: ROLE_INFO[role].label, emoji: ROLE_INFO[role].emoji }));
+const EMPTY_FORM = { name: '', email: '', role: 'cuidabigotes' };
 
 /** Enseña la contraseña temporal una sola vez, con botones para pasarla. */
 function PasswordSheet({ info, onClose }) {
@@ -46,16 +45,12 @@ function PasswordSheet({ info, onClose }) {
   );
 }
 
-export default function Team() {
-  const { user: me } = useAuth();
-  const toast = useToast();
-  const { data, error, loading, reload } = useAdminApi('/equipo');
-  const [form, setForm] = useState({ name: '', email: '', role: 'cuidabigotes' });
+/** Alta de una persona nueva: nombre, email y papel. */
+function AddSheet({ open, onClose, onCreated }) {
+  const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [adding, setAdding] = useState(false);
-  const [password, setPassword] = useState(null);
-  const [ask, dialog] = useConfirm();
 
   async function add(event) {
     event.preventDefault();
@@ -63,10 +58,10 @@ export default function Team() {
     setFormError('');
     try {
       const result = await api('/admin/equipo', { method: 'POST', body: form });
-      setPassword({ name: result.user.name, email: result.user.email, password: result.temporaryPassword });
-      setForm({ name: '', email: '', role: 'cuidabigotes' });
+      setForm(EMPTY_FORM);
       setErrors({});
       refreshAfterChange();
+      onCreated({ name: result.user.name, email: result.user.email, password: result.temporaryPassword });
     } catch (err) {
       if (err instanceof ApiError) setErrors(err.fields);
       setFormError(err.message);
@@ -74,6 +69,47 @@ export default function Team() {
       setAdding(false);
     }
   }
+
+  return (
+    <Sheet open={open} onClose={onClose} title="Añadir al equipo">
+      <form onSubmit={add} className="grid gap-4" noValidate>
+        <TextInput label="Nombre" autoComplete="off" value={form.name} onChange={(v) => setForm({ ...form, name: v })} error={errors.name} />
+        <TextInput
+          label="Email"
+          type="email"
+          inputMode="email"
+          autoComplete="off"
+          hint="Con este email entrará al panel."
+          value={form.email}
+          onChange={(v) => setForm({ ...form, email: v })}
+          error={errors.email}
+        />
+        <Choice label="Papel" columns options={ROLE_OPTIONS} value={form.role} onChange={(v) => setForm({ ...form, role: v })} hint={ROLE_INFO[form.role].can} />
+        <FormError>{formError}</FormError>
+        <Button type="submit" size="lg" block loading={adding}>
+          <UserPlus className="size-5" /> Crear acceso
+        </Button>
+        <p className="text-center text-sm text-cacao-suave">Te daremos una contraseña temporal para que se la pases.</p>
+      </form>
+    </Sheet>
+  );
+}
+
+export default function Team() {
+  const { user: me } = useAuth();
+  const toast = useToast();
+  const { data, error, loading, reload } = useAdminApi('/equipo');
+  const [params, setParams] = useSearchParams();
+  const [adding, setAdding] = useState(false);
+  const [password, setPassword] = useState(null);
+  const [ask, dialog] = useConfirm();
+
+  // Desde el resumen se llega con ?nuevo para abrir directamente el alta.
+  useEffect(() => {
+    if (!params.has('nuevo')) return;
+    setAdding(true);
+    setParams({}, { replace: true });
+  }, [params, setParams]);
 
   async function update(person, body, message) {
     try {
@@ -100,8 +136,27 @@ export default function Team() {
     }
   }
 
+  function changeRole(person) {
+    const next = person.role === 'admin' ? 'cuidabigotes' : 'admin';
+    update(person, { role: next }, `${person.name} ahora es ${ROLE_INFO[next].label.toLowerCase()} ${ROLE_INFO[next].emoji}`);
+  }
+
   return (
-    <AdminPage title="Equipo" subtitle="Las cuidabigotes llevan el día a día: gatitos, solicitudes, mensajes y textos. La administración, además, gestiona el equipo y los datos legales.">
+    <AdminPage title="Equipo" subtitle="Quién puede entrar al panel. No hay registro público: las altas se hacen aquí.">
+      <div className="mb-4 grid gap-2 sm:grid-cols-2">
+        {['admin', 'cuidabigotes'].map((role) => (
+          <Card key={role} className={role === 'admin' ? 'bg-canela-claro' : 'bg-lavanda'}>
+            <p className="font-display text-lg font-semibold">
+              <span aria-hidden>{ROLE_INFO[role].emoji}</span> {ROLE_INFO[role].label}
+            </p>
+            <p className="text-sm">{ROLE_INFO[role].can}</p>
+          </Card>
+        ))}
+      </div>
+      <Button size="lg" block onClick={() => setAdding(true)} className="mb-5">
+        <UserPlus className="size-5" /> Añadir a alguien
+      </Button>
+
       {loading && <Spinner />}
       {error && <ErrorState error={error} onRetry={reload} />}
       {data && (
@@ -125,7 +180,7 @@ export default function Team() {
                       person.role === 'admin' ? 'bg-canela-claro text-canela-oscuro' : 'bg-lavanda text-lavanda-oscuro',
                     )}
                   >
-                    {person.roleLabel}
+                    {ROLE_INFO[person.role]?.emoji} {person.roleLabel}
                   </span>
                 </div>
                 {person.id !== me.id && (
@@ -133,18 +188,8 @@ export default function Team() {
                     <Button variant="secondary" size="sm" onClick={() => reset(person)}>
                       <KeyRound className="size-4" /> Nueva contraseña
                     </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() =>
-                        update(
-                          person,
-                          { role: person.role === 'admin' ? 'cuidabigotes' : 'admin' },
-                          `${person.name} ahora es ${person.role === 'admin' ? 'cuidabigotes' : 'de administración'}`,
-                        )
-                      }
-                    >
-                      {person.role === 'admin' ? 'Pasar a cuidabigotes' : 'Hacer administración'}
+                    <Button variant="secondary" size="sm" onClick={() => changeRole(person)}>
+                      {person.role === 'admin' ? `Pasar a ${ROLE_INFO.cuidabigotes.label.toLowerCase()}` : `Hacer ${ROLE_INFO.admin.label.toLowerCase()}`}
                     </Button>
                     <Button
                       variant={person.active ? 'danger' : 'secondary'}
@@ -162,20 +207,14 @@ export default function Team() {
         </ul>
       )}
 
-      <Card className="mt-6">
-        <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
-          <UserPlus className="size-5 text-canela" /> Añadir a alguien
-        </h2>
-        <form onSubmit={add} className="mt-4 grid gap-4" noValidate>
-          <TextInput label="Nombre" value={form.name} onChange={(v) => setForm({ ...form, name: v })} error={errors.name} />
-          <TextInput label="Email" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} error={errors.email} />
-          <Choice label="Papel" options={ROLE_OPTIONS} value={form.role} onChange={(v) => setForm({ ...form, role: v })} />
-          <FormError>{formError}</FormError>
-          <Button type="submit" loading={adding}>
-            Crear acceso
-          </Button>
-        </form>
-      </Card>
+      <AddSheet
+        open={adding}
+        onClose={() => setAdding(false)}
+        onCreated={(info) => {
+          setAdding(false);
+          setPassword(info);
+        }}
+      />
       <PasswordSheet info={password} onClose={() => setPassword(null)} />
       {dialog}
     </AdminPage>

@@ -4,7 +4,7 @@
 //   npm run seed:demo
 //
 // Fuera de producción crea además dos cuentas de prueba:
-//   admin@bigotes.local / bigotes-demo           (Administración)
+//   admin@bigotes.local / bigotes-demo           (Bigote mayor: administración)
 //   cuidabigotes@bigotes.local / bigotes-demo    (Cuidabigotes)
 import sharp from 'sharp';
 import { IS_PROD } from '../src/config.js';

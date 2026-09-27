@@ -1,10 +1,14 @@
+import crypto from 'node:crypto';
+import fs from 'node:fs/promises';
 import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
 import { db } from '../db.js';
 import { requireAdmin } from '../auth.js';
-import { CAT_STATUSES, photosFor, serializeCat, serializeCats, uniqueSlug } from '../cats.js';
+import { VIDEO_TMP_DIR } from '../config.js';
+import { CAT_STATUSES, serializeCats, uniqueSlug } from '../cats.js';
 import { deletePhotoFiles, ImageError, savePhoto } from '../images.js';
+import { deleteVideoFiles, enqueueVideo, MAX_VIDEO_MB, MAX_VIDEOS, videoSupport } from '../videos.js';
 import { parseBody, parseId, requiredText, text } from '../validation.js';
 
 const MAX_PHOTOS = 12;
@@ -84,7 +88,7 @@ function catParams(data) {
 
 function loadCat(id) {
   const row = db.prepare('SELECT * FROM cats WHERE id = ?').get(id);
-  return row ? serializeCat(row, photosFor([row.id]).get(row.id), { admin: true }) : null;
+  return row ? serializeCats([row], { admin: true })[0] : null;
 }
 
 export function adminCatsRouter() {
@@ -92,6 +96,16 @@ export function adminCatsRouter() {
   const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 20 * 1024 * 1024, files: MAX_PHOTOS },
+  });
+  // Los vídeos van directos a disco (pueden pesar cientos de MB) con un nombre
+  // aleatorio que será su clave: «<uuid>.original».
+  const videoUpload = multer({
+    storage: multer.diskStorage({
+      destination: VIDEO_TMP_DIR,
+      filename: (req, file, cb) => cb(null, `${crypto.randomUUID()}.original`),
+    }),
+    limits: { fileSize: MAX_VIDEO_MB * 1024 * 1024, files: 1 },
+    fileFilter: (req, file, cb) => cb(null, file.mimetype.startsWith('video/')),
   });
 
   router.get('/', (req, res) => {
@@ -154,9 +168,10 @@ export function adminCatsRouter() {
     const id = parseId(req.params.id, res);
     if (id === null) return;
     const photos = db.prepare('SELECT file_key FROM cat_photos WHERE cat_id = ?').all(id);
+    const videos = db.prepare('SELECT file_key FROM cat_videos WHERE cat_id = ?').all(id);
     const info = db.prepare('DELETE FROM cats WHERE id = ?').run(id);
     if (info.changes === 0) return res.status(404).json({ error: 'No encontramos a este gatito' });
-    await Promise.all(photos.map((p) => deletePhotoFiles(p.file_key)));
+    await Promise.all([...photos.map((p) => deletePhotoFiles(p.file_key)), ...videos.map((v) => deleteVideoFiles(v.file_key))]);
     res.json({ ok: true });
   });
 
@@ -223,13 +238,68 @@ export function adminCatsRouter() {
     res.json({ cat: loadCat(id) });
   });
 
-  // Errores de multer (foto demasiado grande, demasiadas fotos…) en castellano.
+  // Antes de recibir cientos de MB, comprobar que el vídeo cabe.
+  function canAddVideo(req, res, next) {
+    const id = parseId(req.params.id, res);
+    if (id === null) return;
+    if (!videoSupport()) {
+      return res.status(503).json({ error: 'Este servidor todavía no puede preparar vídeos' });
+    }
+    if (!db.prepare('SELECT 1 FROM cats WHERE id = ?').get(id)) {
+      return res.status(404).json({ error: 'No encontramos a este gatito' });
+    }
+    const { count } = db.prepare('SELECT COUNT(*) AS count FROM cat_videos WHERE cat_id = ?').get(id);
+    if (count >= MAX_VIDEOS) {
+      return res.status(400).json({ error: `Cada gatito puede tener como mucho ${MAX_VIDEOS} vídeos` });
+    }
+    req.catId = id;
+    next();
+  }
+
+  // El vídeo se guarda tal cual llega y se prepara en segundo plano: la
+  // respuesta llega enseguida con el vídeo en «procesando».
+  router.post('/:id/videos', canAddVideo, videoUpload.single('video'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Eso no parece un vídeo. Elige uno de la galería.' });
+    const id = req.catId;
+    const fileKey = req.file.filename.replace(/\.original$/, '');
+    const { count, maxPosition } = db
+      .prepare('SELECT COUNT(*) AS count, COALESCE(MAX(position), -1) AS maxPosition FROM cat_videos WHERE cat_id = ?')
+      .get(id);
+    if (count >= MAX_VIDEOS || !db.prepare('SELECT 1 FROM cats WHERE id = ?').get(id)) {
+      await fs.rm(req.file.path, { force: true });
+      return res.status(400).json({ error: `Cada gatito puede tener como mucho ${MAX_VIDEOS} vídeos` });
+    }
+    const info = db
+      .prepare('INSERT INTO cat_videos (cat_id, file_key, position) VALUES (?, ?, ?)')
+      .run(id, fileKey, maxPosition + 1);
+    enqueueVideo(info.lastInsertRowid);
+    res.status(202).json({ cat: loadCat(id) });
+  });
+
+  router.delete('/:id/videos/:videoId', async (req, res) => {
+    const id = parseId(req.params.id, res);
+    const videoId = id === null ? null : parseId(req.params.videoId, res);
+    if (videoId === null) return;
+    const video = db.prepare('SELECT * FROM cat_videos WHERE id = ? AND cat_id = ?').get(videoId, id);
+    if (!video) return res.status(404).json({ error: 'No encontramos este vídeo' });
+    db.prepare('DELETE FROM cat_videos WHERE id = ?').run(videoId);
+    await deleteVideoFiles(video.file_key);
+    db.prepare("UPDATE cats SET updated_at = datetime('now') WHERE id = ?").run(id);
+    res.json({ cat: loadCat(id) });
+  });
+
+  // Errores de multer (foto o vídeo demasiado grande, demasiadas fotos…) en castellano.
   router.use((error, req, res, next) => {
     if (error instanceof multer.MulterError) {
-      const message =
-        error.code === 'LIMIT_FILE_SIZE'
-          ? 'Alguna foto pesa demasiado (máximo 20 MB)'
-          : `Puedes subir como mucho ${MAX_PHOTOS} fotos a la vez`;
+      let message = `Puedes subir como mucho ${MAX_PHOTOS} fotos a la vez`;
+      if (error.code === 'LIMIT_FILE_SIZE') {
+        message =
+          error.field === 'video'
+            ? `El vídeo pesa demasiado (máximo ${MAX_VIDEO_MB} MB). Recórtalo en el móvil y vuelve a probar.`
+            : 'Alguna foto pesa demasiado (máximo 20 MB)';
+      } else if (error.field === 'video') {
+        message = 'Sube los vídeos de uno en uno';
+      }
       return res.status(400).json({ error: message });
     }
     next(error);

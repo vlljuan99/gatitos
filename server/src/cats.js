@@ -1,4 +1,5 @@
 import { db } from './db.js';
+import { videoUrls } from './videos.js';
 
 export const CAT_STATUSES = ['borrador', 'disponible', 'reservado', 'adoptado'];
 
@@ -38,6 +39,34 @@ export function photosFor(catIds) {
   return byCat;
 }
 
+/**
+ * Vídeos por gatito. La web solo ve los que están listos; el panel ve también
+ * los que se están preparando o han fallado, para poder quitarlos.
+ */
+export function videosFor(catIds, { admin = false } = {}) {
+  if (catIds.length === 0) return new Map();
+  const rows = db
+    .prepare(
+      `SELECT * FROM cat_videos WHERE cat_id IN (${catIds.map(() => '?').join(',')})
+       ${admin ? '' : "AND status = 'listo'"} ORDER BY position, id`,
+    )
+    .all(...catIds);
+  const byCat = new Map(catIds.map((id) => [id, []]));
+  for (const row of rows) {
+    const ready = row.status === 'listo';
+    const video = {
+      id: row.id,
+      width: row.width,
+      height: row.height,
+      duration: row.duration,
+      ...(ready ? videoUrls(row.file_key) : { url: null, poster: null }),
+    };
+    if (admin) Object.assign(video, { status: row.status, error: row.error });
+    byCat.get(row.cat_id).push(video);
+  }
+  return byCat;
+}
+
 function parseTags(value) {
   try {
     const tags = JSON.parse(value);
@@ -48,7 +77,7 @@ function parseTags(value) {
 }
 
 /** Forma pública de un gatito. Con admin=true añade los datos internos. */
-export function serializeCat(row, photos = [], { admin = false } = {}) {
+export function serializeCat(row, photos = [], { admin = false, videos = [] } = {}) {
   const cat = {
     id: row.id,
     slug: row.slug,
@@ -75,6 +104,7 @@ export function serializeCat(row, photos = [], { admin = false } = {}) {
     adoptedAt: row.adopted_at,
     happyEnding: row.happy_ending,
     photos,
+    videos,
   };
   if (admin) {
     cat.likes = row.likes;
@@ -84,9 +114,11 @@ export function serializeCat(row, photos = [], { admin = false } = {}) {
   return cat;
 }
 
-export function serializeCats(rows, options) {
-  const photos = photosFor(rows.map((row) => row.id));
-  return rows.map((row) => serializeCat(row, photos.get(row.id), options));
+export function serializeCats(rows, { admin = false } = {}) {
+  const ids = rows.map((row) => row.id);
+  const photos = photosFor(ids);
+  const videos = videosFor(ids, { admin });
+  return rows.map((row) => serializeCat(row, photos.get(row.id), { admin, videos: videos.get(row.id) }));
 }
 
 export function slugify(name) {

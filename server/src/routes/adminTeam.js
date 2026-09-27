@@ -4,9 +4,10 @@ import { db } from '../db.js';
 import { createUser, hashPassword, publicUser, ROLES, temporaryPassword } from '../auth.js';
 import { email, parseBody, parseId, requiredText } from '../validation.js';
 
-// Gestión del equipo (solo administración). No hay registro público: la
-// administración da de alta a cada cuidabigotes con una contraseña temporal
-// que se enseña una sola vez para pasársela por WhatsApp o en persona.
+// Gestión del equipo (solo bigotes mayores, es decir, administración). No hay
+// registro público: se da de alta a cada persona, sea cuidabigotes o bigote
+// mayor, con una contraseña temporal que se enseña una sola vez para
+// pasársela por WhatsApp o en persona.
 export function adminTeamRouter() {
   const router = Router();
   const roles = Object.keys(ROLES);
@@ -56,7 +57,7 @@ export function adminTeamRouter() {
       return res.status(400).json({ error: 'No puedes desactivarte ni cambiar tu propio papel' });
     }
     if (losesAdmin && activeAdmins() <= 1) {
-      return res.status(400).json({ error: 'Tiene que quedar al menos una persona en administración' });
+      return res.status(400).json({ error: 'Tiene que quedar al menos un bigote mayor en el equipo' });
     }
 
     const next = {

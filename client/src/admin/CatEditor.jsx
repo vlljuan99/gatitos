@@ -1,6 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useBlocker, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight, ExternalLink, ImagePlus, Plus, Save, Star, Trash2, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Clapperboard,
+  ExternalLink,
+  ImagePlus,
+  LoaderCircle,
+  Play,
+  Plus,
+  Save,
+  Star,
+  Trash2,
+  TriangleAlert,
+  X,
+} from 'lucide-react';
 import { CatPhoto } from '../components/CatPhoto.jsx';
 import { Checkbox, Choice, FormError, TextArea, TextInput } from '../components/form.jsx';
 import { useToast } from '../components/Toast.jsx';
@@ -9,6 +26,7 @@ import { api, ApiError } from '../lib/api.js';
 import { ageText, gendered, PERSONALITY_TAGS, statusLabel } from '../lib/cats.js';
 import { AdminPage, isAdmin, refreshAfterChange, useAdminApi, useAuth, useConfirm } from './common.jsx';
 import { uploadPhotos } from './photos.js';
+import { checkVideo, formatDuration, MAX_VIDEO_SECONDS, MAX_VIDEOS, uploadVideo } from './videos.js';
 
 const MAX_PHOTOS = 12;
 
@@ -320,15 +338,110 @@ function PhotoTile({ src, index, total, onMove, onRemove, alt }) {
 
 const PHOTO_TIP = 'La primera es la portada. Mejor con luz natural, a su altura y con la cara bien visible.';
 
+/** Barra de progreso de subida: progress = { label, value } con value entre 0 y 1. */
 function Progress({ progress }) {
   if (!progress) return null;
   return (
     <div className="rounded-2xl bg-cielo p-3 text-sm font-bold text-cielo-oscuro" role="status">
-      Subiendo foto {Math.min(progress.done + 1, progress.total)} de {progress.total}…
+      {progress.label}
       <div className="mt-2 h-2 rounded-full bg-nata">
-        <div className="h-2 rounded-full bg-cielo-oscuro transition-all" style={{ width: `${(progress.done / progress.total) * 100}%` }} />
+        <div className="h-2 rounded-full bg-cielo-oscuro transition-all" style={{ width: `${Math.round(progress.value * 100)}%` }} />
       </div>
     </div>
+  );
+}
+
+const photoProgress = (done, total) => ({ label: `Subiendo foto ${Math.min(done + 1, total)} de ${total}…`, value: done / total });
+
+function videoProgress(index, total, value) {
+  const which = total > 1 ? `vídeo ${index + 1} de ${total}` : 'vídeo';
+  return { label: `Subiendo ${which}… ${Math.round(value * 100)}%`, value };
+}
+
+/** Avisa antes de cerrar la pestaña mientras algo se está subiendo. */
+function useWarnOnClose(active) {
+  useEffect(() => {
+    if (!active) return undefined;
+    const onBeforeUnload = (event) => event.preventDefault();
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [active]);
+}
+
+const VIDEO_TIP = `Un vídeo jugando o ronroneando enamora más que mil fotos. Hasta ${MAX_VIDEO_SECONDS / 60} minuto cada uno; en vertical queda genial.`;
+
+/** Botón para elegir vídeos de la galería o grabarlos. */
+function VideoPicker({ onFiles, disabled, remaining }) {
+  const input = useRef(null);
+  return (
+    <>
+      <button
+        type="button"
+        disabled={disabled || remaining <= 0}
+        onClick={() => input.current?.click()}
+        className="flex min-h-16 w-full items-center justify-center gap-2 rounded-3xl border-4 border-dashed border-lavanda-oscuro/25 bg-lavanda/40 p-3 font-bold text-lavanda-oscuro transition hover:bg-lavanda disabled:opacity-50"
+      >
+        <Clapperboard className="size-6" aria-hidden />
+        {remaining > 0 ? 'Añadir vídeo' : `Máximo ${MAX_VIDEOS} vídeos`}
+      </button>
+      <input
+        ref={input}
+        type="file"
+        accept="video/*"
+        multiple
+        className="hidden"
+        onChange={(event) => {
+          const files = [...event.target.files].slice(0, remaining);
+          event.target.value = '';
+          if (files.length) onFiles(files);
+        }}
+      />
+    </>
+  );
+}
+
+/** Vídeo ya subido: portada con ▶ (se reproduce ahí mismo), o su estado si aún no está listo. */
+function VideoTile({ video, index, catName, onRemove }) {
+  const [playing, setPlaying] = useState(false);
+  const box = 'aspect-[3/4] w-full';
+  let body;
+  if (video.status === 'listo' && playing) {
+    body = <video src={video.url} poster={video.poster} controls autoPlay playsInline className={cx(box, 'bg-cacao object-contain')} />;
+  } else if (video.status === 'listo') {
+    body = (
+      <button type="button" onClick={() => setPlaying(true)} className="relative block w-full" aria-label={`Ver vídeo ${index + 1} de ${catName}`}>
+        <img src={video.poster} alt="" className={cx(box, 'object-cover')} />
+        <span className="absolute inset-0 grid place-items-center">
+          <span className="grid size-14 place-items-center rounded-full bg-nata/90 text-cacao shadow-suave">
+            <Play className="size-6 translate-x-0.5" fill="currentColor" />
+          </span>
+        </span>
+        <span className="absolute bottom-1.5 left-1.5 rounded-full bg-cacao/75 px-2 py-0.5 text-xs font-bold text-white">{formatDuration(video.duration)}</span>
+      </button>
+    );
+  } else if (video.status === 'procesando') {
+    body = (
+      <div className={cx(box, 'grid place-content-center justify-items-center gap-2 bg-cielo p-3 text-center text-sm font-bold text-cielo-oscuro')} role="status">
+        <LoaderCircle className="size-8 animate-spin" aria-hidden />
+        Preparando el vídeo…
+        <span className="font-semibold">Tarda un poco. Puedes seguir con otras cosas.</span>
+      </div>
+    );
+  } else {
+    body = (
+      <div className={cx(box, 'grid place-content-center justify-items-center gap-2 bg-canela-claro p-3 text-center text-sm font-bold text-canela-oscuro')}>
+        <TriangleAlert className="size-8" aria-hidden />
+        {video.error || 'No se ha podido preparar'}
+      </div>
+    );
+  }
+  return (
+    <li className="relative overflow-hidden rounded-2xl bg-nata shadow-suave">
+      {body}
+      <button type="button" onClick={() => onRemove(video)} className="absolute right-1.5 top-1.5 grid size-9 place-items-center rounded-full bg-nata/90 text-canela-oscuro" aria-label={`Quitar vídeo ${index + 1}`}>
+        <Trash2 className="size-4" />
+      </button>
+    </li>
   );
 }
 
@@ -336,7 +449,7 @@ function Progress({ progress }) {
 // Alta: asistente por pasos («nuevo gatito en un minuto»)
 // ---------------------------------------------------------------------------
 
-const WIZARD = ['Fotos', 'Lo básico', 'Carácter', 'Salud', 'Publicar'];
+const WIZARD = ['Fotos y vídeos', 'Lo básico', 'Carácter', 'Salud', 'Publicar'];
 
 function NewCat() {
   const navigate = useNavigate();
@@ -344,12 +457,27 @@ function NewCat() {
   const form = useCatForm(structuredClone(EMPTY_CAT));
   const { values, setErrors } = form;
   const [files, setFiles] = useState([]);
+  const [videos, setVideos] = useState([]);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [progress, setProgress] = useState(null);
   const [error, setError] = useState('');
   const previews = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
   useEffect(() => () => previews.forEach((url) => URL.revokeObjectURL(url)), [previews]);
+  useWarnOnClose(saving);
+
+  async function addVideos(list) {
+    const accepted = [];
+    for (const file of list) {
+      const check = await checkVideo(file);
+      if (check.error) toast(check.error, { tone: 'error', duration: 8000 });
+      else {
+        if (check.warning) toast(check.warning, { duration: 6000 });
+        accepted.push(file);
+      }
+    }
+    setVideos((current) => [...current, ...accepted].slice(0, MAX_VIDEOS));
+  }
 
   const move = (index, delta) =>
     setFiles((list) => {
@@ -375,12 +503,22 @@ function NewCat() {
       const { cat } = await api('/admin/gatitos', { method: 'POST', body: { ...values, status } });
       let failed = [];
       if (files.length) {
-        const result = await uploadPhotos(cat.id, files, (done, total) => setProgress({ done, total }));
+        const result = await uploadPhotos(cat.id, files, (done, total) => setProgress(photoProgress(done, total)));
         failed = result.failed;
+      }
+      let failedVideos = 0;
+      for (const [i, file] of videos.entries()) {
+        setProgress(videoProgress(i, videos.length, 0));
+        try {
+          await uploadVideo(cat.id, file, (value) => setProgress(videoProgress(i, videos.length, value)));
+        } catch {
+          failedVideos += 1;
+        }
       }
       refreshAfterChange();
       toast(status === 'disponible' ? `¡${cat.name} ya está en la web! 🎉` : `${cat.name} guardado como borrador`);
       if (failed.length) toast(`No se pudieron subir ${failed.length} fotos. Prueba de nuevo desde su ficha.`, { tone: 'error', duration: 6000 });
+      if (failedVideos) toast(`No se pudo subir ${failedVideos === 1 ? 'un vídeo' : `${failedVideos} vídeos`}. Prueba de nuevo desde su ficha.`, { tone: 'error', duration: 6000 });
       navigate(`/admin/gatitos/${cat.id}`, { replace: true });
     } catch (err) {
       if (err instanceof ApiError && Object.keys(err.fields).length) {
@@ -421,6 +559,32 @@ function NewCat() {
                 ))}
               </ul>
             )}
+            <div className="grid gap-3 border-t-2 border-dashed border-borde pt-5">
+              <div>
+                <h3 className="font-display text-lg font-semibold">¿Tienes algún vídeo? 🎬</h3>
+                <p className="text-sm text-cacao-suave">{VIDEO_TIP}</p>
+              </div>
+              {videos.length > 0 && (
+                <ul className="grid gap-2">
+                  {videos.map((file, i) => (
+                    <li key={`${file.name}-${file.size}-${i}`} className="flex items-center gap-3 rounded-2xl bg-lavanda/50 p-2 pl-4">
+                      <Clapperboard className="size-5 shrink-0 text-lavanda-oscuro" aria-hidden />
+                      <span className="min-w-0 flex-1 truncate font-semibold">{file.name}</span>
+                      <span className="shrink-0 text-sm text-cacao-suave">{Math.max(1, Math.round(file.size / 1024 / 1024))} MB</span>
+                      <button
+                        type="button"
+                        onClick={() => setVideos((list) => list.filter((_, j) => j !== i))}
+                        className="grid size-10 shrink-0 place-items-center rounded-full bg-nata text-canela-oscuro"
+                        aria-label={`Quitar ${file.name}`}
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <VideoPicker remaining={MAX_VIDEOS - videos.length} onFiles={addVideos} />
+            </div>
           </Section>
         )}
         {step === 1 && (
@@ -449,7 +613,13 @@ function NewCat() {
               <div className="min-w-0">
                 <h2 className="font-display text-2xl font-semibold">{values.name}</h2>
                 <p className="text-sm text-cacao-suave">
-                  {[ageText(values.birthDate), files.length === 1 ? '1 foto' : `${files.length} fotos`].filter(Boolean).join(' · ')}
+                  {[
+                    ageText(values.birthDate),
+                    files.length === 1 ? '1 foto' : `${files.length} fotos`,
+                    videos.length > 0 && (videos.length === 1 ? '1 vídeo' : `${videos.length} vídeos`),
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {values.personality.slice(0, 3).map((tag) => (
@@ -477,7 +647,7 @@ function NewCat() {
               </Button>
             )}
             <Button size="lg" block onClick={() => go(step + 1)}>
-              {step === 0 && files.length === 0 ? 'Seguir sin fotos' : 'Siguiente'} <ArrowRight className="size-5" />
+              {step === 0 && files.length === 0 && videos.length === 0 ? 'Seguir sin fotos' : 'Siguiente'} <ArrowRight className="size-5" />
             </Button>
           </div>
         ) : (
@@ -508,7 +678,7 @@ function EditPhotos({ cat, onChange }) {
   const [ask, dialog] = useConfirm();
 
   async function add(files) {
-    const result = await uploadPhotos(cat.id, files, (done, total) => setProgress({ done, total }));
+    const result = await uploadPhotos(cat.id, files, (done, total) => setProgress(photoProgress(done, total)));
     setProgress(null);
     if (result.cat) onChange(result.cat);
     if (result.failed.length) toast(result.lastError || `No se pudieron subir ${result.failed.length} fotos`, { tone: 'error', duration: 6000 });
@@ -552,6 +722,87 @@ function EditPhotos({ cat, onChange }) {
       )}
       <Progress progress={progress} />
       <PhotoPicker remaining={MAX_PHOTOS - cat.photos.length} disabled={Boolean(progress)} onFiles={add} />
+      {dialog}
+    </Section>
+  );
+}
+
+function EditVideos({ cat, onChange }) {
+  const toast = useToast();
+  const [progress, setProgress] = useState(null);
+  const [ask, dialog] = useConfirm();
+  const processing = cat.videos.filter((v) => v.status === 'procesando').map((v) => v.id);
+  const waiting = processing.join(',');
+  useWarnOnClose(Boolean(progress));
+
+  // Mientras se prepara algún vídeo, se pregunta cada pocos segundos cómo va.
+  useEffect(() => {
+    if (!waiting) return undefined;
+    const ids = waiting.split(',').map(Number);
+    const timer = setInterval(async () => {
+      try {
+        const { cat: fresh } = await api(`/admin/gatitos/${cat.id}`);
+        const finished = fresh.videos.filter((v) => ids.includes(v.id) && v.status !== 'procesando');
+        if (finished.length === 0) return;
+        onChange(fresh);
+        refreshAfterChange();
+        if (finished.some((v) => v.status === 'listo')) toast('¡Vídeo listo! Ya se ve en la web 🎬');
+        if (finished.some((v) => v.status === 'error')) toast('Un vídeo no se ha podido preparar', { tone: 'error', duration: 6000 });
+      } catch {
+        // Sin conexión un momento: se vuelve a preguntar en el siguiente intento.
+      }
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [waiting, cat.id, onChange, toast]);
+
+  async function add(files) {
+    let uploaded = 0;
+    for (const [i, file] of files.entries()) {
+      const check = await checkVideo(file);
+      if (check.error) {
+        toast(check.error, { tone: 'error', duration: 8000 });
+        continue;
+      }
+      if (check.warning) toast(check.warning, { duration: 6000 });
+      setProgress(videoProgress(i, files.length, 0));
+      try {
+        const result = await uploadVideo(cat.id, file, (value) => setProgress(videoProgress(i, files.length, value)));
+        onChange(result.cat);
+        uploaded += 1;
+      } catch (error) {
+        toast(error.message, { tone: 'error', duration: 8000 });
+      }
+    }
+    setProgress(null);
+    if (uploaded) {
+      toast(uploaded === 1 ? 'Vídeo subido. Lo estamos preparando…' : `${uploaded} vídeos subidos. Los estamos preparando…`);
+      refreshAfterChange();
+    }
+  }
+
+  async function remove(video) {
+    const ok = await ask({ title: '¿Quitar este vídeo?', body: 'Se borrará de la web.', confirmLabel: 'Sí, quitarlo', danger: true });
+    if (!ok) return;
+    try {
+      const result = await api(`/admin/gatitos/${cat.id}/videos/${video.id}`, { method: 'DELETE' });
+      onChange(result.cat);
+      refreshAfterChange();
+    } catch (error) {
+      toast(error.message, { tone: 'error' });
+    }
+  }
+
+  return (
+    <Section title="Vídeos 🎬" hint={VIDEO_TIP}>
+      {cat.videos.length > 0 && (
+        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {cat.videos.map((video, i) => (
+            <VideoTile key={video.id} video={video} index={i} catName={cat.name} onRemove={remove} />
+          ))}
+        </ul>
+      )}
+      <Progress progress={progress} />
+      <VideoPicker remaining={MAX_VIDEOS - cat.videos.length} disabled={Boolean(progress)} onFiles={add} />
       {dialog}
     </Section>
   );
@@ -608,7 +859,7 @@ function EditCat({ initial }) {
   async function destroy() {
     const ok = await ask({
       title: `¿Borrar a ${cat.name}?`,
-      body: 'Se borran su ficha y sus fotos para siempre. Si ha sido adoptado, mejor márcalo como «Adoptado» para que salga en Finales felices.',
+      body: 'Se borran su ficha, sus fotos y sus vídeos para siempre. Si ha sido adoptado, mejor márcalo como «Adoptado» para que salga en Finales felices.',
       confirmLabel: 'Sí, borrar para siempre',
       danger: true,
     });
@@ -634,6 +885,7 @@ function EditCat({ initial }) {
     <AdminPage title={cat.name} back="/admin/gatitos" subtitle={`${statusLabel(cat.status, cat.sex)} · ${cat.likes} 💕 en la web`} action={publicLink}>
       <div className="grid gap-4">
         <EditPhotos cat={cat} onChange={setCat} />
+        <EditVideos cat={cat} onChange={setCat} />
         <Section title="Estado y portada">
           <PublishFields form={form} />
         </Section>

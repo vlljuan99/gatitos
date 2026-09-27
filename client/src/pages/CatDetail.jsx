@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CalendarHeart, Check, CircleHelp, MapPin, Sparkles, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, CalendarHeart, Check, CircleHelp, MapPin, Play, Sparkles, X } from 'lucide-react';
 import { CatPhoto } from '../components/CatPhoto.jsx';
 import { SexIcon, CatCard } from '../components/CatCard.jsx';
 import { FavoriteButton } from '../components/FavoriteButton.jsx';
@@ -18,17 +18,37 @@ import { useApi } from '../lib/useApi.js';
 import { useTitle } from '../lib/useTitle.js';
 
 function Gallery({ cat }) {
+  const [params] = useSearchParams();
   const [index, setIndex] = useState(0);
   const scroller = useRef(null);
-  const photos = cat.photos.length ? cat.photos : [null];
+  // Primero las fotos (la primera es la portada) y después los vídeos. Sin
+  // nada de nada, la ilustración.
+  const slides = [
+    ...cat.photos.map((photo) => ({ key: `foto-${photo.id}`, photo })),
+    ...(cat.videos ?? []).map((video) => ({ key: `video-${video.id}`, video })),
+  ];
+  if (slides.length === 0) slides.push({ key: 'ilustracion', photo: null });
+  const firstVideo = slides.findIndex((slide) => slide.video);
+  const onVideo = Boolean(slides[index]?.video);
 
   function onScroll() {
     const el = scroller.current;
-    if (el) setIndex(Math.round(el.scrollLeft / el.clientWidth));
+    if (!el) return;
+    const next = Math.round(el.scrollLeft / el.clientWidth);
+    if (next === index) return;
+    setIndex(next);
+    // Al pasar a otra foto, el vídeo que sonaba se para.
+    el.querySelectorAll('video').forEach((video) => video.pause());
   }
-  function goTo(i) {
-    scroller.current?.scrollTo({ left: i * scroller.current.clientWidth, behavior: 'smooth' });
+  function goTo(i, behavior = 'smooth') {
+    scroller.current?.scrollTo({ left: i * scroller.current.clientWidth, behavior });
   }
+
+  // Desde el match («▶ Vídeo») se llega con ?video: se abre directamente en él.
+  const wantsVideo = params.has('video');
+  useEffect(() => {
+    if (wantsVideo && firstVideo > 0) goTo(firstVideo, 'instant');
+  }, [wantsVideo, firstVideo]);
 
   return (
     <div className="relative md:overflow-hidden md:rounded-[2rem]">
@@ -37,34 +57,59 @@ function Gallery({ cat }) {
         onScroll={onScroll}
         className="no-scrollbar flex aspect-[4/5] snap-x snap-mandatory overflow-x-auto md:aspect-square"
         aria-roledescription="carrusel"
-        aria-label={`Fotos de ${cat.name}`}
+        aria-label={`Fotos y vídeos de ${cat.name}`}
       >
-        {photos.map((photo, i) => (
-          <div key={photo?.id ?? 'ilustracion'} className="h-full w-full shrink-0 snap-center" aria-label={`Foto ${i + 1} de ${photos.length}`}>
-            <CatPhoto
-              cat={cat}
-              photo={photo ?? undefined}
-              eager={i === 0}
-              sizes="(min-width: 768px) 50vw, 100vw"
-              className="size-full"
-              alt={`${cat.name}, foto ${i + 1}`}
-            />
+        {slides.map(({ key, photo, video }, i) => (
+          <div key={key} className="h-full w-full shrink-0 snap-center" aria-label={`${i + 1} de ${slides.length}`}>
+            {video ? (
+              // En el móvil la ficha se monta 28 px sobre la galería: el
+              // relleno deja a la vista los controles del vídeo.
+              <div className="size-full bg-cacao pb-7 md:pb-0">
+                <video
+                  src={video.url}
+                  poster={video.poster}
+                  controls
+                  playsInline
+                  preload="none"
+                  className="size-full object-contain"
+                  aria-label={`Vídeo de ${cat.name}`}
+                />
+              </div>
+            ) : (
+              <CatPhoto
+                cat={cat}
+                photo={photo ?? undefined}
+                eager={i === 0}
+                sizes="(min-width: 768px) 50vw, 100vw"
+                className="size-full"
+                alt={`${cat.name}, foto ${i + 1}`}
+              />
+            )}
           </div>
         ))}
       </div>
-      {photos.length > 1 && (
+      {slides.length > 1 && !onVideo && (
         <div className="absolute inset-x-0 bottom-10 flex justify-center gap-1.5 md:bottom-4">
-          {photos.map((photo, i) => (
+          {slides.map(({ key, video }, i) => (
             <button
-              key={photo.id}
+              key={key}
               type="button"
               onClick={() => goTo(i)}
-              aria-label={`Ver foto ${i + 1}`}
+              aria-label={video ? 'Ver el vídeo' : `Ver foto ${i + 1}`}
               aria-current={i === index}
-              className={cx('h-2 rounded-full bg-nata shadow transition-all', i === index ? 'w-6' : 'w-2 opacity-70')}
+              className={cx('h-2 rounded-full bg-nata shadow transition-all', i === index ? 'w-6' : 'w-2 opacity-70', video && 'bg-mantequilla')}
             />
           ))}
         </div>
+      )}
+      {firstVideo > 0 && !onVideo && (
+        <button
+          type="button"
+          onClick={() => goTo(firstVideo)}
+          className="absolute bottom-14 left-3 flex min-h-10 items-center gap-1.5 rounded-full bg-nata/90 px-3.5 font-bold shadow-suave backdrop-blur md:bottom-8"
+        >
+          <Play className="size-4" fill="currentColor" aria-hidden /> {slides.length - firstVideo > 1 ? 'Ver vídeos' : 'Ver vídeo'}
+        </button>
       )}
     </div>
   );

@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
-import { ClipboardList, HeartHandshake, Inbox, Plus, Smartphone } from 'lucide-react';
+import { ClipboardList, HeartHandshake, Inbox, Plus, Smartphone, UserPlus } from 'lucide-react';
 import { CatPhoto } from '../components/CatPhoto.jsx';
 import { ButtonLink, Card, ErrorState, Spinner, cx } from '../components/ui.jsx';
-import { AdminPage, useAdminApi, useAuth } from './common.jsx';
+import { AdminPage, isAdmin, useAdminApi, useAuth } from './common.jsx';
 
 function Tile({ to, icon: Icon, count, label, tone }) {
   return (
@@ -39,9 +39,16 @@ export default function Dashboard() {
 
   return (
     <AdminPage title={`${greeting}, ${user.name.split(' ')[0]}! 🐾`} subtitle="Esto es lo que hay pendiente hoy.">
-      <ButtonLink to="/admin/gatitos/nuevo" size="lg" block className="mb-5">
-        <Plus className="size-6" /> Nuevo gatito
-      </ButtonLink>
+      <div className={cx('mb-5 grid gap-3', isAdmin(user) && 'sm:grid-cols-2')}>
+        <ButtonLink to="/admin/gatitos/nuevo" size="lg" block>
+          <Plus className="size-6" /> Nuevo gatito
+        </ButtonLink>
+        {isAdmin(user) && (
+          <ButtonLink to="/admin/equipo?nuevo" variant="secondary" size="lg" block>
+            <UserPlus className="size-5" /> Añadir al equipo
+          </ButtonLink>
+        )}
+      </div>
       {loading && <Spinner />}
       {error && <ErrorState error={error} onRetry={reload} />}
       {data && (

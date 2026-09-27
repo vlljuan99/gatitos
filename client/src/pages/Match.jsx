@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'framer-motion';
-import { Heart, Info, PawPrint, SlidersHorizontal, Undo2 } from 'lucide-react';
+import { Heart, Info, PawPrint, Play, SlidersHorizontal, Undo2 } from 'lucide-react';
 import { CatPhoto } from '../components/CatPhoto.jsx';
 import { Sheet } from '../components/Sheet.jsx';
 import { useToast } from '../components/Toast.jsx';
@@ -43,6 +43,7 @@ const SwipeCard = forwardRef(function SwipeCard({ cat, depth, enterFrom, onDecid
   useImperativeHandle(ref, () => ({ fly }), [fly]);
 
   const tags = cat.personality.slice(0, 3);
+  const hasVideo = top && cat.videos?.length > 0;
   return (
     <motion.div
       // Todas las tarjetas son arrastrables desde que se montan; las de debajo
@@ -89,8 +90,19 @@ const SwipeCard = forwardRef(function SwipeCard({ cat, depth, enterFrom, onDecid
               </Link>
             )}
           </div>
-          {tags.length > 0 && (
+          {(tags.length > 0 || hasVideo) && (
             <ul className="mt-3 flex flex-wrap gap-1.5">
+              {hasVideo && (
+                <li>
+                  <Link
+                    to={`/gatitos/${cat.slug}?video`}
+                    className="flex items-center gap-1 rounded-full bg-nata px-3 py-1 text-sm font-bold text-cacao"
+                    aria-label={`Ver el vídeo de ${cat.name}`}
+                  >
+                    <Play className="size-3.5" fill="currentColor" aria-hidden /> Vídeo
+                  </Link>
+                </li>
+              )}
               {tags.map((tag) => (
                 <li key={tag} className="rounded-full bg-white/20 px-3 py-1 text-sm font-bold backdrop-blur">
                   {gendered(tag, cat.sex)}

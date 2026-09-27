@@ -15,8 +15,17 @@ export const DATA_DIR = path.resolve(process.env.DATA_DIR ?? path.join(__dirname
 export const DB_PATH = path.join(DATA_DIR, 'bigotes.db');
 export const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 export const CAT_PHOTOS_DIR = path.join(UPLOADS_DIR, 'gatitos');
+export const CAT_VIDEOS_DIR = path.join(UPLOADS_DIR, 'videos');
+// Vídeos recién subidos y a medio preparar. Fuera de /uploads a propósito:
+// el original conserva la ubicación GPS y no debe poder descargarse nunca.
+export const VIDEO_TMP_DIR = path.join(DATA_DIR, 'tmp', 'videos');
 
-fs.mkdirSync(CAT_PHOTOS_DIR, { recursive: true });
+for (const dir of [CAT_PHOTOS_DIR, CAT_VIDEOS_DIR, VIDEO_TMP_DIR]) fs.mkdirSync(dir, { recursive: true });
+
+// ffmpeg prepara los vídeos (en la imagen Docker viene instalado). Sin él,
+// la web funciona igual pero el panel no deja subir vídeos.
+export const FFMPEG_PATH = process.env.FFMPEG_PATH ?? 'ffmpeg';
+export const FFPROBE_PATH = process.env.FFPROBE_PATH ?? 'ffprobe';
 
 // URL pública absoluta: la usan las etiquetas Open Graph (WhatsApp, Instagram…)
 // y el sitemap, que necesitan direcciones completas.

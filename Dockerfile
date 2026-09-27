@@ -17,7 +17,8 @@ RUN npm ci --omit=dev --no-audit --no-fund
 
 # 3. Runtime: un solo contenedor sirviendo API, fotos y el build del cliente
 FROM node:22-alpine AS runner
-RUN apk add --no-cache tzdata
+# ffmpeg prepara los vídeos de los gatitos (MP4 H.264 sin metadatos).
+RUN apk add --no-cache tzdata ffmpeg
 ARG APP_VERSION=0.1.0-dev
 ARG GIT_SHA=desconocido
 ARG BUILD_TIME=1970-01-01T00:00:00Z

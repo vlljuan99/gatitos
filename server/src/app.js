@@ -11,6 +11,7 @@ import { publicRouter } from './routes/public.js';
 import { adminRouter } from './routes/admin.js';
 import { injectHead, metaFor, robotsTxt, sitemapXml } from './og.js';
 import { sameOriginOnly } from './security.js';
+import { videoSupport } from './videos.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_CLIENT_DIST = path.resolve(__dirname, '../../client/dist');
@@ -32,6 +33,7 @@ export function createApp({ clientDist = DEFAULT_CLIENT_DIST } = {}) {
           scriptSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", 'data:', 'blob:'],
+          mediaSrc: ["'self'", 'blob:'],
           fontSrc: ["'self'", 'data:'],
           connectSrc: ["'self'"],
           manifestSrc: ["'self'"],
@@ -53,7 +55,7 @@ export function createApp({ clientDist = DEFAULT_CLIENT_DIST } = {}) {
   app.use(
     '/uploads',
     express.static(UPLOADS_DIR, {
-      // Los nombres de las fotos son aleatorios y nunca se reescriben.
+      // Los nombres de fotos y vídeos son aleatorios y nunca se reescriben.
       immutable: true,
       maxAge: '365d',
       fallthrough: false,
@@ -72,6 +74,7 @@ export function createApp({ clientDist = DEFAULT_CLIENT_DIST } = {}) {
         commit: GIT_SHA,
         builtAt: BUILD_TIME,
         database: { ok: true, migration: db.pragma('user_version', { simple: true }), storageWritable: true },
+        videos: videoSupport(),
       });
     } catch (error) {
       console.error('[health] La comprobación ha fallado:', error);

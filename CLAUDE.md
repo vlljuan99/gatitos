@@ -13,7 +13,8 @@ Web de la asociación **Bigotes** (rescate y adopción de gatitos en Almendralej
 - **Solo se adopta en Extremadura** (provincias de Badajoz y Cáceres). El servidor lo valida.
 - **La asociación hace adopciones y voluntariado.** No hay casas de acogida externas ni apadrinamientos por ahora.
 - **Donaciones**: la zona existe, pero sin datos hasta que la asociación los tenga. Cada método sale como «Muy pronto» mientras su campo esté vacío en «Textos de la web → Donaciones».
-- **Roles**: una persona de **administración** y varias **cuidabigotes** (nombre elegido para el papel de gestión del día a día). Cuidabigotes: gatitos, solicitudes, mensajes, voluntariado y textos. Solo administración: equipo, datos legales y borrar gatitos/solicitudes/mensajes. No hay registro público.
+- **Roles con nombre gatuno**: **bigotes mayores** (administración, clave interna `admin`; puede haber varios) y **cuidabigotes** (gestión del día a día). Cuidabigotes: gatitos, solicitudes, mensajes, voluntariado y textos. Solo bigotes mayores: equipo, datos legales y borrar gatitos/solicitudes/mensajes. No hay registro público: las altas de ambos papeles se hacen desde el panel (Equipo). Etiquetas en `server/src/auth.js` (`ROLES`) y `client/src/admin/common.jsx` (`ROLE_INFO`).
+- **Vídeos de gatitos**: hasta 6 por gatito, 1 minuto (se guarda el primero si dura más) y 300 MB. `server/src/videos.js` los convierte en segundo plano, de uno en uno, a MP4 H.264 ≤720p/30 fps sin metadatos (fuera la ubicación GPS) y saca una portada WebP. El original se guarda en `data/tmp/videos`, fuera de `/uploads`, y se borra al terminar. En la web solo salen los que están «listo».
 - **Favoritos sin cuenta** (localStorage). El «Me encanta» suma un contador anónimo por gatito que solo ve el equipo.
 - **Privacidad**: sin cookies de terceros ni analítica (por eso no hay banner). Las fotos pierden el EXIF (ubicación GPS) al subirse. Solicitudes descartadas y mensajes archivados se borran solos a los 12 meses (`RETENTION_MONTHS`).
 - **Textos por defecto** (cómo trabajamos, requisitos, FAQ, legales) son un punto de partida: la asociación debe revisarlos. Los datos legales que falten salen como «[pendiente]».
@@ -26,6 +27,7 @@ Web de la asociación **Bigotes** (rescate y adopción de gatitos en Almendralej
 - **Auth**: email/contraseña (bcrypt) y cookie httpOnly con JWT. `session_version` en el token invalida sesiones al cambiar contraseña, papel o desactivar.
 - **Open Graph**: la SPA no sirve para las vistas previas de WhatsApp/redes, así que `server/src/og.js` rellena el `<head>` de `index.html` (entre `<!--meta-->` y `<!--/meta-->`) por ruta y por gatito.
 - **Fotos**: `server/src/images.js` guarda `lg` (WebP 1600), `sm` (WebP 640) y `og` (JPEG 1200×630) en `data/uploads/gatitos/`. El panel las reduce antes en el móvil (`client/src/admin/photos.js`).
+- **Vídeos**: `server/src/videos.js` (ffmpeg, cola en segundo plano que se retoma al arrancar) guarda `<clave>.mp4` y `<clave>-poster.webp` en `data/uploads/videos/`. El panel sube con progreso (`client/src/admin/videos.js`) y consulta cada 4 s mientras alguno está «procesando». ffmpeg va en la imagen Docker y se instala en CI; sin él las pruebas de vídeo se saltan.
 
 ## Convenciones
 

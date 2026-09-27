@@ -298,6 +298,22 @@ describe('equipo', () => {
     assert.equal(again.status, 401);
   });
 
+  test('también se dan de alta bigotes mayores, que gestionan el equipo', async () => {
+    const created = await admin.post('/api/admin/equipo', { name: 'Lola', email: 'lola@bigotes.test', role: 'admin' });
+    assert.equal(created.status, 201, JSON.stringify(created.data));
+    assert.equal(created.data.user.roleLabel, 'Bigote mayor');
+
+    const lola = client(server.base);
+    await lola.post('/api/auth/login', { email: 'lola@bigotes.test', password: created.data.temporaryPassword });
+    const byLola = await lola.post('/api/admin/equipo', { name: 'Rosa', email: 'rosa@bigotes.test' });
+    assert.equal(byLola.status, 201);
+    assert.equal(byLola.data.user.roleLabel, 'Cuidabigotes');
+
+    const denied = await helper.post('/api/admin/equipo', { name: 'Intrusa', email: 'intrusa@bigotes.test', role: 'admin' });
+    assert.equal(denied.status, 403);
+    assert.match(denied.data.error, /bigote mayor/);
+  });
+
   test('nadie se desactiva ni se cambia el papel a sí mismo', async () => {
     assert.equal((await admin.patch(`/api/admin/equipo/${admin.user.id}`, { active: false })).status, 400);
     assert.equal((await admin.patch(`/api/admin/equipo/${admin.user.id}`, { role: 'cuidabigotes' })).status, 400);

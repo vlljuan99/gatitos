@@ -86,8 +86,11 @@ export function Chip({ selected, className, children, ...props }) {
 }
 
 export function Card({ className, children, ...props }) {
+  // El fondo blanco solo si no se pide otro: en el CSS bg-nata va detrás de
+  // bg-menta, bg-lavanda… y ganaría siempre.
+  const custom = /(^|\s)bg-/.test(className ?? '');
   return (
-    <div className={cx('rounded-3xl bg-nata p-5 shadow-suave', className)} {...props}>
+    <div className={cx('rounded-3xl p-5 shadow-suave', !custom && 'bg-nata', className)} {...props}>
       {children}
     </div>
   );

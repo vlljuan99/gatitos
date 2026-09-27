@@ -11,8 +11,9 @@ se enamore de un gatito y lo adopte.
 - **Portada** con contadores (rescatados, adoptados este año, buscan hogar),
   gatitos destacados y cómo es la adopción.
 - **Catálogo** con filtros (edad, sexo, si convive con niños, gatos o perros).
-- **Ficha de cada gatito**: galería, carácter, convivencia, salud, necesidades
-  especiales, su historia y botón para compartir por WhatsApp. Cada ficha tiene
+- **Ficha de cada gatito**: galería de fotos y vídeos, carácter, convivencia,
+  salud, necesidades especiales, su historia y botón para compartir por
+  WhatsApp. Cada ficha tiene
   su propia vista previa (foto y nombre) al compartir el enlace.
 - **Modo match**: tarjetas que se deslizan con el dedo. Solo hay «Me encanta»
   y «Siguiente», nada de «no me gusta». Se puede deshacer, filtrar y, al primer
@@ -30,12 +31,18 @@ se enamore de un gatito y lo adopte.
 
 **Panel del equipo** (`/admin`), también pensado para el móvil
 
-- **Administración** (una persona) y **cuidabigotes** (el resto del equipo).
-  Las cuidabigotes llevan el día a día; la administración además gestiona el
-  equipo, los datos legales y puede borrar.
-- **Nuevo gatito en un minuto**: asistente que empieza por las fotos (desde la
-  galería o la cámara). Las fotos se reducen en el propio móvil, se convierten
-  a WebP y se les quita la ubicación GPS antes de publicarse.
+- Dos papeles con nombre gatuno: **bigotes mayores** (administración) y
+  **cuidabigotes**. Las cuidabigotes llevan el día a día; los bigotes mayores
+  además gestionan el equipo, los datos legales y pueden borrar. Las altas de
+  los dos papeles se hacen desde el panel (**Equipo → Añadir a alguien**), con
+  una contraseña temporal para pasar por WhatsApp.
+- **Nuevo gatito en un minuto**: asistente que empieza por las fotos y los
+  vídeos (desde la galería o la cámara). Las fotos se reducen en el propio
+  móvil, se convierten a WebP y se les quita la ubicación GPS antes de
+  publicarse.
+- **Vídeos**: hasta 6 por gatito, de un minuto como mucho. El servidor los
+  prepara en segundo plano con ffmpeg (MP4 que se ve en cualquier móvil, sin
+  ubicación GPS ni otros metadatos) y aparecen en la web cuando están listos.
 - Cambio de estado con un toque (disponible, reservado, adoptado…). Al marcar
   «Adoptado» el gatito pasa solo a Finales felices.
 - **Solicitudes** por etapas (nueva → entrevista → visita → aprobada →
@@ -53,7 +60,8 @@ El mismo que el resto de proyectos del VPS:
 
 - **Cliente**: React 19 + Vite + Tailwind CSS 4 + Framer Motion + React Router.
 - **Servidor**: Node.js 22 + Express 5 + better-sqlite3 (SQLite en WAL) + sharp
-  para las fotos. Sesión con cookie httpOnly (JWT) y contraseñas con bcrypt.
+  para las fotos y ffmpeg para los vídeos. Sesión con cookie httpOnly (JWT) y
+  contraseñas con bcrypt.
 - **Producción**: un contenedor Docker detrás del Caddy compartido. Ver
   [deploy/README.md](deploy/README.md).
 
@@ -65,8 +73,11 @@ npm run seed:demo     # gatitos de demostración y dos cuentas de prueba
 npm run dev           # servidor en :4000 y Vite en :5173
 ```
 
-Cuentas de prueba (solo fuera de producción): `admin@bigotes.local` y
-`cuidabigotes@bigotes.local`, contraseña `bigotes-demo`.
+Cuentas de prueba (solo fuera de producción): `admin@bigotes.local` (bigote
+mayor) y `cuidabigotes@bigotes.local`, contraseña `bigotes-demo`.
+
+Para subir vídeos en local hace falta tener `ffmpeg` instalado (sin él, el
+panel lo avisa y todo lo demás funciona igual; sus pruebas se saltan).
 
 ```bash
 npm test              # pruebas del servidor y del cliente

@@ -9,6 +9,21 @@ export const AuthContext = createContext({ user: null, setUser: () => {} });
 export const useAuth = () => useContext(AuthContext);
 export const isAdmin = (user) => user?.role === 'admin';
 
+// Los dos papeles del equipo, con nombre gatuno (el servidor usa los mismos
+// en server/src/auth.js). Las claves internas no cambian: admin y cuidabigotes.
+export const ROLE_INFO = {
+  admin: {
+    label: 'Bigote mayor',
+    emoji: '👑',
+    can: 'Lo puede todo: además del día a día, da de alta al equipo, cambia los datos legales y puede borrar.',
+  },
+  cuidabigotes: {
+    label: 'Cuidabigotes',
+    emoji: '🐾',
+    can: 'Lleva el día a día: gatitos, solicitudes, mensajes, voluntariado y textos de la web.',
+  },
+};
+
 /** Lecturas del panel: siempre se refrescan al entrar, pero enseñan lo último que había mientras. */
 export const useAdminApi = (path) => useApi(path ? `/admin${path}` : null, { maxAge: 0 });
 

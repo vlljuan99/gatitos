@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Mars, Venus } from 'lucide-react';
+import { Mars, Play, Venus } from 'lucide-react';
 import { ageText, gendered, statusLabel } from '../lib/cats.js';
 import { CatPhoto } from './CatPhoto.jsx';
 import { FavoriteButton } from './FavoriteButton.jsx';
@@ -9,6 +9,15 @@ export function SexIcon({ sex, className = 'size-4' }) {
   if (sex === 'hembra') return <Venus className={`${className} text-canela`} aria-label="Hembra" />;
   if (sex === 'macho') return <Mars className={`${className} text-cielo-oscuro`} aria-label="Macho" />;
   return null;
+}
+
+/** Distintivo «▶ Vídeo» para los gatitos que tienen vídeo. */
+export function VideoBadge({ className = '' }) {
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full bg-cacao/75 px-2 py-0.5 text-xs font-bold text-white backdrop-blur ${className}`}>
+      <Play className="size-3" fill="currentColor" aria-hidden /> Vídeo
+    </span>
+  );
 }
 
 export function CatCard({ cat, sizes }) {
@@ -26,6 +35,7 @@ export function CatCard({ cat, sizes }) {
               {statusLabel('reservado', cat.sex)} 💛
             </span>
           )}
+          {cat.videos?.length > 0 && <VideoBadge className="absolute bottom-2 left-2" />}
         </div>
         <div className="p-3">
           <div className="flex items-center gap-1.5">

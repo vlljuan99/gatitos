@@ -70,7 +70,7 @@ mkdir -p "$DATA_DIR"
 chown -R 1000:1000 "$DATA_DIR"
 
 # Copia consistente de SQLite mediante la API online de better-sqlite3. Las
-# fotos se archivan aparte; nunca se copia el .db junto al WAL.
+# fotos y los vídeos se guardan aparte; nunca se copia el .db junto al WAL.
 if docker container inspect bigotes-app >/dev/null 2>&1; then
   BACKUP_ID="$(date -u +%Y%m%dT%H%M%SZ)-${GIT_SHA:0:12}"
   BACKUP_DIR="$BACKUP_ROOT/$BACKUP_ID"
@@ -91,14 +91,18 @@ if docker container inspect bigotes-app >/dev/null 2>&1; then
     '
   mv -- "$TEMP_DB_HOST" "$BACKUP_DIR/bigotes.db"
 
-  DATA_ENTRIES=()
-  for entry in uploads jwt-secret.txt; do
-    [[ -e "$DATA_DIR/$entry" ]] && DATA_ENTRIES+=("$entry")
-  done
-  if ((${#DATA_ENTRIES[@]})); then
-    tar -czf "$BACKUP_DIR/files.tar.gz" -C "$DATA_DIR" "${DATA_ENTRIES[@]}"
+  # Fotos y vídeos nunca se reescriben (nombres aleatorios; la app solo crea y
+  # borra), así que una copia con enlaces duros guarda el estado completo sin
+  # ocupar más disco por cada despliegue. Un tar de todos los vídeos en cada
+  # despliegue acabaría llenando el disco compartido del VPS.
+  if [[ -d "$DATA_DIR/uploads" ]]; then
+    cp -al -- "$DATA_DIR/uploads" "$BACKUP_DIR/uploads"
   fi
-  sha256sum "$BACKUP_DIR"/* > "$BACKUP_DIR/SHA256SUMS"
+  if [[ -e "$DATA_DIR/jwt-secret.txt" ]]; then
+    tar -czf "$BACKUP_DIR/files.tar.gz" -C "$DATA_DIR" jwt-secret.txt
+  fi
+  (cd "$BACKUP_DIR" && find . -maxdepth 1 -type f ! -name SHA256SUMS -printf '%P\0' | sort -z | xargs -0 -r sha256sum) \
+    > "$BACKUP_DIR/SHA256SUMS"
   printf '%s\n' "$BACKUP_ID" > "$SCRIPT_DIR/.last-backup"
   echo "Backup previo verificado: $BACKUP_DIR"
 else

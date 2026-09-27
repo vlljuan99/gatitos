@@ -1,7 +1,7 @@
 import { client, loggedIn, startServer, validApplication } from './helpers.js';
 import { after, before, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { db } from '../src/db.js';
+import { db, migrations } from '../src/db.js';
 
 let server;
 let api;
@@ -177,7 +177,7 @@ describe('seguridad', () => {
   test('envía cabeceras de seguridad', async () => {
     const res = await api.get('/api/health');
     assert.equal(res.data.ok, true);
-    assert.equal(res.data.database.migration, 1);
+    assert.equal(res.data.database.migration, migrations.length);
     assert.match(res.headers.get('content-security-policy'), /frame-ancestors 'none'/);
     assert.equal(res.headers.get('x-powered-by'), null);
   });

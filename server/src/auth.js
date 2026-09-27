@@ -8,11 +8,12 @@ import { COOKIE_NAME, IS_PROD, JWT_SECRET, SESSION_DAYS } from './config.js';
 import { rateLimit } from './security.js';
 import { email, parseBody } from './validation.js';
 
-// Dos papeles en el equipo: una persona de administración (lo puede todo,
-// incluido gestionar el equipo y los datos legales) y las «cuidabigotes»,
-// que llevan el día a día: gatitos, solicitudes, mensajes y textos.
+// Dos papeles en el equipo, con nombre gatuno: los «bigotes mayores»
+// (administración: lo pueden todo, incluido dar de alta al equipo y los datos
+// legales) y las «cuidabigotes», que llevan el día a día: gatitos,
+// solicitudes, mensajes y textos. Las claves internas son admin y cuidabigotes.
 export const ROLES = {
-  admin: 'Administración',
+  admin: 'Bigote mayor',
   cuidabigotes: 'Cuidabigotes',
 };
 
@@ -90,7 +91,7 @@ export function requireAuth(req, res, next) {
 
 export function requireAdmin(req, res, next) {
   if (req.user?.role !== 'admin') {
-    return res.status(403).json({ error: 'Solo la administración puede hacer esto' });
+    return res.status(403).json({ error: 'Solo un bigote mayor puede hacer esto' });
   }
   next();
 }
