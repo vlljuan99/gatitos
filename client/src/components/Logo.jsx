@@ -19,7 +19,7 @@ export function LogoFull({ className = 'w-64' }) {
       alt="Bigotes, asociación para la ayuda al gato callejero. Protección, cuidado y orientación ciudadana."
       className={`h-auto ${className}`}
       width="411"
-      height="159"
+      height="156"
     />
   );
 }

@@ -7,7 +7,7 @@ Web de la asociación **Bigotes** (rescate y adopción de gatitos en Almendralej
 ## Decisiones de producto ya confirmadas (no volver a preguntar)
 
 - **Mobile first** en todo, también en el panel. Barra de navegación inferior en móvil; objetivos táctiles de 44-48 px como mínimo.
-- **Logo oficial**: «Bigotes · Asociación para la ayuda al gato callejero · Protección, cuidado y orientación ciudadana». Original en `brand/logo-bigotes-original.png`; vectorizado en `client/public/` (`logo-texto.svg` para cabeceras, `logo-completo.svg` con el lema, `logo-cara.svg`/`favicon.svg` para iconos). Los PNG de iconos y la imagen para compartir salen de ahí con `node server/scripts/generate-brand.js`.
+- **Logo oficial**: «Bigotes · Asociación para la ayuda al gato callejero · Protección, cuidado y orientación ciudadana». Original en `brand/logo-bigotes.jpg` (versión actual, sin bigotes en la B y con los del gato más largos); vectorizado en `client/public/` (`logo-texto.svg` para cabeceras, `logo-completo.svg` con el lema, `logo-cara.svg`/`favicon.svg` para iconos). Los PNG de iconos y la imagen para compartir salen de ahí con `node server/scripts/generate-brand.js`.
 - **Estética mona y cuqui**, pero que dé confianza: colores del logo (carbón `cacao` y `canela`) más pasteles (menta, lavanda, mantequilla…), definidos en `client/src/index.css` con contraste AA. Tipografías Fredoka (títulos) y Nunito (texto) servidas desde la propia web.
 - **Modo match sin «no me gusta»**: solo «Me encanta» y «Siguiente». No introducir nunca textos o iconos negativos (❌, «no me gusta», «descartar») en la parte pública.
 - **Solo se adopta en Extremadura** (provincias de Badajoz y Cáceres). El servidor lo valida.

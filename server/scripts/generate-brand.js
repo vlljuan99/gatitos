@@ -1,6 +1,6 @@
 // Genera los iconos PNG (favicon, app instalable) y la imagen por defecto
 // para compartir en redes a partir del logo vectorizado de client/public
-// (logo-cara.svg y logo-completo.svg, sacados de brand/logo-bigotes-original.png).
+// (logo-cara.svg y logo-completo.svg, sacados de brand/logo-bigotes.jpg).
 // El resultado se versiona, así que solo hace falta ejecutarlo al cambiar el logo:
 //
 //   node scripts/generate-brand.js
