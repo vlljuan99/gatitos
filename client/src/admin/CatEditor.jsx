@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useBlocker, useNavigate, useParams } from 'react-router-dom';
+import { Link, useBlocker, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowRight,
@@ -10,6 +10,7 @@ import {
   ExternalLink,
   ImagePlus,
   LoaderCircle,
+  Megaphone,
   Play,
   Plus,
   Save,
@@ -24,11 +25,15 @@ import { useToast } from '../components/Toast.jsx';
 import { Button, Card, Chip, ErrorState, Spinner, Tag, cx } from '../components/ui.jsx';
 import { api, ApiError } from '../lib/api.js';
 import { ageText, gendered, PERSONALITY_TAGS, statusLabel } from '../lib/cats.js';
+import { useDraftState } from '../lib/drafts.js';
+import { clearFiles, loadFiles, saveFiles } from '../lib/fileDrafts.js';
 import { AdminPage, isAdmin, refreshAfterChange, useAdminApi, useAuth, useConfirm } from './common.jsx';
-import { uploadPhotos } from './photos.js';
+import { shrinkImage, uploadPhotos } from './photos.js';
+import { ShareImageSheet, sharePhotos } from './ShareImage.jsx';
 import { checkVideo, formatDuration, MAX_VIDEO_SECONDS, MAX_VIDEOS, uploadVideo } from './videos.js';
 
 const MAX_PHOTOS = 12;
+const NEW_CAT_DRAFT = 'gatito-nuevo';
 
 const EMPTY_CAT = {
   name: '',
@@ -55,9 +60,13 @@ function toForm(cat) {
   return structuredClone(form);
 }
 
-/** Actualiza un campo, también anidado: set('goodWith.kids', 'si'). */
-function useCatForm(initial) {
-  const [values, setValues] = useState(initial);
+/**
+ * Valores del formulario de un gatito, guardados como borrador en el navegador
+ * (sobreviven a recargar la página). `set` actualiza un campo, también
+ * anidado: set('goodWith.kids', 'si').
+ */
+function useCatForm(pristine, { draftKey, checkBase = false } = {}) {
+  const [values, setValues, draft] = useDraftState(draftKey, pristine, { storage: 'local', checkBase });
   const [errors, setErrors] = useState({});
   const set = (path, value) => {
     setValues((current) => {
@@ -70,7 +79,7 @@ function useCatForm(initial) {
     });
     setErrors((current) => ({ ...current, [path]: undefined }));
   };
-  return { values, setValues, set, errors, setErrors };
+  return { values, setValues, set, errors, setErrors, draft };
 }
 
 const SEX_OPTIONS = [
@@ -454,17 +463,58 @@ const WIZARD = ['Fotos y vídeos', 'Lo básico', 'Carácter', 'Salud', 'Publicar
 function NewCat() {
   const navigate = useNavigate();
   const toast = useToast();
-  const form = useCatForm(structuredClone(EMPTY_CAT));
+  // Todo el alta (datos, paso, fotos y vídeos) se guarda en el navegador
+  // mientras no se publica: si la página se recarga, se sigue donde se dejó.
+  const form = useCatForm(EMPTY_CAT, { draftKey: NEW_CAT_DRAFT });
   const { values, setErrors } = form;
+  const [step, setStep, stepDraft] = useDraftState(`${NEW_CAT_DRAFT}:paso`, 0, { storage: 'local' });
   const [files, setFiles] = useState([]);
   const [videos, setVideos] = useState([]);
-  const [step, setStep] = useState(0);
+  const [filesReady, setFilesReady] = useState(false);
+  const [recovered, setRecovered] = useState(form.draft.restored || stepDraft.restored);
   const [saving, setSaving] = useState(false);
   const [progress, setProgress] = useState(null);
   const [error, setError] = useState('');
   const previews = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
   useEffect(() => () => previews.forEach((url) => URL.revokeObjectURL(url)), [previews]);
   useWarnOnClose(saving);
+
+  useEffect(() => {
+    let alive = true;
+    Promise.all([loadFiles(`${NEW_CAT_DRAFT}:fotos`), loadFiles(`${NEW_CAT_DRAFT}:videos`)]).then(([photos, clips]) => {
+      if (!alive) return;
+      if (photos.length || clips.length) {
+        setFiles(photos);
+        setVideos(clips);
+        setRecovered(true);
+      }
+      setFilesReady(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  useEffect(() => {
+    if (filesReady) saveFiles(`${NEW_CAT_DRAFT}:fotos`, files);
+  }, [files, filesReady]);
+  useEffect(() => {
+    if (filesReady) saveFiles(`${NEW_CAT_DRAFT}:videos`, videos);
+  }, [videos, filesReady]);
+
+  function startOver() {
+    form.setValues(structuredClone(EMPTY_CAT));
+    form.setErrors({});
+    setStep(0);
+    setFiles([]);
+    setVideos([]);
+    setRecovered(false);
+  }
+
+  // Las fotos se reducen al elegirlas: pesan menos en el borrador y al subirlas.
+  async function addPhotos(list) {
+    const small = await Promise.all(list.map((file) => shrinkImage(file)));
+    setFiles((current) => [...current, ...small].slice(0, MAX_PHOTOS));
+  }
 
   async function addVideos(list) {
     const accepted = [];
@@ -515,11 +565,16 @@ function NewCat() {
           failedVideos += 1;
         }
       }
+      form.draft.discard();
+      stepDraft.discard();
+      clearFiles(`${NEW_CAT_DRAFT}:fotos`);
+      clearFiles(`${NEW_CAT_DRAFT}:videos`);
       refreshAfterChange();
       toast(status === 'disponible' ? `¡${cat.name} ya está en la web! 🎉` : `${cat.name} guardado como borrador`);
       if (failed.length) toast(`No se pudieron subir ${failed.length} fotos. Prueba de nuevo desde su ficha.`, { tone: 'error', duration: 6000 });
       if (failedVideos) toast(`No se pudo subir ${failedVideos === 1 ? 'un vídeo' : `${failedVideos} vídeos`}. Prueba de nuevo desde su ficha.`, { tone: 'error', duration: 6000 });
-      navigate(`/admin/gatitos/${cat.id}`, { replace: true });
+      // Recién publicado, se ofrece la imagen para compartirlo en redes.
+      navigate(`/admin/gatitos/${cat.id}${status === 'disponible' ? '?compartir' : ''}`, { replace: true });
     } catch (err) {
       if (err instanceof ApiError && Object.keys(err.fields).length) {
         setErrors(err.fields);
@@ -540,10 +595,22 @@ function NewCat() {
         ))}
       </div>
 
+      {recovered && (
+        <Card className="mb-5 flex flex-wrap items-center gap-3 bg-mantequilla p-4" role="status">
+          <p className="min-w-0 flex-1 text-sm">
+            <strong className="block">Tenías un gatito a medias 🐾</strong>
+            Lo hemos recuperado para que sigas donde lo dejaste.
+          </p>
+          <Button variant="secondary" size="sm" onClick={startOver}>
+            Empezar de cero
+          </Button>
+        </Card>
+      )}
+
       <div className="grid gap-5">
         {step === 0 && (
           <Section title="Empieza por las fotos 📸" hint={PHOTO_TIP}>
-            <PhotoPicker remaining={MAX_PHOTOS - files.length} onFiles={(list) => setFiles((current) => [...current, ...list])} />
+            <PhotoPicker remaining={MAX_PHOTOS - files.length} onFiles={addPhotos} />
             {files.length > 0 && (
               <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {files.map((file, i) => (
@@ -813,13 +880,28 @@ function EditCat({ initial }) {
   const toast = useToast();
   const { user } = useAuth();
   const [cat, setCat] = useState(initial);
-  const form = useCatForm(toForm(initial));
-  const [saved, setSaved] = useState(() => JSON.stringify(toForm(initial)));
+  // Lo último guardado. Los cambios sin guardar quedan como borrador en el
+  // navegador: si la página se recarga, se recuperan (siempre que nadie haya
+  // cambiado la ficha mientras tanto).
+  const [saved, setSaved] = useState(() => toForm(initial));
+  const form = useCatForm(saved, { draftKey: `gatito-${initial.id}`, checkBase: true });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [ask, dialog] = useConfirm();
   const leaving = useRef(false);
-  const dirty = JSON.stringify(form.values) !== saved;
+  const dirty = JSON.stringify(form.values) !== JSON.stringify(saved);
+  const recovered = form.draft.restored;
+  // Recién publicado desde el alta (?compartir) se abre la imagen para redes.
+  const [params, setParams] = useSearchParams();
+  const [sharing, setSharing] = useState(() => params.has('compartir'));
+  useEffect(() => {
+    if (params.has('compartir')) setParams({}, { replace: true });
+  }, [params, setParams]);
+  const canShare = sharePhotos(cat).length > 0;
+
+  useEffect(() => {
+    if (recovered) toast('Hemos recuperado los cambios que no habías guardado', { duration: 6000 });
+  }, [recovered, toast]);
 
   // Aviso al salir con cambios sin guardar.
   const blocker = useBlocker(
@@ -830,13 +912,6 @@ function EditCat({ initial }) {
     if (window.confirm('Tienes cambios sin guardar. ¿Salir igualmente?')) blocker.proceed();
     else blocker.reset();
   }, [blocker]);
-  useEffect(() => {
-    if (!dirty) return undefined;
-    const onBeforeUnload = (event) => event.preventDefault();
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [dirty]);
-
   async function save() {
     setSaving(true);
     setError('');
@@ -845,7 +920,7 @@ function EditCat({ initial }) {
       setCat(result.cat);
       const next = toForm(result.cat);
       form.setValues(next);
-      setSaved(JSON.stringify(next));
+      setSaved(next);
       refreshAfterChange();
       toast('Cambios guardados ✨');
     } catch (err) {
@@ -884,6 +959,18 @@ function EditCat({ initial }) {
   return (
     <AdminPage title={cat.name} back="/admin/gatitos" subtitle={`${statusLabel(cat.status, cat.sex)} · ${cat.likes} 💕 en la web`} action={publicLink}>
       <div className="grid gap-4">
+        <Card className="flex flex-wrap items-center gap-3 bg-lavanda">
+          <Megaphone className="size-8 shrink-0 text-lavanda-oscuro" aria-hidden />
+          <div className="min-w-0 flex-1">
+            <h2 className="font-display text-lg font-semibold">Compártelo en redes</h2>
+            <p className="text-sm">
+              {canShare ? 'Imagen lista para Instagram o WhatsApp, con sus fotos y vuestro contacto.' : 'Añade una foto y podrás crear una imagen para redes.'}
+            </p>
+          </div>
+          <Button onClick={() => setSharing(true)} disabled={!canShare}>
+            Crear imagen
+          </Button>
+        </Card>
         <EditPhotos cat={cat} onChange={setCat} />
         <EditVideos cat={cat} onChange={setCat} />
         <Section title="Estado y portada">
@@ -917,7 +1004,7 @@ function EditCat({ initial }) {
           <button
             type="button"
             onClick={() => {
-              form.setValues(JSON.parse(saved));
+              form.setValues(structuredClone(saved));
               form.setErrors({});
             }}
             className="grid size-11 place-items-center rounded-full hover:bg-white/10"
@@ -930,6 +1017,7 @@ function EditCat({ initial }) {
           </Button>
         </div>
       </div>
+      <ShareImageSheet cat={cat} open={sharing} onClose={() => setSharing(false)} />
       {dialog}
     </AdminPage>
   );

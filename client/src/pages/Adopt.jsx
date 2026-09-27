@@ -15,19 +15,10 @@ import {
 } from '../lib/adoption.js';
 import { useFavorites } from '../lib/favorites.js';
 import { ALLERGIES, HOURS_ALONE, HOUSING, KIDS, PETS_ALLOWED, PROVINCES, TENURE, WINDOWS, YES_NO } from '../lib/forms.js';
+import { useDraftState } from '../lib/drafts.js';
 import { useForm } from '../lib/useForm.js';
 import { useApi } from '../lib/useApi.js';
 import { useTitle } from '../lib/useTitle.js';
-
-const DRAFT_KEY = 'bigotes:solicitud';
-
-function readDraft() {
-  try {
-    return JSON.parse(sessionStorage.getItem(DRAFT_KEY) ?? 'null');
-  } catch {
-    return null;
-  }
-}
 
 function Progress({ step }) {
   const pct = ((step + 1) / STEPS.length) * 100;
@@ -138,29 +129,22 @@ export default function Adopt() {
   const [params] = useSearchParams();
   const { data, loading } = useApi('/gatitos');
   const { slugs: favoriteSlugs } = useFavorites();
-  const form = useForm(() => {
-    const draft = readDraft();
-    const initial = { ...INITIAL_APPLICATION, ...(draft ?? {}), website: '' };
-    if (params.get('gatito')) initial.catSlug = params.get('gatito');
-    return initial;
+  // Lo escrito y el paso en el que ibas sobreviven a recargar la página
+  // (se borran al enviar o al cerrar la pestaña). Si llegas desde la ficha de
+  // otro gatito, manda el de la ficha.
+  const gatito = params.get('gatito');
+  const form = useForm(INITIAL_APPLICATION, {
+    draft: 'solicitud',
+    omit: ['privacy', 'website'],
+    override: gatito ? { catSlug: gatito } : undefined,
   });
   const { values, set, field, setErrors, errors, formError, setFormError, sending, submit } = form;
 
-  const [step, setStep] = useState(0);
+  const [step, setStep, stepDraft] = useDraftState('solicitud:paso', 0);
   const [done, setDone] = useState(false);
 
   const cats = useMemo(() => (data?.cats ?? []).filter((c) => c.status === 'disponible' || c.slug === values.catSlug), [data, values.catSlug]);
   const chosen = cats.find((c) => c.slug === values.catSlug) ?? null;
-
-  useEffect(() => {
-    if (done) return;
-    try {
-      const { website, privacy, ...draft } = values;
-      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-    } catch {
-      // Sin almacenamiento: simplemente no se guarda el borrador.
-    }
-  }, [values, done]);
 
   function go(next) {
     setStep(next);
@@ -189,12 +173,8 @@ export default function Adopt() {
     }
     const ok = await submit('/solicitudes', applicationPayload(values));
     if (ok) {
+      stepDraft.discard();
       setDone(true);
-      try {
-        sessionStorage.removeItem(DRAFT_KEY);
-      } catch {
-        // nada
-      }
       window.scrollTo({ top: 0 });
     }
   }

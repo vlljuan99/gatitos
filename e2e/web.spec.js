@@ -113,6 +113,11 @@ test('solicitud de adopción por pasos', async ({ page }) => {
   await page.getByText('Soy mayor de edad').click();
   await next();
 
+  // Recargar la página no borra lo escrito ni el paso en el que ibas.
+  await page.reload();
+  await expect(group('¿Dónde vives?')).toBeVisible();
+  await expect(page.getByText('Solicitud para')).toContainText('Luna');
+
   await group('¿Dónde vives?').getByText('Piso', { exact: true }).click();
   await group('Tu casa es…').getByText('De alquiler').click();
   await group('¿Tu casero permite animales?').getByText('Sí, se permiten').click();
@@ -142,11 +147,16 @@ test('contacto', async ({ page }) => {
   await page.getByLabel('Nombre').fill('Pepe');
   await page.getByLabel('Email').fill('pepe@ejemplo.es');
   await page.getByLabel('Mensaje').fill('¿Puedo ir a conocer a Tofu?');
+  await page.reload();
+  await expect(page.getByLabel('Mensaje')).toHaveValue('¿Puedo ir a conocer a Tofu?');
+  await expect(page.getByLabel('Nombre')).toHaveValue('Pepe');
   await page.getByRole('button', { name: 'Enviar mensaje' }).click();
   await expect(page.getByText('Necesitamos tu permiso para tratar estos datos')).toBeVisible();
   await page.getByText(/He leído la/).click();
   await page.getByRole('button', { name: 'Enviar mensaje' }).click();
   await expect(page.getByText('¡Mensaje enviado!')).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel('Mensaje')).toHaveValue('');
 });
 
 test('vista previa al compartir un gatito', async ({ request }) => {

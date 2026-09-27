@@ -22,7 +22,7 @@ const INITIAL = {
 };
 
 function VolunteerForm() {
-  const { values, set, field, errors, formError, sending, submit } = useForm(INITIAL);
+  const { values, set, field, errors, formError, sending, submit } = useForm(INITIAL, { draft: 'voluntariado', omit: ['privacy', 'website'] });
   const [sent, setSent] = useState(false);
 
   if (sent) {

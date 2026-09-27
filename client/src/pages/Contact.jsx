@@ -39,7 +39,7 @@ export default function Contact() {
   useTitle('Contacto');
   const { data } = useSite();
   const contact = data?.content.contact;
-  const { values, set, field, errors, formError, sending, submit, setValues } = useForm(INITIAL);
+  const { values, set, field, errors, formError, sending, submit, setValues } = useForm(INITIAL, { draft: 'contacto', omit: ['privacy', 'website'] });
   const [sent, setSent] = useState(false);
 
   return (

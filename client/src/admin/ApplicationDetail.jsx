@@ -6,6 +6,7 @@ import { CatPhoto } from '../components/CatPhoto.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { Button, Card, ErrorState, Spinner, cx } from '../components/ui.jsx';
 import { api } from '../lib/api.js';
+import { useDraftState } from '../lib/drafts.js';
 import { gendered, statusLabel } from '../lib/cats.js';
 import { APPLICATION_QUESTIONS } from '../lib/forms.js';
 import { AdminPage, formatDate, isAdmin, refreshAfterChange, StatusPill, timeAgo, useAdminApi, useAuth, useConfirm } from './common.jsx';
@@ -54,13 +55,20 @@ function Answers({ application }) {
   );
 }
 
-export default function ApplicationDetail() {
+// Una instancia por solicitud: así la nota a medias de una no pasa a otra.
+export default function ApplicationDetailRoute() {
+  const { id } = useParams();
+  return <ApplicationDetail key={id} />;
+}
+
+function ApplicationDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
   const { user } = useAuth();
   const { data, error, loading, reload } = useAdminApi(`/solicitudes/${id}`);
-  const [note, setNote] = useState('');
+  // La nota a medio escribir sobrevive a recargar la página.
+  const [note, setNote] = useDraftState(`nota-${id}`, '', { storage: 'local' });
   const [busy, setBusy] = useState(false);
   const [ask, dialog] = useConfirm();
 

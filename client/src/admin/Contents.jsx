@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2 } from 'lucide-react';
 import { FormError, TextArea, TextInput } from '../components/form.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { Button, ErrorState, Spinner } from '../components/ui.jsx';
 import { api, ApiError } from '../lib/api.js';
+import { useDraftState } from '../lib/drafts.js';
 import { AdminPage, isAdmin, refreshAfterChange, useAdminApi, useAuth } from './common.jsx';
 
 /** Lista editable (pasos, requisitos, preguntas): añadir, quitar y reordenar. */
@@ -181,11 +182,22 @@ const SECTIONS = [
 
 function SectionEditor({ section, value, open, onToggle }) {
   const toast = useToast();
-  const [draft, setDraft] = useState(value);
+  // Lo escrito sin guardar sobrevive a recargar la página (si nadie ha
+  // cambiado ese texto mientras tanto).
+  const [draft, setDraft] = useDraftState(`textos-${section.key}`, value, { storage: 'local', checkBase: true });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  useEffect(() => setDraft(value), [value]);
-  const dirty = JSON.stringify(draft) !== JSON.stringify(value);
+  // Si el texto guardado cambia (al guardar o al refrescar el panel), se parte de él.
+  const first = useRef(true);
+  const valueJson = JSON.stringify(value);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    setDraft(JSON.parse(valueJson));
+  }, [valueJson, setDraft]);
+  const dirty = JSON.stringify(draft) !== valueJson;
 
   async function save() {
     setSaving(true);

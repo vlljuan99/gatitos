@@ -6,6 +6,7 @@ import './index.css';
 import { PublicLayout } from './components/Layout.jsx';
 import { ToastProvider } from './components/Toast.jsx';
 import { ButtonLink, EmptyState, Spinner } from './components/ui.jsx';
+import { purgeOldDrafts } from './lib/drafts.js';
 import Home from './pages/Home.jsx';
 import Cats from './pages/Cats.jsx';
 import CatDetail from './pages/CatDetail.jsx';
@@ -73,6 +74,8 @@ const router = createBrowserRouter([
     ],
   },
 ]);
+
+purgeOldDrafts();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

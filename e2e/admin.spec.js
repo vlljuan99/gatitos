@@ -38,6 +38,15 @@ test('una cuidabigotes sube un gatito nuevo en un minuto', async ({ page, reques
 
   await page.getByRole('button', { name: /Publicar ya/ }).click();
   await expect(page.getByText('¡Garfield ya está en la web! 🎉')).toBeVisible();
+
+  // Al publicar se ofrece la imagen para redes, lista para descargar o compartir.
+  const share = page.getByRole('dialog', { name: /Compártelo en redes/ });
+  await expect(share.getByRole('img', { name: 'Imagen para redes de Garfield' })).toBeVisible({ timeout: 20_000 });
+  await expect(share.getByRole('link', { name: /Descargar imagen/ })).toHaveAttribute('href', /^blob:/);
+  await expect(share.getByText(/¡Garfield busca hogar!/)).toBeVisible();
+  await share.getByRole('radio', { name: /Historia/ }).click();
+  await expect(share.getByRole('img', { name: 'Imagen para redes de Garfield' })).toBeVisible({ timeout: 20_000 });
+  await share.getByRole('button', { name: 'Cerrar' }).click();
   await expect(page.getByRole('heading', { name: 'Garfield', level: 1 })).toBeVisible();
 
   const cat = (await (await request.get('/api/gatitos/garfield')).json()).cat;
@@ -48,6 +57,40 @@ test('una cuidabigotes sube un gatito nuevo en un minuto', async ({ page, reques
   // Las cuidabigotes no ven la gestión del equipo.
   await page.goto('/admin');
   await expect(page.getByRole('link', { name: 'Equipo' })).toHaveCount(0);
+});
+
+test('el alta de un gatito y los cambios sin guardar sobreviven a recargar', async ({ page }) => {
+  await login(page, 'cuidabigotes@bigotes.local');
+  await page.getByRole('link', { name: /Nuevo gatito/ }).click();
+  await page.locator('input[type=file][accept="image/*"]').setInputFiles({ name: 'mishi.png', mimeType: 'image/png', buffer: PHOTO });
+  await expect(page.getByRole('img', { name: 'Foto 1' })).toBeVisible();
+  await page.getByRole('button', { name: /Siguiente/ }).click();
+  await page.getByLabel('Nombre').fill('Mishi');
+
+  await page.reload();
+  await expect(page.getByText('Tenías un gatito a medias')).toBeVisible();
+  await expect(page.getByLabel('Nombre')).toHaveValue('Mishi');
+  await page.getByRole('button', { name: 'Paso anterior' }).click();
+  await expect(page.getByRole('img', { name: 'Foto 1' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Empezar de cero' }).click();
+  await expect(page.getByText('Tenías un gatito a medias')).toHaveCount(0);
+  await expect(page.getByRole('img', { name: 'Foto 1' })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('Tenías un gatito a medias')).toHaveCount(0);
+
+  // En la ficha de un gatito, los cambios sin guardar también se recuperan.
+  await page.goto('/admin/gatitos');
+  await page.getByRole('link', { name: /Tofu/ }).first().click();
+  await page.getByLabel('Frase corta').fill('Un torbellino con patitas enormes.');
+  await expect(page.getByText('Cambios sin guardar')).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Hemos recuperado los cambios que no habías guardado')).toBeVisible();
+  await expect(page.getByLabel('Frase corta')).toHaveValue('Un torbellino con patitas enormes.');
+  await page.getByRole('button', { name: 'Guardar' }).click();
+  await expect(page.getByText('Cambios guardados ✨')).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Hemos recuperado los cambios')).toHaveCount(0);
 });
 
 test('la administración lleva una solicitud por sus etapas', async ({ page, request }) => {

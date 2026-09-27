@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { api, ApiError } from './api.js';
+import { useDraftState } from './drafts.js';
 
 /**
  * Estado de un formulario público: valores, errores por campo (del servidor)
  * y envío. `field(name)` devuelve { value, onChange, error } para los inputs.
+ * Con `draft` (una clave), lo escrito sobrevive a recargar la página hasta que
+ * se envía o se cierra la pestaña (ver lib/drafts.js).
  */
-export function useForm(initial) {
-  const [values, setValues] = useState(initial);
+export function useForm(initial, { draft, omit, override } = {}) {
+  const [pristine] = useState(initial);
+  const [values, setValues, draftState] = useDraftState(draft, pristine, { omit, override });
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [sending, setSending] = useState(false);
@@ -23,6 +27,7 @@ export function useForm(initial) {
     setFormError('');
     try {
       await api(path, { method: 'POST', body });
+      draftState.discard();
       return true;
     } catch (error) {
       if (error instanceof ApiError) {
@@ -37,5 +42,17 @@ export function useForm(initial) {
     }
   }
 
-  return { values, setValues, set, field, errors, setErrors, formError, setFormError, sending, submit };
+  return {
+    values,
+    setValues,
+    set,
+    field,
+    errors,
+    setErrors,
+    formError,
+    setFormError,
+    sending,
+    submit,
+    restored: draftState.restored,
+  };
 }

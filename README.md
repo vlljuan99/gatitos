@@ -40,6 +40,14 @@ se enamore de un gatito y lo adopte.
   vídeos (desde la galería o la cámara). Las fotos se reducen en el propio
   móvil, se convierten a WebP y se les quita la ubicación GPS antes de
   publicarse.
+- **Imagen para redes**: al publicar un gatito (y cuando se quiera desde su
+  ficha) se crea en el móvil una imagen lista para Instagram o WhatsApp
+  (publicación 4:5 o historia 9:16) con sus fotos en polaroid, su nombre, sus
+  datos y el contacto de la asociación, más un texto para acompañarla.
+- **Nada se pierde al recargar**: los formularios (solicitud, contacto,
+  voluntariado, alta y edición de gatitos, textos, notas…) guardan lo escrito
+  en el navegador hasta que se envían. El alta de un gatito recuerda también
+  el paso y las fotos y vídeos elegidos.
 - **Vídeos**: hasta 6 por gatito, de un minuto como mucho. El servidor los
   prepara en segundo plano con ffmpeg (MP4 que se ve en cualquier móvil, sin
   ubicación GPS ni otros metadatos) y aparecen en la web cuando están listos.

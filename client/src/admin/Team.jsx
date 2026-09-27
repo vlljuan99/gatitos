@@ -7,6 +7,7 @@ import { Sheet } from '../components/Sheet.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { Button, Card, ErrorState, Spinner, buttonClass, cx } from '../components/ui.jsx';
 import { api, ApiError } from '../lib/api.js';
+import { useDraftState } from '../lib/drafts.js';
 import { AdminPage, refreshAfterChange, ROLE_INFO, timeAgo, useAdminApi, useAuth, useConfirm } from './common.jsx';
 
 const ROLE_OPTIONS = ['cuidabigotes', 'admin'].map((role) => ({ value: role, label: ROLE_INFO[role].label, emoji: ROLE_INFO[role].emoji }));
@@ -47,7 +48,7 @@ function PasswordSheet({ info, onClose }) {
 
 /** Alta de una persona nueva: nombre, email y papel. */
 function AddSheet({ open, onClose, onCreated }) {
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useDraftState('alta-equipo', EMPTY_FORM, { storage: 'local' });
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [adding, setAdding] = useState(false);

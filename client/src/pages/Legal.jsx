@@ -121,8 +121,9 @@ function Cookies() {
           cuáles gustan más.
         </p>
         <p>
-          <strong>Borrador de la solicitud:</strong> mientras rellenas la solicitud de adopción, se guarda en tu navegador hasta
-          que cierras la pestaña, para que no pierdas lo escrito.
+          <strong>Borradores de los formularios:</strong> mientras rellenas la solicitud de adopción, el formulario de contacto o
+          el de voluntariado, lo que escribes se guarda en tu navegador para que no lo pierdas si la página se recarga. Se borra
+          al enviarlo o al cerrar la pestaña, y nunca sale de tu dispositivo hasta que lo envías.
         </p>
         <p>
           <strong>Sesión del equipo:</strong> solo quienes gestionan la web reciben una cookie técnica para mantener abierta su
