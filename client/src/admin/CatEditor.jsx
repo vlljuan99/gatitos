@@ -908,7 +908,7 @@ function EditCat({ initial }) {
 
       <div
         className={cx(
-          'fixed inset-x-0 bottom-[4.75rem] z-30 px-4 transition md:bottom-6 md:left-64',
+          'fixed inset-x-0 bottom-sobre-barra z-30 px-4 transition md:bottom-6 md:left-64',
           dirty ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0',
         )}
       >

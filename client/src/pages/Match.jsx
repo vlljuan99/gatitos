@@ -339,8 +339,9 @@ export default function Match() {
   } else if (deck) {
     body = (
       <>
-        {/* La tarjeta ocupa el alto que queda libre entre cabecera, botones y barra inferior. */}
-        <div className="relative mx-auto h-[clamp(260px,calc(100dvh-23.5rem),560px)] w-full max-w-sm md:h-[clamp(320px,calc(100dvh-20rem),600px)]">
+        {/* La tarjeta ocupa el alto que queda libre entre cabecera, botones y
+            barra inferior (que en el iPhone crece con la zona segura). */}
+        <div className="relative mx-auto h-[clamp(260px,calc(100dvh-23rem-var(--zona-segura)),560px)] w-full max-w-sm md:h-[clamp(320px,calc(100dvh-20rem),600px)]">
           {visible
             .map((slug, depth) => (
               <SwipeCard

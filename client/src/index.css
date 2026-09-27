@@ -37,6 +37,14 @@
 }
 
 @layer base {
+  :root {
+    /* Zona segura de abajo (la raya de inicio del iPhone; en Android, casi
+       nada). La barra inferior la añade como relleno, así que todo lo que va
+       fijo encima de ella tiene que contarla o queda tapado. */
+    --zona-segura: max(env(safe-area-inset-bottom), 0.5rem);
+    /* Alto de la barra inferior del móvil, zona segura incluida. */
+    --barra-movil: calc(3.75rem + var(--zona-segura));
+  }
   html {
     color-scheme: light;
     -webkit-tap-highlight-color: transparent;
@@ -59,7 +67,18 @@
 }
 
 @utility pb-safe {
-  padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+  padding-bottom: var(--zona-segura);
+}
+
+/* Fijo justo encima de la barra inferior, sin chocar con el botón redondo del match. */
+@utility bottom-sobre-barra {
+  bottom: calc(var(--barra-movil) + 1.5rem);
+}
+
+/* Hueco al final de la página: que nada quede debajo de la barra inferior ni
+   del botón fijo de la ficha («Quiero adoptarle»). */
+@utility pb-sobre-barra {
+  padding-bottom: calc(var(--barra-movil) + 6.5rem);
 }
 
 @utility no-scrollbar {

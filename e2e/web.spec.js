@@ -20,6 +20,24 @@ test('portada, catálogo, ficha y favoritos', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Quiero conocerla' })).toBeVisible();
 });
 
+test('con la raya de inicio del iPhone, nada queda tapado por la barra inferior', async ({ page }) => {
+  await page.goto('/gatitos/bigotin');
+  // Chromium no emula env(safe-area-inset-bottom): se simula la del iPhone (34 px).
+  await page.addStyleTag({ content: ':root { --zona-segura: 34px !important; }' });
+  const cta = page.getByRole('link', { name: /Quiero adoptarle/ });
+  await expect(cta).toBeVisible();
+  const bubble = mainNav(page).getByRole('link', { name: 'Match' }).locator('span').first();
+  const [ctaBox, bubbleBox] = [await cta.boundingBox(), await bubble.boundingBox()];
+  expect(ctaBox.y + ctaBox.height).toBeLessThanOrEqual(bubbleBox.y);
+
+  await page.goto('/match');
+  await page.addStyleTag({ content: ':root { --zona-segura: 34px !important; }' });
+  const like = page.getByRole('button', { name: 'Me encanta', exact: true });
+  const navBox = await mainNav(page).boundingBox();
+  const likeBox = await like.boundingBox();
+  expect(likeBox.y + likeBox.height).toBeLessThanOrEqual(navBox.y);
+});
+
 test('filtros del catálogo', async ({ page }) => {
   await page.goto('/gatitos');
   await page.getByRole('button', { name: 'Seniors' }).click();

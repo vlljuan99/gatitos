@@ -37,7 +37,7 @@ export function refreshAfterChange() {
 
 export function AdminPage({ title, back, action, children, subtitle }) {
   return (
-    <div className="mx-auto max-w-3xl px-4 pt-4 pb-32 md:pb-12">
+    <div className="mx-auto max-w-3xl px-4 pt-4 pb-sobre-barra md:pb-12">
       {back && (
         <Link to={back} className="mb-2 inline-flex min-h-10 items-center gap-1 font-bold text-cacao-suave">
           <ArrowLeft className="size-5" /> Volver

@@ -278,7 +278,7 @@ export default function CatDetail() {
           </ul>
 
           {!adopted && (
-            <div className="fixed inset-x-0 bottom-[4.75rem] z-30 px-4 md:static md:mt-8 md:px-0">
+            <div className="fixed inset-x-0 bottom-sobre-barra z-30 px-4 md:static md:mt-8 md:px-0">
               {reserved ? (
                 <div className="rounded-3xl bg-mantequilla p-4 text-center shadow-flotante md:shadow-none">
                   <p className="font-bold text-mantequilla-oscuro">

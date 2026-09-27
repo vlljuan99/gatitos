@@ -198,7 +198,7 @@ export function SocialLinks({ contact, className }) {
 function Footer() {
   const { data } = useSite();
   return (
-    <footer className="mt-16 bg-canela-claro/60 pb-28 md:pb-10">
+    <footer className="mt-16 bg-canela-claro/60 pb-sobre-barra md:pb-10">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 pt-10 md:grid-cols-3">
         <div>
           <LogoFull className="w-full max-w-xs" />
