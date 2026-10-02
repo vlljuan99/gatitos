@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Archive, Mail, MailOpen, Phone, Trash2, UserCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Archive, House, Mail, MailOpen, Phone, ShieldCheck, Trash2, UserCheck } from 'lucide-react';
 import { WhatsAppIcon, whatsappUrl } from '../components/BrandIcons.jsx';
 import { useToast } from '../components/Toast.jsx';
-import { Card, EmptyState, ErrorState, Spinner, Tag, cx } from '../components/ui.jsx';
+import { buttonClass, Card, EmptyState, ErrorState, Spinner, Tag, cx } from '../components/ui.jsx';
 import { api } from '../lib/api.js';
 import { volunteerAreaLabel } from '../lib/forms.js';
 import { AdminPage, isAdmin, refreshAfterChange, StatusPill, Tabs, timeAgo, useAdminApi, useAuth, useConfirm } from './common.jsx';
+import { PdfLink } from './Papers.jsx';
 
 function ActionButton({ onClick, href, icon: Icon, children, external }) {
   const className = 'inline-flex min-h-10 items-center gap-1.5 rounded-full bg-crema px-3 text-sm font-bold hover:bg-canela-claro';
@@ -192,6 +194,18 @@ export function Volunteers() {
             <p className="break-all text-sm text-cacao-suave">
               {v.email} · {v.phone}
             </p>
+            <div className="flex flex-wrap gap-2">
+              <PdfLink path={`/confidencialidad/voluntariado/${v.id}`} label={`Compromiso de confidencialidad de ${v.name}`}>
+                <ShieldCheck className="size-4" /> Confidencialidad
+              </PdfLink>
+              <Link
+                to="/admin/acogidas"
+                state={{ prefill: { name: v.name, phone: v.phone, email: v.email } }}
+                className={buttonClass({ variant: 'soft', size: 'sm' })}
+              >
+                <House className="size-4" /> Hacer casa de acogida
+              </Link>
+            </div>
           </>
         ),
       }}

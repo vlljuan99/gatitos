@@ -20,14 +20,16 @@ import {
   X,
 } from 'lucide-react';
 import { CatPhoto } from '../components/CatPhoto.jsx';
-import { Checkbox, Choice, FormError, TextArea, TextInput } from '../components/form.jsx';
+import { Checkbox, Choice, Field, FormError, TextArea, TextInput } from '../components/form.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { Button, Card, Chip, ErrorState, Spinner, Tag, cx } from '../components/ui.jsx';
 import { api, ApiError } from '../lib/api.js';
 import { ageText, gendered, PERSONALITY_TAGS, statusLabel } from '../lib/cats.js';
 import { useDraftState } from '../lib/drafts.js';
 import { clearFiles, loadFiles, saveFiles } from '../lib/fileDrafts.js';
-import { AdminPage, isAdmin, refreshAfterChange, useAdminApi, useAuth, useConfirm } from './common.jsx';
+import { CatHistory } from './CatHistory.jsx';
+import { AdminPage, isAdmin, refreshAfterChange, todayIso, useAdminApi, useAuth, useConfirm } from './common.jsx';
+import { CatPapers } from './Papers.jsx';
 import { shrinkImage, uploadPhotos } from './photos.js';
 import { ShareImageSheet, sharePhotos } from './ShareImage.jsx';
 import { checkVideo, formatDuration, MAX_VIDEO_SECONDS, MAX_VIDEOS, uploadVideo } from './videos.js';
@@ -52,13 +54,35 @@ const EMPTY_CAT = {
   arrivedAt: '',
   adoptedAt: '',
   happyEnding: '',
+  // Ficha interna: va a los papeles y nunca sale en la web.
+  record: {
+    fileNumber: '',
+    breed: '',
+    microchipNumber: '',
+    intakePlace: '',
+    intakeBy: '',
+    intakePhone: '',
+    intakeReason: '',
+    colonyMember: 'desconocido',
+    colonyName: '',
+    colonyCaretaker: '',
+    earTipped: 'desconocido',
+    inTreatment: false,
+    fosterId: null,
+    fosterSince: '',
+    returnedAt: '',
+    pending: '',
+  },
 };
 
 function toForm(cat) {
   const form = {};
   for (const key of Object.keys(EMPTY_CAT)) form[key] = cat[key] ?? EMPTY_CAT[key];
+  form.record = { ...EMPTY_CAT.record, ...cat.record };
   return structuredClone(form);
 }
+
+const PUBLIC_STATUSES = ['disponible', 'reservado', 'adoptado'];
 
 /**
  * Valores del formulario de un gatito, guardados como borrador en el navegador
@@ -253,16 +277,38 @@ function HealthFields({ form }) {
 
 function PublishFields({ form, showStatus = true }) {
   const { values, set, errors } = form;
-  const options = ['borrador', 'disponible', 'reservado', 'adoptado'].map((status) => ({
+  const options = ['borrador', 'disponible', 'reservado', 'adoptado', 'colonia'].map((status) => ({
     value: status,
-    label: status === 'borrador' ? 'Borrador (oculto)' : statusLabel(status, values.sex),
+    label: status === 'borrador' ? 'Borrador (oculto)' : status === 'colonia' ? 'En su colonia (oculto)' : statusLabel(status, values.sex),
   }));
   return (
     <>
-      {showStatus && <Choice label="Estado" options={options} columns value={values.status} onChange={(v) => set('status', v)} />}
-      <Checkbox checked={values.featured} onChange={(v) => set('featured', v)}>
-        <strong>Destacar en la portada</strong> ⭐ <span className="text-cacao-suave">Sale entre los primeros en «Te están esperando».</span>
-      </Checkbox>
+      {showStatus && (
+        <Choice
+          label="Estado"
+          options={options}
+          columns
+          value={values.status}
+          onChange={(v) => set('status', v)}
+          hint={values.status === 'colonia' ? `Gato de colonia ${gendered('devuelto', values.sex)} a su sitio tras atenderlo. Queda registrado, pero no sale en la web.` : undefined}
+        />
+      )}
+      {values.status === 'colonia' && (
+        <TextInput
+          label="Volvió a su colonia el"
+          type="date"
+          optional
+          hint="Si la dejas vacía, se usa la de hoy."
+          value={values.record.returnedAt}
+          onChange={(v) => set('record.returnedAt', v)}
+          error={errors['record.returnedAt']}
+        />
+      )}
+      {values.status !== 'colonia' && (
+        <Checkbox checked={values.featured} onChange={(v) => set('featured', v)}>
+          <strong>Destacar en la portada</strong> ⭐ <span className="text-cacao-suave">Sale entre los primeros en «Te están esperando».</span>
+        </Checkbox>
+      )}
       {values.status === 'adoptado' && (
         <>
           <TextInput
@@ -284,6 +330,89 @@ function PublishFields({ form, showStatus = true }) {
           />
         </>
       )}
+    </>
+  );
+}
+
+const selectClass =
+  'w-full appearance-none rounded-2xl border-2 border-borde bg-nata px-4 py-3 text-base text-cacao transition focus:border-canela focus:outline-none';
+
+/** Ficha interna: datos para los papeles (ficha del gato, partes, contratos). */
+function RecordFields({ form, showFileNumber = true }) {
+  const { values, set, errors } = form;
+  const r = values.record;
+  const { data } = useAdminApi('/acogidas');
+  const fosters = (data?.fosters ?? []).filter((f) => f.active || f.id === r.fosterId);
+  const err = (key) => errors[`record.${key}`];
+  const field = (key) => ({ value: r[key], onChange: (v) => set(`record.${key}`, v), error: err(key) });
+  const g = (word) => gendered(word, values.sex);
+  return (
+    <>
+      {showFileNumber && (
+        <TextInput label="N.º de ficha" hint="Se pone solo al darlo de alta. Cámbialo si ya tenía uno en papel." maxLength={20} {...field('fileNumber')} />
+      )}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <TextInput label="Raza / tipo" optional placeholder="Común europeo" maxLength={80} {...field('breed')} />
+        <TextInput label="N.º de microchip" optional inputMode="numeric" maxLength={30} {...field('microchipNumber')} />
+      </div>
+      <fieldset className="grid gap-4 rounded-3xl bg-crema p-4">
+        <legend className="px-1 font-display text-lg font-semibold">Cómo llegó</legend>
+        <TextInput label="Lugar exacto de recogida" optional maxLength={200} {...field('intakePlace')} />
+        <TextInput label="Quién lo recogió o avisó" optional maxLength={120} {...field('intakeBy')} />
+        <TextInput label="Su teléfono" optional type="tel" inputMode="tel" maxLength={30} {...field('intakePhone')} />
+        <TextInput label="Motivo" optional placeholder="Abandonado, herido, camada en la calle…" maxLength={300} {...field('intakeReason')} />
+      </fieldset>
+      <fieldset className="grid gap-4 rounded-3xl bg-crema p-4">
+        <legend className="px-1 font-display text-lg font-semibold">Colonia</legend>
+        <Choice label="¿Es de una colonia?" options={TRI} value={r.colonyMember} onChange={(v) => set('record.colonyMember', v)} />
+        {r.colonyMember !== 'no' && (
+          <>
+            <TextInput label="Nombre o ubicación de la colonia" optional maxLength={200} {...field('colonyName')} />
+            <TextInput label="Quién la cuida o alimenta" optional maxLength={200} {...field('colonyCaretaker')} />
+            <Choice label={`¿Está ${g('marcado')} en la oreja (CER)?`} options={TRI} value={r.earTipped} onChange={(v) => set('record.earTipped', v)} />
+          </>
+        )}
+      </fieldset>
+      <fieldset className="grid gap-4 rounded-3xl bg-crema p-4">
+        <legend className="px-1 font-display text-lg font-semibold">Casa de acogida</legend>
+        <Field label="¿Dónde vive ahora?" error={err('fosterId')} hint={fosters.length === 0 ? 'Todavía no hay casas de acogida apuntadas.' : undefined}>
+          {({ id, describedBy }) => (
+            <select
+              id={id}
+              aria-describedby={describedBy}
+              className={selectClass}
+              value={r.fosterId ?? ''}
+              onChange={(event) => {
+                const fosterId = Number(event.target.value) || null;
+                set('record.fosterId', fosterId);
+                set('record.fosterSince', fosterId ? r.fosterSince || todayIso() : '');
+              }}
+            >
+              <option value="">Sin casa de acogida</option>
+              {fosters.map((foster) => (
+                <option key={foster.id} value={foster.id}>
+                  {foster.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </Field>
+        {r.fosterId && <TextInput label="Está con ella desde" type="date" {...field('fosterSince')} />}
+        <Link to="/admin/acogidas" className="justify-self-start text-sm font-bold text-canela-oscuro underline">
+          Gestionar casas de acogida
+        </Link>
+      </fieldset>
+      <Checkbox checked={r.inTreatment} onChange={(v) => set('record.inTreatment', v)}>
+        <strong>Está en tratamiento</strong> <span className="text-cacao-suave">Sale marcado en su ficha.</span>
+      </Checkbox>
+      <TextArea
+        label="Pendiente"
+        optional
+        rows={3}
+        hint="Lo que queda por hacer: vacunas, revisiones, compras… Sale en su ficha de seguimiento."
+        maxLength={1000}
+        {...field('pending')}
+      />
     </>
   );
 }
@@ -458,7 +587,7 @@ function VideoTile({ video, index, catName, onRemove }) {
 // Alta: asistente por pasos («nuevo gatito en un minuto»)
 // ---------------------------------------------------------------------------
 
-const WIZARD = ['Fotos y vídeos', 'Lo básico', 'Carácter', 'Salud', 'Publicar'];
+const WIZARD = ['Fotos y vídeos', 'Lo básico', 'Carácter', 'Salud', 'Ficha interna', 'Publicar'];
 
 function NewCat() {
   const navigate = useNavigate();
@@ -670,6 +799,11 @@ function NewCat() {
           </Section>
         )}
         {step === 4 && (
+          <Section title="Ficha interna 🗂️" hint="Todo opcional y no sale en la web: es lo que se imprime en sus papeles. Puedes completarlo más tarde.">
+            <RecordFields form={form} showFileNumber={false} />
+          </Section>
+        )}
+        {step === 5 && (
           <>
             <Card className="flex gap-4">
               {previews[0] ? (
@@ -898,6 +1032,9 @@ function EditCat({ initial }) {
     if (params.has('compartir')) setParams({}, { replace: true });
   }, [params, setParams]);
   const canShare = sharePhotos(cat).length > 0;
+  const [reporting, setReporting] = useState(false);
+  const { data: fosterData } = useAdminApi('/acogidas');
+  const foster = fosterData?.fosters.find((f) => f.id === cat.record?.fosterId);
 
   useEffect(() => {
     if (recovered) toast('Hemos recuperado los cambios que no habías guardado', { duration: 6000 });
@@ -950,7 +1087,7 @@ function EditCat({ initial }) {
     }
   }
 
-  const publicLink = cat.status !== 'borrador' && (
+  const publicLink = PUBLIC_STATUSES.includes(cat.status) && (
     <a href={`/gatitos/${cat.slug}`} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center gap-1 rounded-full bg-nata px-3 text-sm font-bold shadow-suave">
       <ExternalLink className="size-4" /> Ver en la web
     </a>
@@ -971,6 +1108,7 @@ function EditCat({ initial }) {
             Crear imagen
           </Button>
         </Card>
+        <CatPapers cat={cat} dirty={dirty} onNewReport={() => setReporting(true)} />
         <EditPhotos cat={cat} onChange={setCat} />
         <EditVideos cat={cat} onChange={setCat} />
         <Section title="Estado y portada">
@@ -985,6 +1123,16 @@ function EditCat({ initial }) {
         <Section title="Convivencia y salud">
           <HealthFields form={form} />
         </Section>
+        <Section title="Ficha interna 🗂️" hint="No sale en la web. Es lo que se imprime en sus papeles.">
+          <RecordFields form={form} />
+        </Section>
+        <CatHistory
+          cat={cat}
+          reportOpen={reporting}
+          onReportOpen={() => setReporting(true)}
+          onReportClose={() => setReporting(false)}
+          carrier={foster ? { name: foster.name, phone: foster.phone } : undefined}
+        />
         <FormError>{error}</FormError>
         {isAdmin(user) && (
           <Button variant="danger" onClick={destroy} className="justify-self-start">

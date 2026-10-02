@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { db } from '../db.js';
 import { getAllContent } from '../content.js';
-import { publicStats, serializeCats } from '../cats.js';
+import { publicStats, PUBLIC_STATUSES_SQL, serializeCats } from '../cats.js';
 import { applicationSchema, messageSchema, volunteerSchema } from '../forms.js';
 import { notifyNewApplication, notifyNewMessage, notifyNewVolunteer } from '../notify.js';
 import { isBot, rateLimit } from '../security.js';
@@ -34,7 +34,7 @@ export function publicRouter() {
   });
 
   router.get('/gatitos/:slug', (req, res) => {
-    const row = db.prepare("SELECT * FROM cats WHERE slug = ? AND status != 'borrador'").get(req.params.slug);
+    const row = db.prepare(`SELECT * FROM cats WHERE slug = ? AND status IN (${PUBLIC_STATUSES_SQL})`).get(req.params.slug);
     if (!row) return res.status(404).json({ error: 'No encontramos a este gatito' });
     res.json({ cat: serializeCats([row])[0] });
   });

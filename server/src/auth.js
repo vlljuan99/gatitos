@@ -68,7 +68,7 @@ function setSessionCookie(res, user) {
 }
 
 /** Usuario de la cookie de sesión, o null si no hay sesión válida. */
-function sessionUser(req) {
+export function sessionUser(req) {
   const token = req.cookies?.[COOKIE_NAME];
   if (!token) return null;
   try {

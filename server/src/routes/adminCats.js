@@ -9,19 +9,41 @@ import { VIDEO_TMP_DIR } from '../config.js';
 import { CAT_STATUSES, serializeCats, uniqueSlug } from '../cats.js';
 import { deletePhotoFiles, ImageError, savePhoto } from '../images.js';
 import { deleteVideoFiles, enqueueVideo, MAX_VIDEO_MB, MAX_VIDEOS, videoSupport } from '../videos.js';
-import { parseBody, parseId, requiredText, text } from '../validation.js';
+import { nextFileNumber, today } from '../numbers.js';
+import { catRecordsRouter } from './adminCatRecords.js';
+import { optionalDate, optionalDay, parseBody, parseId, requiredText, text } from '../validation.js';
 
 const MAX_PHOTOS = 12;
 const triState = z.enum(['si', 'no', 'desconocido']).default('desconocido');
-// Las fechas vacías llegan como '' desde el formulario o como null al reenviar
-// un gatito tal cual se leyó: ambas significan «sin fecha».
-const optionalDate = (schema) =>
-  z
-    .union([z.literal(''), schema])
-    .nullish()
-    .transform((value) => value ?? '');
 const month = optionalDate(z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Fecha no válida'));
-const day = optionalDate(z.iso.date('Fecha no válida'));
+const day = optionalDay();
+
+// Ficha interna: datos para los papeles (ficha del gato, partes, contratos…)
+// que no salen nunca en la web. Es opcional en la petición: si no llega, se
+// conserva la que hubiera.
+const recordSchema = z.object({
+  fileNumber: text(20).default(''),
+  breed: text(80).default(''),
+  microchipNumber: text(30).default(''),
+  intakePlace: text(200).default(''),
+  intakeBy: text(120).default(''),
+  intakePhone: text(30).default(''),
+  intakeReason: text(300).default(''),
+  colonyMember: triState,
+  colonyName: text(200).default(''),
+  colonyCaretaker: text(200).default(''),
+  earTipped: triState,
+  inTreatment: z.boolean().default(false),
+  fosterId: z
+    .number()
+    .int()
+    .positive()
+    .nullish()
+    .transform((value) => value ?? null),
+  fosterSince: day,
+  returnedAt: day,
+  pending: text(1000).default(''),
+});
 
 const catSchema = z
   .object({
@@ -49,6 +71,7 @@ const catSchema = z
     arrivedAt: day,
     adoptedAt: day,
     happyEnding: text(3000).default(''),
+    record: recordSchema.optional(),
   })
   .superRefine((data, ctx) => {
     const thisMonth = new Date().toISOString().slice(0, 7);
@@ -57,9 +80,45 @@ const catSchema = z
     }
   });
 
+function recordParams(record) {
+  return {
+    breed: record.breed,
+    microchip_number: record.microchipNumber,
+    intake_place: record.intakePlace,
+    intake_by: record.intakeBy,
+    intake_phone: record.intakePhone,
+    intake_reason: record.intakeReason,
+    colony_member: record.colonyMember,
+    colony_name: record.colonyName,
+    colony_caretaker: record.colonyCaretaker,
+    ear_tipped: record.earTipped,
+    in_treatment: record.inTreatment ? 1 : 0,
+    foster_id: record.fosterId,
+    // Al asignar una casa de acogida sin fecha, se toma la de hoy.
+    foster_since: record.fosterId ? record.fosterSince || today() : null,
+    pending: record.pending,
+  };
+}
+
+/**
+ * Comprueba la ficha interna (n.º de ficha libre, casa de acogida existente).
+ * Devuelve los errores por campo, o null si todo está bien.
+ */
+function checkRecord(record, catId = null) {
+  if (!record) return null;
+  const fields = {};
+  if (record.fileNumber) {
+    const taken = db.prepare('SELECT id FROM cats WHERE file_number = ? AND id IS NOT ?').get(record.fileNumber, catId);
+    if (taken) fields['record.fileNumber'] = 'Ese número de ficha ya lo tiene otro gato';
+  }
+  if (record.fosterId && !db.prepare('SELECT 1 FROM fosters WHERE id = ?').get(record.fosterId)) {
+    fields['record.fosterId'] = 'Esa casa de acogida ya no existe';
+  }
+  return Object.keys(fields).length ? fields : null;
+}
+
 function catParams(data) {
-  const adoptedAt =
-    data.status === 'adoptado' ? data.adoptedAt || new Date().toISOString().slice(0, 10) : null;
+  const adoptedAt = data.status === 'adoptado' ? data.adoptedAt || today() : null;
   return {
     name: data.name,
     sex: data.sex,
@@ -83,7 +142,14 @@ function catParams(data) {
     arrived_at: data.arrivedAt || null,
     adopted_at: adoptedAt,
     happy_ending: data.happyEnding,
+    ...(data.record ? recordParams(data.record) : {}),
   };
+}
+
+/** Fecha en que volvió a su colonia: la indicada, la que ya tenía o hoy. */
+function returnedAt(data, current = null) {
+  if (data.status !== 'colonia') return null;
+  return data.record?.returnedAt || current?.returned_at || today();
 }
 
 function loadCat(id) {
@@ -130,7 +196,16 @@ export function adminCatsRouter() {
   router.post('/', (req, res) => {
     const data = parseBody(catSchema, req, res);
     if (!data) return;
-    const params = { ...catParams(data), slug: uniqueSlug(data.name), created_by: req.user.id };
+    const problems = checkRecord(data.record);
+    if (problems) return res.status(400).json({ error: 'Revisa los campos marcados', fields: problems });
+    const year = Number((data.arrivedAt || today()).slice(0, 4));
+    const params = {
+      ...catParams(data),
+      slug: uniqueSlug(data.name),
+      created_by: req.user.id,
+      file_number: data.record?.fileNumber || nextFileNumber(year),
+      returned_at: returnedAt(data),
+    };
     const columns = Object.keys(params);
     const info = db
       .prepare(`INSERT INTO cats (${columns.join(', ')}) VALUES (${columns.map((c) => `@${c}`).join(', ')})`)
@@ -144,10 +219,15 @@ export function adminCatsRouter() {
     const data = parseBody(catSchema, req, res);
     if (!data) return;
     const params = catParams(data);
-    const current = db.prepare('SELECT adopted_at FROM cats WHERE id = ?').get(id);
+    const current = db.prepare('SELECT adopted_at, returned_at, file_number FROM cats WHERE id = ?').get(id);
     if (!current) return res.status(404).json({ error: 'No encontramos a este gatito' });
+    const problems = checkRecord(data.record, id);
+    if (problems) return res.status(400).json({ error: 'Revisa los campos marcados', fields: problems });
     // Si ya estaba adoptado y no se indica fecha, se conserva la original.
     if (data.status === 'adoptado' && !data.adoptedAt && current.adopted_at) params.adopted_at = current.adopted_at;
+    params.returned_at = returnedAt(data, current);
+    // El n.º de ficha no se puede dejar vacío: si se borra, se queda el que tenía.
+    if (data.record) params.file_number = data.record.fileNumber || current.file_number || nextFileNumber();
     const sets = Object.keys(params).map((c) => `${c} = @${c}`);
     db.prepare(`UPDATE cats SET ${sets.join(', ')}, updated_at = datetime('now') WHERE id = @id`).run({ ...params, id });
     res.json({ cat: loadCat(id) });
@@ -288,6 +368,9 @@ export function adminCatsRouter() {
     res.json({ cat: loadCat(id) });
   });
 
+  // Historial y visitas al veterinario: /gatitos/:id/historial y /gatitos/:id/veterinario.
+  router.use('/:id', catRecordsRouter());
+
   // Errores de multer (foto o vídeo demasiado grande, demasiadas fotos…) en castellano.
   router.use((error, req, res, next) => {
     if (error instanceof multer.MulterError) {
@@ -312,9 +395,10 @@ export function setCatStatus(id, status) {
   return db
     .prepare(
       `UPDATE cats SET status = @status,
-         adopted_at = CASE WHEN @status = 'adoptado' THEN COALESCE(adopted_at, date('now')) ELSE NULL END,
+         adopted_at = CASE WHEN @status = 'adoptado' THEN COALESCE(adopted_at, @today) ELSE NULL END,
+         returned_at = CASE WHEN @status = 'colonia' THEN COALESCE(returned_at, @today) ELSE NULL END,
          updated_at = datetime('now')
        WHERE id = @id`,
     )
-    .run({ id, status });
+    .run({ id, status, today: today() });
 }

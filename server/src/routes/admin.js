@@ -4,8 +4,13 @@ import { requireAdmin, requireAuth } from '../auth.js';
 import { CONTENT, getAllContent, saveContent } from '../content.js';
 import { serializeCats } from '../cats.js';
 import { parseBody } from '../validation.js';
+import { pdfToken } from '../papers/access.js';
 import { adminCatsRouter } from './adminCats.js';
+import { upcomingChecks } from './adminCatRecords.js';
+import { adminDonationsRouter } from './adminDonations.js';
+import { adminFostersRouter } from './adminFosters.js';
 import { adminApplicationsRouter, adminMessagesRouter, adminVolunteersRouter } from './adminInbox.js';
+import { adminInventoryRouter, inventoryAlerts } from './adminInventory.js';
 import { adminTeamRouter } from './adminTeam.js';
 
 // Todo lo de /api/admin exige sesión del equipo. Lo exclusivo de la
@@ -38,7 +43,10 @@ export function adminRouter() {
         disponible: cats.disponible ?? 0,
         reservado: cats.reservado ?? 0,
         adoptado: cats.adoptado ?? 0,
+        colonia: cats.colonia ?? 0,
       },
+      // Avisos: medicación que caduca, cosas que se acaban y revisiones cercanas.
+      alerts: { ...inventoryAlerts(), checks: upcomingChecks() },
       // Los más queridos en el match y los que necesitan un empujón.
       mostLoved: available('likes DESC, created_at DESC'),
       needLove: available('likes ASC, COALESCE(arrived_at, created_at) ASC'),
@@ -64,7 +72,16 @@ export function adminRouter() {
     res.json({ value: saveContent(req.params.key, data) });
   });
 
+  // Permiso de media hora para abrir los PDF (/api/papeles/…?t=…) fuera del
+  // panel: en una pestaña nueva, en el visor del móvil o al descargarlos.
+  router.post('/papeles/permiso', (req, res) => {
+    res.json(pdfToken(req.user));
+  });
+
   router.use('/gatitos', adminCatsRouter());
+  router.use('/acogidas', adminFostersRouter());
+  router.use('/inventario', adminInventoryRouter());
+  router.use('/donaciones', adminDonationsRouter());
   router.use('/solicitudes', adminApplicationsRouter());
   router.use('/mensajes', adminMessagesRouter());
   router.use('/voluntariado', adminVolunteersRouter());

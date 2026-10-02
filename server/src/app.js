@@ -9,6 +9,7 @@ import { APP_VERSION, BUILD_TIME, DATA_DIR, GIT_SHA, PUBLIC_URL, UPLOADS_DIR } f
 import { authRouter } from './auth.js';
 import { publicRouter } from './routes/public.js';
 import { adminRouter } from './routes/admin.js';
+import { papersRouter } from './papers/router.js';
 import { injectHead, metaFor, robotsTxt, sitemapXml } from './og.js';
 import { sameOriginOnly } from './security.js';
 import { videoSupport } from './videos.js';
@@ -89,6 +90,7 @@ export function createApp({ clientDist = DEFAULT_CLIENT_DIST } = {}) {
   });
   app.use('/api/auth', authRouter());
   app.use('/api/admin', adminRouter());
+  app.use('/api/papeles', papersRouter());
   app.use('/api', publicRouter());
   app.use('/api', (req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
 

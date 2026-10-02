@@ -1,7 +1,7 @@
 import { db } from './db.js';
 import { PUBLIC_URL } from './config.js';
 import { getContent } from './content.js';
-import { photoUrls } from './cats.js';
+import { photoUrls, PUBLIC_STATUSES_SQL } from './cats.js';
 
 // La web es una SPA, pero WhatsApp, Instagram o Facebook no ejecutan
 // JavaScript al generar la vista previa de un enlace. Por eso el servidor
@@ -46,7 +46,7 @@ export function ageText(birthDate, now = new Date()) {
 }
 
 function catMeta(slug) {
-  const cat = db.prepare("SELECT * FROM cats WHERE slug = ? AND status != 'borrador'").get(slug);
+  const cat = db.prepare(`SELECT * FROM cats WHERE slug = ? AND status IN (${PUBLIC_STATUSES_SQL})`).get(slug);
   if (!cat) return null;
   const photo = db.prepare('SELECT file_key FROM cat_photos WHERE cat_id = ? ORDER BY position, id LIMIT 1').get(cat.id);
   const sex = cat.sex === 'macho' ? 'macho' : cat.sex === 'hembra' ? 'hembra' : '';
@@ -110,7 +110,7 @@ export function injectHead(template, pathname, meta) {
 }
 
 export function sitemapXml() {
-  const cats = db.prepare("SELECT slug, updated_at FROM cats WHERE status != 'borrador'").all();
+  const cats = db.prepare(`SELECT slug, updated_at FROM cats WHERE status IN (${PUBLIC_STATUSES_SQL})`).all();
   const pages = Object.keys(STATIC_PAGES).filter((p) => !['/favoritos', '/aviso-legal', '/privacidad', '/cookies'].includes(p));
   const urls = [
     ...pages.map((p) => `<url><loc>${PUBLIC_URL}${p}</loc></url>`),

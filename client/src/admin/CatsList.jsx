@@ -8,7 +8,7 @@ import { api } from '../lib/api.js';
 import { ageText, statusLabel } from '../lib/cats.js';
 import { AdminPage, refreshAfterChange, Tabs, timeAgo, useAdminApi } from './common.jsx';
 
-export const CAT_STATUSES = ['borrador', 'disponible', 'reservado', 'adoptado'];
+export const CAT_STATUSES = ['borrador', 'disponible', 'reservado', 'adoptado', 'colonia'];
 
 const normalize = (text) =>
   text
@@ -25,6 +25,7 @@ function QuickStatus({ cat, onChanged }) {
     disponible: 'bg-menta text-menta-oscuro',
     reservado: 'bg-mantequilla text-mantequilla-oscuro',
     adoptado: 'bg-lavanda text-lavanda-oscuro',
+    colonia: 'bg-cielo text-cielo-oscuro',
   };
   return (
     <select
@@ -65,7 +66,9 @@ export default function CatsList() {
 
   const counts = useMemo(() => Object.fromEntries(CAT_STATUSES.map((s) => [s, cats.filter((c) => c.status === s).length])), [cats]);
   const visible = cats.filter(
-    (cat) => (status === 'todos' || cat.status === status) && (!query || normalize(cat.name).includes(normalize(query))),
+    (cat) =>
+      (status === 'todos' || cat.status === status) &&
+      (!query || normalize(`${cat.name} ${cat.record?.fileNumber ?? ''}`).includes(normalize(query))),
   );
 
   return (
@@ -78,13 +81,13 @@ export default function CatsList() {
       }
     >
       <label className="relative mb-3 block">
-        <span className="sr-only">Buscar por nombre</span>
+        <span className="sr-only">Buscar por nombre o n.º de ficha</span>
         <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-cacao-suave" aria-hidden />
         <input
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Buscar por nombre"
+          placeholder="Buscar por nombre o n.º de ficha"
           className="w-full rounded-full border-2 border-borde bg-nata py-3 pl-12 pr-4 focus:border-canela focus:outline-none"
         />
       </label>
@@ -97,6 +100,7 @@ export default function CatsList() {
           { value: 'reservado', label: 'Reservados', count: counts.reservado },
           { value: 'adoptado', label: 'Adoptados', count: counts.adoptado },
           { value: 'borrador', label: 'Borradores', count: counts.borrador },
+          { value: 'colonia', label: 'Colonias', count: counts.colonia },
         ]}
       />
       {loading && <Spinner />}
@@ -118,7 +122,9 @@ export default function CatsList() {
                   {cat.featured && <Star className="size-4 shrink-0 text-mantequilla-oscuro" fill="currentColor" aria-label="Destacado" />}
                 </span>
                 <span className="block truncate text-sm text-cacao-suave">
-                  {[ageText(cat.birthDate), cat.photos.length === 1 ? '1 foto' : `${cat.photos.length} fotos`, `${cat.likes} 💕`].filter(Boolean).join(' · ')}
+                  {[cat.record?.fileNumber && `N.º ${cat.record.fileNumber}`, ageText(cat.birthDate), cat.photos.length === 1 ? '1 foto' : `${cat.photos.length} fotos`, `${cat.likes} 💕`]
+                    .filter(Boolean)
+                    .join(' · ')}
                 </span>
                 <span className="block text-xs text-cacao-suave">Editado {timeAgo(cat.updatedAt)}</span>
               </span>

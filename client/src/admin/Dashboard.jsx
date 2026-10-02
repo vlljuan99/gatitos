@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
-import { ClipboardList, HeartHandshake, Inbox, Plus, Smartphone, UserPlus } from 'lucide-react';
+import { ClipboardList, HeartHandshake, Inbox, Plus, Printer, Smartphone, TriangleAlert, UserPlus } from 'lucide-react';
 import { CatPhoto } from '../components/CatPhoto.jsx';
 import { ButtonLink, Card, ErrorState, Spinner, cx } from '../components/ui.jsx';
-import { AdminPage, isAdmin, useAdminApi, useAuth } from './common.jsx';
+import { AdminPage, isAdmin, shortDate, todayIso, useAdminApi, useAuth } from './common.jsx';
 
 function Tile({ to, icon: Icon, count, label, tone }) {
   return (
@@ -11,6 +11,45 @@ function Tile({ to, icon: Icon, count, label, tone }) {
       <span className="font-display text-4xl font-semibold leading-none">{count}</span>
       <span className="text-sm font-bold leading-tight">{label}</span>
     </Link>
+  );
+}
+
+/** Avisos: medicación que caduca, cosas que se acaban y revisiones veterinarias cercanas. */
+function Alerts({ alerts }) {
+  const today = todayIso();
+  const rows = [
+    ...alerts.expiring.map((item) => ({
+      key: `c${item.id}`,
+      to: '/admin/inventario',
+      text: item.expiresOn < today ? `${item.name}: caducado el ${shortDate(item.expiresOn)}` : `${item.name}: caduca el ${shortDate(item.expiresOn)}`,
+    })),
+    ...alerts.low.map((item) => ({
+      key: `p${item.id}`,
+      to: item.kind === 'general' ? '/admin/inventario?tipo=general' : '/admin/inventario',
+      text: `Queda poco: ${item.name} (${item.quantity.toLocaleString('es-ES')}${item.unit ? ` ${item.unit}` : ''})`,
+    })),
+    ...alerts.checks.map((check) => ({
+      key: `r${check.catId}`,
+      to: `/admin/gatitos/${check.catId}`,
+      text: `Revisión de ${check.catName} el ${shortDate(check.nextCheck)}`,
+    })),
+  ];
+  if (rows.length === 0) return null;
+  return (
+    <Card className="mb-5 bg-mantequilla">
+      <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-mantequilla-oscuro">
+        <TriangleAlert className="size-5" aria-hidden /> Avisos
+      </h2>
+      <ul className="mt-2 grid gap-1">
+        {rows.map((row) => (
+          <li key={row.key}>
+            <Link to={row.to} className="block rounded-xl px-2 py-1.5 font-semibold underline-offset-2 hover:underline">
+              {row.text}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }
 
@@ -39,9 +78,12 @@ export default function Dashboard() {
 
   return (
     <AdminPage title={`${greeting}, ${user.name.split(' ')[0]}! 🐾`} subtitle="Esto es lo que hay pendiente hoy.">
-      <div className={cx('mb-5 grid gap-3', isAdmin(user) && 'sm:grid-cols-2')}>
+      <div className={cx('mb-5 grid gap-3 sm:grid-cols-2', isAdmin(user) && 'lg:grid-cols-3')}>
         <ButtonLink to="/admin/gatitos/nuevo" size="lg" block>
           <Plus className="size-6" /> Nuevo gatito
+        </ButtonLink>
+        <ButtonLink to="/admin/papeles" variant="secondary" size="lg" block>
+          <Printer className="size-5" /> Papeles
         </ButtonLink>
         {isAdmin(user) && (
           <ButtonLink to="/admin/equipo?nuevo" variant="secondary" size="lg" block>
@@ -53,6 +95,7 @@ export default function Dashboard() {
       {error && <ErrorState error={error} onRetry={reload} />}
       {data && (
         <>
+          <Alerts alerts={data.alerts} />
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <Tile to="/admin/solicitudes" icon={ClipboardList} count={data.applications.new} label="solicitudes nuevas" tone="bg-canela-claro text-canela-oscuro" />
             <Tile to="/admin/mensajes" icon={Inbox} count={data.messages.new} label="mensajes sin leer" tone="bg-cielo text-cielo-oscuro" />
@@ -62,12 +105,13 @@ export default function Dashboard() {
 
           <Card className="mt-5">
             <h2 className="font-display text-xl font-semibold">Gatitos</h2>
-            <div className="mt-3 grid grid-cols-4 gap-2 text-center">
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center sm:grid-cols-5">
               {[
                 ['disponible', 'Disponibles', 'bg-menta text-menta-oscuro'],
                 ['reservado', 'Reservados', 'bg-mantequilla text-mantequilla-oscuro'],
                 ['adoptado', 'Adoptados', 'bg-lavanda text-lavanda-oscuro'],
                 ['borrador', 'Borradores', 'bg-cacao/10 text-cacao-suave'],
+                ['colonia', 'Colonias', 'bg-cielo text-cielo-oscuro'],
               ].map(([status, label, tone]) => (
                 <Link key={status} to={`/admin/gatitos?estado=${status}`} className={cx('rounded-2xl p-2', tone)}>
                   <span className="block font-display text-2xl font-semibold">{data.cats[status]}</span>

@@ -65,6 +65,20 @@ function Privacy({ legal, email }) {
         <p>
           <strong>Solicitudes de adopción:</strong> tus datos de contacto y las respuestas del cuestionario, para valorar si el
           gatito y tu hogar encajan, hablar contigo, organizar la visita, firmar el contrato y hacer el seguimiento de la adopción.
+          Si la adopción sigue adelante, para el contrato te pediremos además DNI, fecha de nacimiento, dirección y, si quieres,
+          un contacto alternativo; también hacen falta para cambiar el titular del microchip.
+        </p>
+        <p>
+          <strong>Casas de acogida:</strong> nombre, DNI, dirección y datos de contacto de quien acoge un gato en su casa, para el
+          acuerdo de acogida y para coordinar sus cuidados.
+        </p>
+        <p>
+          <strong>Donaciones:</strong> el nombre y el contacto de quien dona (si quiere darlos), la fecha y lo donado, para
+          llevar las cuentas de la asociación y dar las gracias.
+        </p>
+        <p>
+          <strong>Avisos de gatos:</strong> el nombre y el teléfono de quien recoge o nos avisa de un gato, en su ficha, por si
+          hay que volver a contactar sobre él.
         </p>
         <p>
           <strong>Voluntariado:</strong> tus datos de contacto y disponibilidad, para organizar la ayuda.
@@ -75,20 +89,25 @@ function Privacy({ legal, email }) {
       </Section>
       <Section title="Base legal">
         <p>
-          Tu consentimiento, que nos das al enviar cada formulario (art. 6.1.a del RGPD), y, en las adopciones, la aplicación de
-          medidas precontractuales a petición tuya (art. 6.1.b). Puedes retirar tu consentimiento cuando quieras.
+          Tu consentimiento, que nos das al enviar cada formulario o al darnos tus datos (art. 6.1.a del RGPD), y, en las
+          adopciones y las acogidas, el contrato o acuerdo que firmamos contigo y los pasos previos a él (art. 6.1.b). Las cuentas
+          de las donaciones, además, son una obligación legal de la asociación (art. 6.1.c). Puedes retirar tu consentimiento
+          cuando quieras.
         </p>
       </Section>
       <Section title="Cuánto tiempo los guardamos">
         <p>
           Las solicitudes que no siguen adelante y los mensajes archivados se borran automáticamente al cabo de un año. Los datos
-          de las adopciones realizadas se conservan mientras dure el seguimiento y los plazos que marca la ley.
+          de las adopciones realizadas y de las acogidas se conservan mientras dure el seguimiento del gato y los plazos que
+          marca la ley; los de las donaciones, lo que exige la ley para las cuentas de la asociación. Cualquier persona puede
+          pedir que borremos antes lo que no sea obligatorio guardar.
         </p>
       </Section>
       <Section title="Quién más los ve">
         <p>
-          Nadie fuera del equipo de la asociación. No cedemos ni vendemos datos. La web está alojada en servidores de Hetzner
-          Online GmbH en la Unión Europea, que actúa como encargado del tratamiento.
+          Nadie fuera del equipo de la asociación, que firma un compromiso de confidencialidad. No cedemos ni vendemos datos,
+          salvo cuando lo exige la ley (por ejemplo, el registro del microchip al cambiar de titular). La web está alojada en
+          servidores de Hetzner Online GmbH en la Unión Europea, que actúa como encargado del tratamiento.
         </p>
       </Section>
       <Section title="Tus derechos">

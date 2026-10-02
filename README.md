@@ -52,15 +52,37 @@ se enamore de un gatito y lo adopte.
   prepara en segundo plano con ffmpeg (MP4 que se ve en cualquier móvil, sin
   ubicación GPS ni otros metadatos) y aparecen en la web cuando están listos.
 - Cambio de estado con un toque (disponible, reservado, adoptado…). Al marcar
-  «Adoptado» el gatito pasa solo a Finales felices.
+  «Adoptado» el gatito pasa solo a Finales felices. Los **gatos de colonia**
+  que se atienden y se devuelven a su sitio quedan registrados como «En su
+  colonia», sin salir nunca en la web.
+- **Ficha interna** de cada gato (no sale en la web): n.º de ficha del año
+  (`2026-001`), dónde y quién lo recogió, raza, microchip, colonia, casa de
+  acogida, si está en tratamiento y lo que queda pendiente.
+- **Historial y veterinario**: notas con fecha y visitas a la clínica. Cada
+  visita nace con su **parte veterinario** numerado (`V-2026-001`): sin parte,
+  la clínica no atiende a cargo de la asociación. Al volver se completa con
+  diagnóstico, tratamiento, próxima revisión e importe.
+- **Papeles en PDF** listos para imprimir (o escribir encima): ficha del gato,
+  ficha de seguimiento, acuerdo de acogida, parte veterinario, contrato de
+  adopción (`A-2026-001`), compromiso de confidencialidad, inventarios y
+  registro de donaciones. Salen rellenos con lo que hay en el panel y con
+  líneas en blanco para lo que falte; también se pueden sacar en blanco. Los
+  A5 se pueden imprimir dos por folio. Todo está en **Papeles** y en la ficha
+  de cada gato o solicitud.
+- **Casas de acogida** con sus datos (van al acuerdo de acogida y salen en la
+  ficha de cada gato).
+- **Inventario** de medicación (caducidad e instrucciones) y general, con
+  sumar/restar de un toque y avisos de lo que caduca o se acaba.
+- **Donaciones** de dinero y de material, con los totales del año.
 - **Solicitudes** por etapas (nueva → entrevista → visita → aprobada →
   adoptado / descartada), con notas internas y botones para llamar, WhatsApp o
   email.
 - Bandejas de **mensajes** y **voluntariado**.
 - **Textos de la web** editables sin tocar código (portada, cómo trabajamos,
   requisitos, preguntas, contacto, donaciones, datos legales).
-- **Resumen** con lo pendiente, los gatitos más queridos en el match y los que
-  necesitan un empujón.
+- **Resumen** con lo pendiente, avisos (medicación que caduca, cosas que se
+  acaban, revisiones veterinarias), los gatitos más queridos en el match y los
+  que necesitan un empujón.
 
 ## Stack
 
@@ -68,8 +90,8 @@ El mismo que el resto de proyectos del VPS:
 
 - **Cliente**: React 19 + Vite + Tailwind CSS 4 + Framer Motion + React Router.
 - **Servidor**: Node.js 22 + Express 5 + better-sqlite3 (SQLite en WAL) + sharp
-  para las fotos y ffmpeg para los vídeos. Sesión con cookie httpOnly (JWT) y
-  contraseñas con bcrypt.
+  para las fotos, ffmpeg para los vídeos y PDFKit para los papeles. Sesión con
+  cookie httpOnly (JWT) y contraseñas con bcrypt.
 - **Producción**: un contenedor Docker detrás del Caddy compartido. Ver
   [deploy/README.md](deploy/README.md).
 
@@ -106,6 +128,8 @@ server/src/
   db.js         SQLite y migraciones (fuente de verdad del modelo de datos)
   content.js    Textos editables con sus valores por defecto
   routes/       API pública y del panel
+  papers/       Papeles en PDF (/api/papeles): plantillas, datos y permisos
+server/assets/  Tipografías de la web en TTF para los PDF (licencia OFL)
 server/scripts/ seed-demo, create-user, generate-brand
 brand/          Logo original de la asociación (el vectorizado está en client/public)
 deploy/         Compose, Caddy y scripts del servidor

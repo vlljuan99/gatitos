@@ -20,7 +20,7 @@ export const ROLE_INFO = {
   cuidabigotes: {
     label: 'Cuidabigotes',
     emoji: '🐾',
-    can: 'Lleva el día a día: gatitos, solicitudes, mensajes, voluntariado y textos de la web.',
+    can: 'Lleva el día a día: gatitos y sus papeles, solicitudes, mensajes, voluntariado, acogidas, inventario, donaciones y textos de la web.',
   },
 };
 
@@ -88,6 +88,7 @@ const STATUS_TONES = {
   disponible: 'bg-menta text-menta-oscuro',
   reservado: 'bg-mantequilla text-mantequilla-oscuro',
   adoptado: 'bg-lavanda text-lavanda-oscuro',
+  colonia: 'bg-cielo text-cielo-oscuro',
   nueva: 'bg-canela-claro text-canela-oscuro',
   nuevo: 'bg-canela-claro text-canela-oscuro',
   entrevista: 'bg-cielo text-cielo-oscuro',
@@ -126,6 +127,15 @@ export function timeAgo(value, now = Date.now()) {
     if (Math.abs(seconds) >= size) return rtf.format(Math.round(seconds / size), unit);
   }
   return 'ahora mismo';
+}
+
+/** «2026-10-02» → «02/10/2026» (fechas de calendario, sin hora). */
+export const shortDate = (value) => (value ? value.slice(0, 10).split('-').reverse().join('/') : '');
+
+/** Hoy en la hora del móvil, como AAAA-MM-DD (para campos de fecha). */
+export function todayIso(now = new Date()) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
 export function formatDate(value) {

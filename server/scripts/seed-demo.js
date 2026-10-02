@@ -11,6 +11,7 @@ import { IS_PROD } from '../src/config.js';
 import { db, runMigrations } from '../src/db.js';
 import { createUser } from '../src/auth.js';
 import { uniqueSlug } from '../src/cats.js';
+import { nextFileNumber } from '../src/numbers.js';
 import { savePhoto } from '../src/images.js';
 import { catPortraitSvg } from './cat-art.js';
 
@@ -208,10 +209,10 @@ if (!IS_PROD && db.prepare('SELECT COUNT(*) AS n FROM users').get().n === 0) {
 const insertCat = db.prepare(`
   INSERT INTO cats (slug, name, sex, birth_date, coat, summary, story, personality,
     good_with_kids, good_with_cats, good_with_dogs, vaccinated, dewormed, microchipped, sterilized, fiv_felv,
-    special_needs, location, status, featured, likes, arrived_at, adopted_at, happy_ending)
+    special_needs, location, status, featured, likes, arrived_at, adopted_at, happy_ending, file_number, breed)
   VALUES (@slug, @name, @sex, @birth_date, @coat, @summary, @story, @personality,
     @kids, @cats, @dogs, @vaccinated, @dewormed, @microchipped, @sterilized, @fiv,
-    @specialNeeds, @location, @status, @featured, @likes, @arrived, @adopted, @happyEnding)`);
+    @specialNeeds, @location, @status, @featured, @likes, @arrived, @adopted, @happyEnding, @fileNumber, 'Común europeo')`);
 const insertPhoto = db.prepare(
   'INSERT INTO cat_photos (cat_id, file_key, width, height, position) VALUES (?, ?, ?, ?, ?)',
 );
@@ -244,6 +245,7 @@ for (const cat of CATS) {
     arrived: cat.arrived,
     adopted: cat.adopted ?? null,
     happyEnding: cat.happyEnding ?? '',
+    fileNumber: nextFileNumber(Number((cat.arrived ?? daysAgo(0)).slice(0, 4))),
   });
   for (const [position, art] of cat.art.entries()) {
     const buffer = await sharp(Buffer.from(catPortraitSvg(art))).jpeg({ quality: 90 }).toBuffer();
@@ -251,5 +253,13 @@ for (const cat of CATS) {
     insertPhoto.run(info.lastInsertRowid, photo.key, photo.width, photo.height, position);
   }
   console.log(`🐱 ${cat.name}`);
+}
+// Fuera de producción, una casa de acogida de ejemplo con Luna, para ver
+// el acuerdo de acogida ya relleno.
+if (!IS_PROD && db.prepare('SELECT COUNT(*) AS n FROM fosters').get().n === 0) {
+  const foster = db
+    .prepare("INSERT INTO fosters (name, phone, email, address) VALUES ('Lucía Fernández (demo)', '600 000 000', 'acogida@bigotes.local', 'Almendralejo')")
+    .run();
+  db.prepare("UPDATE cats SET foster_id = ?, foster_since = ? WHERE name = 'Luna'").run(foster.lastInsertRowid, daysAgo(20));
 }
 console.log('Gatitos de demostración creados.');

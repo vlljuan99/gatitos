@@ -6,11 +6,15 @@ import {
   ClipboardList,
   ExternalLink,
   FileText,
+  HandHeart,
   HeartHandshake,
+  House,
   Inbox,
   LayoutDashboard,
   LogOut,
   Menu,
+  Package,
+  Printer,
   UserCog,
   Users,
 } from 'lucide-react';
@@ -32,6 +36,10 @@ const Volunteers = lazy(() => import('./Inbox.jsx').then((m) => ({ default: m.Vo
 const Contents = lazy(() => import('./Contents.jsx'));
 const Team = lazy(() => import('./Team.jsx'));
 const Account = lazy(() => import('./Account.jsx'));
+const Fosters = lazy(() => import('./Fosters.jsx'));
+const Inventory = lazy(() => import('./Inventory.jsx'));
+const Donations = lazy(() => import('./Donations.jsx'));
+const Papers = lazy(() => import('./Papers.jsx'));
 
 function Login({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -94,6 +102,15 @@ function useNavItems(user) {
     { to: '/admin/solicitudes', label: 'Solicitudes', icon: ClipboardList, badge: data?.applications.new, main: true },
     { to: '/admin/mensajes', label: 'Mensajes', icon: Inbox, badge: data?.messages.new, main: true },
     { to: '/admin/voluntariado', label: 'Voluntariado', icon: HeartHandshake, badge: data?.volunteers.new },
+    { to: '/admin/acogidas', label: 'Casas de acogida', icon: House },
+    {
+      to: '/admin/inventario',
+      label: 'Inventario',
+      icon: Package,
+      badge: (data?.alerts.expiring.length ?? 0) + (data?.alerts.low.length ?? 0),
+    },
+    { to: '/admin/donaciones', label: 'Donaciones', icon: HandHeart },
+    { to: '/admin/papeles', label: 'Papeles', icon: Printer },
     { to: '/admin/contenidos', label: 'Textos de la web', icon: FileText },
     isAdmin(user) && { to: '/admin/equipo', label: 'Equipo', icon: Users },
     { to: '/admin/cuenta', label: 'Mi cuenta', icon: UserCog },
@@ -238,6 +255,10 @@ export default function AdminApp() {
           <Route path="solicitudes/:id" element={<ApplicationDetail />} />
           <Route path="mensajes" element={<Messages />} />
           <Route path="voluntariado" element={<Volunteers />} />
+          <Route path="acogidas" element={<Fosters />} />
+          <Route path="inventario" element={<Inventory />} />
+          <Route path="donaciones" element={<Donations />} />
+          <Route path="papeles" element={<Papers />} />
           <Route path="contenidos" element={<Contents />} />
           {isAdmin(user) && <Route path="equipo" element={<Team />} />}
           <Route path="cuenta" element={<Account />} />

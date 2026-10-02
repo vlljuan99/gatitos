@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { LogOut } from 'lucide-react';
+import { LogOut, ShieldCheck } from 'lucide-react';
 import { FormError, TextInput } from '../components/form.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { Button, Card } from '../components/ui.jsx';
 import { api, ApiError } from '../lib/api.js';
 import { AdminPage, useAuth } from './common.jsx';
+import { PdfLink } from './Papers.jsx';
 
 export default function Account() {
   const { user, logout } = useAuth();
@@ -45,6 +46,11 @@ export default function Account() {
         <p className="font-display text-xl font-semibold">{user.name}</p>
         <p className="text-cacao-suave">{user.email}</p>
         <p className="mt-2 inline-block rounded-full bg-lavanda px-3 py-1 text-sm font-bold text-lavanda-oscuro">{user.roleLabel}</p>
+        <div className="mt-4">
+          <PdfLink path={`/confidencialidad/equipo/${user.id}`} label="Mi compromiso de confidencialidad en PDF">
+            <ShieldCheck className="size-4" /> Mi compromiso de confidencialidad
+          </PdfLink>
+        </div>
       </Card>
       <Card className="mt-4">
         <h2 className="font-display text-xl font-semibold">Cambiar contraseña</h2>

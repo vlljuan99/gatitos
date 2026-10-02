@@ -11,6 +11,7 @@ import { gendered, statusLabel } from '../lib/cats.js';
 import { APPLICATION_QUESTIONS } from '../lib/forms.js';
 import { AdminPage, formatDate, isAdmin, refreshAfterChange, StatusPill, timeAgo, useAdminApi, useAuth, useConfirm } from './common.jsx';
 import { APPLICATION_STATUSES } from './Applications.jsx';
+import { ContractCard } from './Contract.jsx';
 
 function ContactButton({ href, icon: Icon, label, external }) {
   return (
@@ -208,6 +209,8 @@ function ApplicationDetail() {
             ))}
           </div>
         </Card>
+
+        {['visita', 'aprobada', 'adoptado'].includes(app.status) || app.contract.number ? <ContractCard app={app} /> : null}
 
         <Card>
           <h2 className="font-display text-lg font-semibold">Contacto</h2>

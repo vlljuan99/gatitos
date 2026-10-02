@@ -1,7 +1,13 @@
 import { db } from './db.js';
 import { videoUrls } from './videos.js';
 
-export const CAT_STATUSES = ['borrador', 'disponible', 'reservado', 'adoptado'];
+// «colonia» es un gato de colonia que se devolvió a su sitio tras atenderlo
+// (captura, esterilización y retorno): se registra en el panel, pero no sale
+// en la web. Igual que «borrador», nunca es público.
+export const CAT_STATUSES = ['borrador', 'disponible', 'reservado', 'adoptado', 'colonia'];
+export const PUBLIC_STATUSES = ['disponible', 'reservado', 'adoptado'];
+/** Para consultas SQL: «'disponible', 'reservado', 'adoptado'». */
+export const PUBLIC_STATUSES_SQL = PUBLIC_STATUSES.map((s) => `'${s}'`).join(', ');
 
 // Etiquetas de carácter que el panel ofrece con un toque. Se guardan como
 // texto, así que se pueden añadir más sin migraciones.
@@ -110,8 +116,31 @@ export function serializeCat(row, photos = [], { admin = false, videos = [] } = 
     cat.likes = row.likes;
     cat.createdAt = row.created_at;
     cat.updatedAt = row.updated_at;
+    cat.record = serializeRecord(row);
   }
   return cat;
+}
+
+/** Ficha interna: lo que va a los papeles y nunca sale en la web. */
+export function serializeRecord(row) {
+  return {
+    fileNumber: row.file_number ?? '',
+    breed: row.breed,
+    microchipNumber: row.microchip_number,
+    intakePlace: row.intake_place,
+    intakeBy: row.intake_by,
+    intakePhone: row.intake_phone,
+    intakeReason: row.intake_reason,
+    colonyMember: row.colony_member,
+    colonyName: row.colony_name,
+    colonyCaretaker: row.colony_caretaker,
+    earTipped: row.ear_tipped,
+    inTreatment: Boolean(row.in_treatment),
+    fosterId: row.foster_id,
+    fosterSince: row.foster_since ?? '',
+    returnedAt: row.returned_at ?? '',
+    pending: row.pending,
+  };
 }
 
 export function serializeCats(rows, { admin = false } = {}) {
@@ -148,7 +177,7 @@ export function publicStats(rescuedBase = 0) {
   const row = db
     .prepare(
       `SELECT
-         SUM(CASE WHEN status != 'borrador' THEN 1 ELSE 0 END) AS rescued,
+         SUM(CASE WHEN status IN (${PUBLIC_STATUSES_SQL}) THEN 1 ELSE 0 END) AS rescued,
          SUM(CASE WHEN status = 'disponible' THEN 1 ELSE 0 END) AS available,
          SUM(CASE WHEN status = 'adoptado' AND adopted_at >= ? THEN 1 ELSE 0 END) AS adopted_this_year
        FROM cats`,

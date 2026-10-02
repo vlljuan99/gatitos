@@ -34,6 +34,34 @@ export const phone = (message = 'Escribe un teléfono válido') =>
     .trim()
     .regex(/^\+?[\d\s().-]{9,20}$/, message);
 
+// Las fechas vacías llegan como '' desde el formulario o como null al reenviar
+// algo tal cual se leyó: ambas significan «sin fecha» y quedan en ''.
+export const optionalDate = (schema) =>
+  z
+    .union([z.literal(''), schema])
+    .nullish()
+    .transform((value) => value ?? '');
+export const optionalDay = () => optionalDate(z.iso.date('Fecha no válida'));
+export const requiredDay = (message = 'Indica la fecha') => z.iso.date(message);
+
+/**
+ * Número que puede llegar escrito a mano («12,5», «3») o como número. Vacío
+ * queda en null. Sirve para cantidades del inventario e importes en euros.
+ */
+export const decimal = ({ min = 0, max = 1_000_000, message = 'Escribe un número' } = {}) =>
+  z
+    .union([z.number(), z.string()])
+    .nullish()
+    .transform((value, ctx) => {
+      if (value === null || value === undefined || String(value).trim() === '') return null;
+      const number = typeof value === 'number' ? value : Number(String(value).trim().replace(/\s|€/g, '').replace(',', '.'));
+      if (!Number.isFinite(number) || number < min || number > max) {
+        ctx.addIssue({ code: 'custom', message });
+        return z.NEVER;
+      }
+      return number;
+    });
+
 export const idParam = z.coerce.number().int().positive();
 
 /** Convierte un id de la URL en número o responde 404. */

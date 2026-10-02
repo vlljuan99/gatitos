@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { db } from '../db.js';
 import { requireAdmin } from '../auth.js';
 import { photosFor } from '../cats.js';
-import { parseBody, parseId, requiredText } from '../validation.js';
+import { nextContractNumber, today } from '../numbers.js';
+import { optionalDay, parseBody, parseId, requiredText, text } from '../validation.js';
 import { setCatStatus } from './adminCats.js';
 
 export const APPLICATION_STATUSES = ['nueva', 'entrevista', 'visita', 'aprobada', 'adoptado', 'descartada'];
@@ -42,6 +43,37 @@ function serializeApplication(row) {
   };
 }
 
+export function serializeContract(row) {
+  return {
+    number: row.contract_number ?? '',
+    date: row.contract_date ?? '',
+    dni: row.dni ?? '',
+    birthDate: row.birth_date ?? '',
+    address: row.address ?? '',
+    postalCode: row.postal_code ?? '',
+    altContactName: row.alt_contact_name ?? '',
+    altContactPhone: row.alt_contact_phone ?? '',
+    altContactRelation: row.alt_contact_relation ?? '',
+  };
+}
+
+const contractSchema = z.object({
+  dni: text(20).default(''),
+  birthDate: optionalDay(),
+  address: text(200).default(''),
+  postalCode: z.union([z.literal(''), z.string().trim().regex(/^\d{5}$/, 'El código postal tiene 5 cifras')]).default(''),
+  altContactName: text(120).default(''),
+  altContactPhone: text(30).default(''),
+  altContactRelation: text(60).default(''),
+  contractDate: optionalDay(),
+  catId: z
+    .number()
+    .int()
+    .positive()
+    .nullish()
+    .transform((value) => value ?? null),
+});
+
 function countsBy(table, statuses) {
   const rows = db.prepare(`SELECT status, COUNT(*) AS n FROM ${table} GROUP BY status`).all();
   const counts = Object.fromEntries(statuses.map((s) => [s, 0]));
@@ -79,6 +111,7 @@ export function adminApplicationsRouter() {
       .map((n) => ({ id: n.id, author: n.author_name, body: n.body, createdAt: n.created_at }));
     return {
       ...serializeApplication(row),
+      contract: serializeContract(row),
       answers: parseJson(row.answers, {}),
       cat: cat ? { ...cat, photo: photosFor([cat.id]).get(cat.id)[0] ?? null } : null,
       notes,
@@ -118,6 +151,45 @@ export function adminApplicationsRouter() {
         );
       }
       if (data.catStatus && current.cat_id) setCatStatus(current.cat_id, data.catStatus);
+    })();
+    res.json({ application: loadApplication(id) });
+  });
+
+  // Datos que pide el contrato de adopción y no están en la solicitud (DNI,
+  // dirección…). Al guardarlos por primera vez se reserva el n.º de contrato.
+  router.put('/:id/contrato', (req, res) => {
+    const id = parseId(req.params.id, res);
+    if (id === null) return;
+    const data = parseBody(contractSchema, req, res);
+    if (!data) return;
+    const current = db.prepare('SELECT contract_number, cat_id FROM applications WHERE id = ?').get(id);
+    if (!current) return res.status(404).json({ error: 'No encontramos esta solicitud' });
+    let cat = null;
+    if (data.catId) {
+      cat = db.prepare('SELECT id, name FROM cats WHERE id = ?').get(data.catId);
+      if (!cat) return res.status(400).json({ error: 'Revisa los campos marcados', fields: { catId: 'Ese gatito ya no existe' } });
+    }
+    const contractDate = data.contractDate || today();
+    db.transaction(() => {
+      const number = current.contract_number ?? nextContractNumber(Number(contractDate.slice(0, 4)));
+      db.prepare(
+        `UPDATE applications SET dni = @dni, birth_date = @birthDate, address = @address, postal_code = @postalCode,
+           alt_contact_name = @altContactName, alt_contact_phone = @altContactPhone,
+           alt_contact_relation = @altContactRelation, contract_number = @number, contract_date = @contractDate,
+           updated_at = datetime('now')
+         WHERE id = @id`,
+      ).run({ ...data, birthDate: data.birthDate || null, number, contractDate, id });
+      if (cat && cat.id !== current.cat_id) {
+        db.prepare('UPDATE applications SET cat_id = ?, cat_name = ? WHERE id = ?').run(cat.id, cat.name, id);
+      }
+      if (!current.contract_number) {
+        db.prepare('INSERT INTO application_notes (application_id, user_id, author_name, body) VALUES (?, ?, ?, ?)').run(
+          id,
+          req.user.id,
+          req.user.name,
+          `Ha preparado el contrato de adopción ${number}`,
+        );
+      }
     })();
     res.json({ application: loadApplication(id) });
   });

@@ -36,6 +36,10 @@ test('una cuidabigotes sube un gatito nuevo en un minuto', async ({ page, reques
   await page.getByRole('button', { name: /Siguiente/ }).click();
   await page.getByRole('button', { name: /Siguiente/ }).click();
 
+  // Ficha interna (no sale en la web): de dónde viene, para sus papeles.
+  await page.getByLabel('Lugar exacto de recogida').fill('Parque de la Piedad');
+  await page.getByRole('button', { name: /Siguiente/ }).click();
+
   await page.getByRole('button', { name: /Publicar ya/ }).click();
   await expect(page.getByText('¡Garfield ya está en la web! 🎉')).toBeVisible();
 
@@ -138,6 +142,74 @@ test('la administración lleva una solicitud por sus etapas', async ({ page, req
   await expect(page.getByText(/Entrevista → Aprobada/)).toBeVisible();
   const canelo = (await (await request.get('/api/gatitos/canelo')).json()).cat;
   expect(canelo.status).toBe('reservado');
+});
+
+test('papeles: parte veterinario y contrato de adopción listos para imprimir', async ({ page, request }) => {
+  await login(page, 'cuidabigotes@bigotes.local');
+  await page.getByRole('navigation', { name: 'Panel' }).getByRole('link', { name: /Gatitos/ }).click();
+  await page.getByRole('link', { name: /Luna/ }).first().click();
+  await expect(page.getByRole('heading', { name: 'Papeles para imprimir 🖨️' })).toBeVisible();
+
+  // Los enlaces llevan su permiso: se abren aunque no viaje la cookie (app instalada, visor del móvil).
+  const ficha = page.getByRole('link', { name: 'Abrir Ficha del gato en PDF' });
+  await expect(ficha).toHaveAttribute('href', /^\/api\/papeles\/gatito\/\d+\/ficha\?t=/);
+  const fichaPdf = await request.get(await ficha.getAttribute('href'));
+  expect(fichaPdf.headers()['content-type']).toContain('application/pdf');
+
+  // Nuevo parte: quien lo lleva es su casa de acogida.
+  await page.getByRole('button', { name: 'Nuevo parte' }).first().click();
+  const sheet = page.getByRole('dialog', { name: 'Nuevo parte veterinario' });
+  await expect(sheet.getByLabel('¿Quién lo lleva?')).toHaveValue('Lucía Fernández (demo)');
+  await sheet.getByRole('button', { name: /Crear parte/ }).click();
+  const created = page.getByRole('dialog', { name: /Parte V-\d{4}-001 listo/ });
+  const parte = created.getByRole('link', { name: /Abrir el parte/ });
+  await expect(parte).toHaveAttribute('href', /\/api\/papeles\/parte\/\d+\?t=/);
+  expect((await request.get(await parte.getAttribute('href'))).headers()['content-type']).toContain('application/pdf');
+  await created.getByRole('button', { name: 'Hecho' }).click();
+  await expect(page.getByText('Falta completar')).toBeVisible();
+
+  // Contrato desde la solicitud aprobada: se añade el DNI y sale numerado.
+  const sent = await request.post('/api/solicitudes', {
+    data: {
+      catSlug: 'luna',
+      name: 'Rosa Pérez',
+      email: 'rosa@ejemplo.es',
+      phone: '633 444 555',
+      adult: true,
+      municipality: 'Almendralejo',
+      province: 'Badajoz',
+      housingType: 'piso',
+      tenure: 'propiedad',
+      windowsSafe: 'si',
+      adults: 1,
+      kids: 'no',
+      allAgree: 'si',
+      allergies: 'no',
+      hoursAlone: '4_8',
+      why: 'Luna me robó el corazón en la web.',
+      commitVet: true,
+      commitSterilize: true,
+      commitFollowUp: true,
+      privacy: true,
+    },
+  });
+  expect(sent.status()).toBe(201);
+  await page.getByRole('navigation', { name: 'Panel' }).getByRole('link', { name: /Solicitudes/ }).click();
+  await page.getByRole('link', { name: /Rosa Pérez/ }).click();
+  await page.getByRole('button', { name: 'Aprobada', exact: true }).click();
+  await page.getByRole('button', { name: /No, solo cambiar la solicitud/ }).click();
+  await page.getByRole('button', { name: 'Preparar contrato' }).click();
+  const contract = page.getByRole('dialog', { name: 'Datos para el contrato' });
+  await contract.getByLabel('DNI / NIE').fill('12345678Z');
+  await contract.getByLabel('Código postal').fill('06200');
+  await contract.getByRole('button', { name: 'Preparar contrato' }).click();
+  await expect(page.getByText(/N\.º A-\d{4}-001/)).toBeVisible();
+  const link = page.getByRole('link', { name: /Contrato A-\d{4}-001 en PDF/ });
+  expect((await request.get(await link.getAttribute('href'))).headers()['content-type']).toContain('application/pdf');
+
+  // Y en «Papeles» están todos, también en blanco.
+  await page.goto('/admin/papeles');
+  await expect(page.getByRole('link', { name: 'Abrir Contrato de adopción en PDF' })).toHaveAttribute('href', /en-blanco\/contrato/);
 });
 
 test('un bigote mayor da de alta a alguien desde el resumen', async ({ page }) => {

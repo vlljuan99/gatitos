@@ -53,6 +53,7 @@ export function statusLabel(status, sex) {
     disponible: 'Disponible',
     reservado: gendered('Reservado', sex),
     adoptado: gendered('Adoptado', sex),
+    colonia: 'En su colonia',
   }[status];
 }
 

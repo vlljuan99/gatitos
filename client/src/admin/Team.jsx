@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Copy, KeyRound, UserCheck, UserPlus, UserX } from 'lucide-react';
+import { Copy, KeyRound, ShieldCheck, UserCheck, UserPlus, UserX } from 'lucide-react';
 import { WhatsAppIcon } from '../components/BrandIcons.jsx';
 import { Choice, FormError, TextInput } from '../components/form.jsx';
 import { Sheet } from '../components/Sheet.jsx';
@@ -9,6 +9,7 @@ import { Button, Card, ErrorState, Spinner, buttonClass, cx } from '../component
 import { api, ApiError } from '../lib/api.js';
 import { useDraftState } from '../lib/drafts.js';
 import { AdminPage, refreshAfterChange, ROLE_INFO, timeAgo, useAdminApi, useAuth, useConfirm } from './common.jsx';
+import { PdfLink } from './Papers.jsx';
 
 const ROLE_OPTIONS = ['cuidabigotes', 'admin'].map((role) => ({ value: role, label: ROLE_INFO[role].label, emoji: ROLE_INFO[role].emoji }));
 const EMPTY_FORM = { name: '', email: '', role: 'cuidabigotes' };
@@ -183,6 +184,11 @@ export default function Team() {
                   >
                     {ROLE_INFO[person.role]?.emoji} {person.roleLabel}
                   </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <PdfLink path={`/confidencialidad/equipo/${person.id}`} label={`Compromiso de confidencialidad de ${person.name}`}>
+                    <ShieldCheck className="size-4" /> Confidencialidad
+                  </PdfLink>
                 </div>
                 {person.id !== me.id && (
                   <div className="flex flex-wrap gap-2">
