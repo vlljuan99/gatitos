@@ -1,0 +1,139 @@
+# Operación de producción de Bigotes
+
+Bigotes vive en el VPS Hetzner compartido (el mismo que tilestudio, tri-dnd,
+teacherflow y friendlyflights), detrás del Caddy de `/opt/tilestudio`, en
+`https://bigotes.167-233-99-156.sslip.io`.
+
+Cada despliegue construye una imagen Docker inmutable `bigotes:<commit-sha>`.
+El fichero `/opt/bigotes/.deploy.env` registra qué imagen ejecuta Compose y
+`/api/health` confirma la revisión desplegada y la migración de SQLite.
+
+## Primer despliegue (una sola vez)
+
+Todo lo del servidor lo hace el workflow. Solo hacen falta estos secretos en
+GitHub (*Settings → Secrets and variables → Actions → New repository secret*):
+
+| Secreto | Qué es |
+|---|---|
+| `HETZNER_SSH_KEY` | La clave privada SSH del VPS (la misma que usan tri-dnd y el resto). |
+| `BIGOTES_ADMIN_EMAIL` | Email de la cuenta de administración del panel. |
+| `BIGOTES_ADMIN_PASSWORD` | Su contraseña inicial (8 caracteres o más, sin comillas simples). |
+| `BIGOTES_ADMIN_NAME` | Opcional: el nombre que verá en el panel. |
+
+Después se lanza **Deploy to Hetzner** desde la pestaña Actions. En el primer
+despliegue el workflow comprueba que existe el Caddy compartido de tilestudio
+(`/opt/tilestudio/sites` y la red `tilestudio_default`) y crea
+`/opt/bigotes/app.env` (permisos 600) con `PUBLIC_URL` y la cuenta de
+administración; al arrancar sin nadie en el equipo, la app crea esa cuenta. En
+los despliegues siguientes `app.env` ya existe y no se toca: para cambiar algo
+(p. ej. los avisos por email) se edita a mano en el servidor. La contraseña se
+cambia desde «Mi cuenta» en el panel.
+
+Si falta algún secreto, el workflow falla en los primeros segundos con un
+mensaje que dice cuál.
+
+Opcional: cargar los gatitos de demostración para enseñar la web a la
+asociación (se pueden borrar después desde el panel):
+
+```bash
+docker exec -w /app/server bigotes-app npm run seed:demo
+```
+
+El resto del equipo (cuidabigotes y otros bigotes mayores) se da de alta desde
+el panel: **Equipo → Añadir a alguien**, o «Añadir al equipo» en el resumen.
+Si alguna vez nadie pudiera entrar, se puede crear una cuenta de administración
+desde el servidor:
+
+```bash
+docker exec -w /app/server bigotes-app npm run create-user -- --email ana@ejemplo.es --name Ana --role admin
+```
+
+## Despliegue normal
+
+El workflow manual `Deploy to Hetzner` es la única vía normal:
+
+1. Instala exactamente los `package-lock.json` con `npm ci`.
+2. Ejecuta las pruebas unitarias, el build de Vite, las pruebas E2E en móvil y
+   `npm audit` de producción.
+3. Construye `bigotes:<sha>` en el VPS con metadatos OCI.
+4. Antes de reiniciar, crea un backup online e íntegro de SQLite y guarda las
+   fotos, los vídeos y el secreto de sesión.
+5. Levanta la imagen por SHA, recarga Caddy y comprueba web, SQLite, SHA,
+   las etiquetas para compartir y que la imagen trae ffmpeg (vídeos).
+6. Si la comprobación falla, vuelve automáticamente a la imagen anterior. El
+   job queda en rojo para que el incidente se vea.
+
+Los backups viven en `/opt/bigotes/backups/<fecha>-<sha-corto>/`:
+
+- `bigotes.db`, copiado con la API online de SQLite y validado con
+  `PRAGMA integrity_check`;
+- `uploads/`, las fotos y los vídeos tal como estaban. Son **enlaces duros**
+  a los ficheros de `data/uploads` (que nunca se reescriben), así que cada
+  backup no ocupa más disco salvo por lo que se haya borrado después;
+- `files.tar.gz`, con el secreto de sesión (en los backups anteriores a los
+  vídeos, también las fotos);
+- `SHA256SUMS`, para verificar la base de datos y el secreto.
+
+Los vídeos se preparan en `data/tmp/` y solo pasan a `data/uploads/videos/`
+cuando están listos; el original (con la ubicación GPS del móvil) se borra y
+nunca se sirve.
+
+No hay borrado automático de backups ni de imágenes. **Las fotos y los vídeos
+son lo más valioso**: conviene copiar `/opt/bigotes/backups` fuera del VPS
+(por ejemplo, a una Storage Box de Hetzner, con `rsync -aH` para respetar los
+enlaces duros) antes de decidir una retención.
+
+## Rollback del código
+
+```bash
+cd /opt/bigotes
+./rollback.sh              # a la imagen anterior
+./rollback.sh <commit-sha> # a una revisión concreta que siga en Docker
+```
+
+Las migraciones son incrementales y no se revierten al cambiar de imagen. Si el
+problema ha alterado datos, hay que restaurar también el backup.
+
+## Restauración manual de datos
+
+Destructiva: con la aplicación parada y guardando antes el estado fallido.
+
+```bash
+cd /opt/bigotes
+BACKUP_ID=<fecha-sha-del-directorio>
+test -f "backups/$BACKUP_ID/bigotes.db"
+(cd "backups/$BACKUP_ID" && sha256sum -c SHA256SUMS)
+docker compose --env-file .deploy.env stop app
+cp -a data "backups/estado-fallido-$(date -u +%Y%m%dT%H%M%SZ)"
+cp "backups/$BACKUP_ID/bigotes.db" data/bigotes.db
+rm -f data/bigotes.db-wal data/bigotes.db-shm
+test ! -f "backups/$BACKUP_ID/files.tar.gz" || tar -xzf "backups/$BACKUP_ID/files.tar.gz" -C data
+if [[ -d "backups/$BACKUP_ID/uploads" ]]; then
+  rm -rf data/uploads && cp -al "backups/$BACKUP_ID/uploads" data/uploads
+fi
+chown -R 1000:1000 data
+docker compose --env-file .deploy.env up -d app
+curl --fail https://bigotes.167-233-99-156.sslip.io/api/health
+```
+
+## Dominio propio (cuando lo haya)
+
+1. Apunta el dominio (registro A) a `167.233.99.156`.
+2. Cambia la primera línea de `deploy/bigotes.caddy` por el dominio (se pueden
+   dejar los dos separados por comas mientras tanto) y `PUBLIC_URL` en
+   `/opt/bigotes/app.env`.
+3. Actualiza `APP_URL` en `.github/workflows/deploy.yml` y `monitor.yml` y
+   vuelve a desplegar. Caddy saca el certificado solo.
+
+## Avisos por email
+
+Opcionales. Hetzner bloquea el SMTP saliente (puertos 25 y 465), así que se usa
+la API HTTPS de [Resend](https://resend.com): rellena `RESEND_API_KEY`,
+`MAIL_FROM` (un remitente de un dominio verificado en Resend) y `NOTIFY_EMAIL`
+en `app.env` y reinicia (`docker compose --env-file .deploy.env up -d app`).
+Sin ellos no se envía nada y todo queda igualmente en el panel.
+
+## Monitor
+
+`Monitor production` consulta cada 30 minutos la portada y `/api/health`. Un
+fallo queda como ejecución fallida en GitHub Actions.

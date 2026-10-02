@@ -1,0 +1,20 @@
+{
+  "name": "Bigotes · Adopción de gatitos",
+  "short_name": "Bigotes",
+  "description": "Rescatamos gatitos en Almendralejo y les buscamos una familia para siempre.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#faf6f3",
+  "theme_color": "#faf6f3",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Encuentra tu match", "url": "/match", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Nuevo gatito (equipo)", "url": "/admin/gatitos/nuevo", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

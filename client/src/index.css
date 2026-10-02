@@ -1,0 +1,99 @@
+@import 'tailwindcss';
+/* Tipografías servidas desde la propia web (sin Google Fonts): así no se
+   envía la IP de nadie a terceros y no hace falta aviso de cookies. */
+@import '@fontsource-variable/fredoka';
+@import '@fontsource-variable/nunito';
+
+@theme {
+  --font-display: 'Fredoka Variable', ui-rounded, system-ui, sans-serif;
+  --font-sans: 'Nunito Variable', ui-rounded, system-ui, sans-serif;
+
+  /* Paleta «Bigotes», sacada del logo (carbón y canela) con pasteles para
+     lo cuqui. Todos los textos cumplen contraste AA. */
+  --color-crema: #faf6f3;
+  --color-nata: #ffffff;
+  --color-borde: #ece3de;
+  --color-cacao: #2b2727;
+  --color-cacao-suave: #6b5f5c;
+
+  --color-canela: #8a6d65;
+  --color-canela-oscuro: #735852;
+  --color-canela-claro: #f3ebe8;
+  --color-canela-pastel: #d9c6c0;
+
+  --color-menta: #d7f3e8;
+  --color-menta-oscuro: #1d6b52;
+  --color-lavanda: #ebe4fd;
+  --color-lavanda-oscuro: #5b43a8;
+  --color-mantequilla: #fff1c2;
+  --color-mantequilla-oscuro: #7a5200;
+  --color-melocoton: #ffe4d1;
+  --color-melocoton-oscuro: #9a3412;
+  --color-cielo: #dcefff;
+  --color-cielo-oscuro: #1e5f8a;
+
+  --shadow-suave: 0 2px 0 rgb(58 42 48 / 0.06), 0 8px 24px -8px rgb(58 42 48 / 0.18);
+  --shadow-flotante: 0 12px 32px -10px rgb(58 42 48 / 0.35);
+}
+
+@layer base {
+  :root {
+    /* Zona segura de abajo (la raya de inicio del iPhone; en Android, casi
+       nada). La barra inferior la añade como relleno, así que todo lo que va
+       fijo encima de ella tiene que contarla o queda tapado. */
+    --zona-segura: max(env(safe-area-inset-bottom), 0.5rem);
+    /* Alto de la barra inferior del móvil, zona segura incluida. */
+    --barra-movil: calc(3.75rem + var(--zona-segura));
+  }
+  html {
+    color-scheme: light;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-crema text-cacao font-sans antialiased;
+    min-height: 100dvh;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display text-balance;
+  }
+  :focus-visible {
+    @apply outline-3 outline-offset-2 outline-canela;
+  }
+  ::selection {
+    @apply bg-canela-claro;
+  }
+}
+
+@utility pb-safe {
+  padding-bottom: var(--zona-segura);
+}
+
+/* Fijo justo encima de la barra inferior, sin chocar con el botón redondo del match. */
+@utility bottom-sobre-barra {
+  bottom: calc(var(--barra-movil) + 1.5rem);
+}
+
+/* Hueco al final de la página: que nada quede debajo de la barra inferior ni
+   del botón fijo de la ficha («Quiero adoptarle»). */
+@utility pb-sobre-barra {
+  padding-bottom: calc(var(--barra-movil) + 6.5rem);
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,40 @@
+name: Monitor production
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23,53 * * * *"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  availability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Hasta el primer despliegue correcto no hay web que vigilar: no fallar.
+      - name: ¿Se ha desplegado ya?
+        id: deployed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          COUNT=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow deploy.yml --status success --limit 1 --json databaseId --jq 'length')
+          if [[ "$COUNT" -gt 0 ]]; then
+            echo "yes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "yes=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Bigotes todavía no se ha desplegado: no hay nada que vigilar."
+          fi
+
+      - name: Comprobar web y base de datos
+        if: steps.deployed.outputs.yes == 'true'
+        env:
+          APP_URL: https://bigotes.167-233-99-156.sslip.io
+        run: |
+          HOME_STATUS=$(curl --retry 2 --retry-delay 3 -sS -o /dev/null -w "%{http_code}" "$APP_URL/")
+          HEALTH_BODY=$(curl --retry 2 --retry-delay 3 -fsS "$APP_URL/api/health")
+          jq -e '.ok == true and .database.ok == true and (.database.migration | type == "number")' <<<"$HEALTH_BODY"
+          [[ "$HOME_STATUS" == "200" ]]
+          echo "Bigotes disponible: $(jq -r '.commit' <<<"$HEALTH_BODY") · migración $(jq -r '.database.migration' <<<"$HEALTH_BODY")"

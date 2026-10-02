@@ -1,0 +1,28 @@
+# Compose de Bigotes compartiendo Caddy con el stack de tilestudio en
+# /opt/tilestudio (como tri-dnd). No arranca su propio Caddy: usa el reverse
+# proxy vecino a través de la red externa tilestudio_default.
+#
+# Layout esperado en /opt/bigotes/:
+#   docker-compose.yml   (este archivo)
+#   app.env              (variables de la app; ver deploy/app.env.example)
+#   data/                (volumen: SQLite, fotos y secreto de sesión)
+#   src.tar.gz           (lo sube el despliegue)
+
+name: bigotes
+
+services:
+  app:
+    # `.deploy.env` fija esta referencia a `bigotes:<commit-sha>`.
+    image: ${BIGOTES_IMAGE:-bigotes:local}
+    container_name: bigotes-app
+    restart: unless-stopped
+    env_file:
+      - app.env
+    volumes:
+      - ./data:/app/server/data
+    networks:
+      - tilestudio_default
+
+networks:
+  tilestudio_default:
+    external: true

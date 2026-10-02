@@ -1,0 +1,14 @@
+bigotes.167-233-99-156.sslip.io {
+	encode zstd gzip
+	reverse_proxy bigotes-app:4000
+	# El panel reduce las fotos en el móvil y las sube de una en una. Los
+	# vídeos llegan tal cual los grabó el móvil (el servidor admite hasta 300 MB).
+	@videos path_regexp ^/api/admin/gatitos/[0-9]+/videos$
+	@resto not path_regexp ^/api/admin/gatitos/[0-9]+/videos$
+	request_body @videos {
+		max_size 320MiB
+	}
+	request_body @resto {
+		max_size 25MB
+	}
+}

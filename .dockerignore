@@ -1,0 +1,13 @@
+**/node_modules
+**/dist
+.git
+.github
+.claude
+*.log
+server/data
+server/.env
+server/test
+e2e
+test-results
+playwright-report
+deploy

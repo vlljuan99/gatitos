@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            client/package-lock.json
+            server/package-lock.json
+
+      - name: Instalar dependencias
+        run: |
+          # ffmpeg: para las pruebas de vídeos (en producción va en la imagen).
+          command -v ffmpeg >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg; }
+          npm ci
+          npm ci --prefix server
+          npm ci --prefix client
+
+      - name: Pruebas unitarias y build
+        run: |
+          npm test
+          npm run build
+
+      - name: Pruebas E2E en móvil (Chromium)
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:e2e
