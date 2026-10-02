@@ -212,6 +212,65 @@ test('papeles: parte veterinario y contrato de adopción listos para imprimir', 
   await expect(page.getByRole('link', { name: 'Abrir Contrato de adopción en PDF' })).toHaveAttribute('href', /en-blanco\/contrato/);
 });
 
+test('una solicitud de Madrid muestra quién del transporte solidario viaja allí', async ({ page, request }) => {
+  const signup = await request.post('/api/transporte', {
+    data: {
+      name: 'Inés Carretera',
+      email: 'ines@ejemplo.es',
+      phone: '644 555 666',
+      origin: 'Almendralejo',
+      destinations: [{ city: 'Alcalá de Henares', province: 'Madrid' }],
+      frequency: 'semanal',
+      adult: true,
+      privacy: true,
+    },
+  });
+  expect(signup.status()).toBe(201);
+  const sent = await request.post('/api/solicitudes', {
+    data: {
+      catSlug: 'tofu',
+      name: 'Javier Madrileño',
+      email: 'javier@ejemplo.es',
+      phone: '655 777 888',
+      adult: true,
+      municipality: 'Alcalá de Henares',
+      province: 'Madrid',
+      housingType: 'piso',
+      tenure: 'propiedad',
+      windowsSafe: 'si',
+      adults: 2,
+      kids: 'no',
+      allAgree: 'si',
+      allergies: 'no',
+      hoursAlone: '4_8',
+      why: 'Tofu nos ha conquistado.',
+      commitVet: true,
+      commitSterilize: true,
+      commitFollowUp: true,
+      privacy: true,
+    },
+  });
+  expect(sent.status()).toBe(201);
+
+  await login(page, 'cuidabigotes@bigotes.local');
+  await page.getByRole('navigation', { name: 'Panel' }).getByRole('link', { name: /Solicitudes/ }).click();
+  const row = page.getByRole('link', { name: /Javier Madrileño/ });
+  await expect(row.getByText('📍 Madrid')).toBeVisible();
+  await expect(row.getByText('🚗 1 viaja allí')).toBeVisible();
+  await row.click();
+  await expect(page.getByRole('heading', { name: 'Vive fuera de Extremadura' })).toBeVisible();
+  await expect(page.getByText('Inés Carretera')).toBeVisible();
+  await expect(page.getByText(/Va a Alcalá de Henares/)).toBeVisible();
+
+  // En la bandeja del transporte se confirma y se busca por ciudad.
+  await page.goto('/admin/transporte');
+  await page.getByPlaceholder('Buscar ciudad o provincia').fill('alcala');
+  await page.getByRole('button', { name: /Inés Carretera/ }).click();
+  await page.getByRole('button', { name: 'Confirmar' }).click();
+  await page.getByRole('tab', { name: /Confirmados/ }).click();
+  await expect(page.getByText('Inés Carretera')).toBeVisible();
+});
+
 test('un bigote mayor da de alta a alguien desde el resumen', async ({ page }) => {
   await login(page, 'admin@bigotes.local');
   await page.getByRole('link', { name: /Añadir al equipo/ }).click();

@@ -105,7 +105,7 @@ export const CONTENT = {
     defaults: {
       requirements: [
         'Ser mayor de edad.',
-        'Vivir en Extremadura: de momento solo damos en adopción en las provincias de Badajoz y Cáceres.',
+        'Vivir en Extremadura o en una zona a la que viaje alguien de nuestro transporte solidario, para que el gatito llegue en buenas manos y podamos hacer el seguimiento.',
         'Que todas las personas de casa estén de acuerdo con la adopción.',
         'Tener ventanas y balcones protegidos con redes o mallas, o comprometerte a ponerlas antes de que llegue el gatito.',
         'Si vives de alquiler, contar con permiso para tener animales.',
@@ -128,7 +128,7 @@ export const CONTENT = {
         { q: '¿Cuánto cuesta adoptar?', a: DEFAULT_FEE },
         {
           q: '¿Puedo adoptar si no vivo en Extremadura?',
-          a: 'De momento no. Solo damos en adopción en las provincias de Badajoz y Cáceres para poder conocernos en persona, hacer la visita y el seguimiento.',
+          a: 'Sí, si alguien de nuestro transporte solidario viaja a tu zona: así el gatito llega acompañado por alguien de confianza y podemos hacer la visita y el seguimiento. Envía tu solicitud y te contamos si es posible. Y si viajas a menudo a otra ciudad, ¡apúntate al transporte solidario!',
         },
         {
           q: '¿Cuánto tarda el proceso?',
@@ -207,11 +207,13 @@ export const CONTENT = {
       email: z.union([z.literal(''), z.email('Escribe un email válido')]),
     }),
     defaults: {
+      // Datos de ejemplo para ver los papeles completos: hay que cambiarlos por
+      // los reales en «Textos de la web → Datos legales» (el panel lo avisa).
       holder: 'Bigotes, Asociación para la Ayuda al Gato Callejero',
-      cif: '',
-      registry: '',
-      address: 'Almendralejo (Badajoz)',
-      email: '',
+      cif: 'G12345678',
+      registry: 'Registro de Asociaciones de Extremadura, n.º 1234567',
+      address: 'C/ Ejemplo, 12 · 06200 Almendralejo (Badajoz)',
+      email: 'hola@bigotes.example',
     },
   },
 };

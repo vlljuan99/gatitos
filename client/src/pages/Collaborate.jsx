@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Copy, Gift, Landmark, Megaphone, PiggyBank, Share2, Smartphone } from 'lucide-react';
+import { Car, Check, Copy, Gift, Landmark, Megaphone, PiggyBank, Share2, Smartphone } from 'lucide-react';
 import { useSite } from '../components/Layout.jsx';
 import { Checkbox, FormError, Honeypot, MultiChoice, TextArea, TextInput } from '../components/form.jsx';
-import { Button, Card, ErrorState, PageHeader, Spinner, cx } from '../components/ui.jsx';
+import { Button, ButtonLink, Card, ErrorState, PageHeader, Spinner, cx } from '../components/ui.jsx';
 import { VOLUNTEER_AREAS } from '../lib/forms.js';
 import { useForm } from '../lib/useForm.js';
 import { useTitle } from '../lib/useTitle.js';
@@ -141,6 +141,24 @@ export default function Collaborate() {
         <div className="md:col-span-3">
           <VolunteerForm />
         </div>
+      </section>
+
+      <section className="mt-14 px-4" aria-labelledby="transporte">
+        <Card className="flex flex-col gap-4 bg-menta sm:flex-row sm:items-center">
+          <Car className="size-10 shrink-0 text-menta-oscuro" aria-hidden />
+          <div className="flex-1">
+            <h2 id="transporte" className="font-display text-2xl font-semibold">
+              Transporte solidario
+            </h2>
+            <p className="mt-1">
+              ¿Viajas a menudo a otra ciudad? Apúntate y, cuando alguien de allí quiera adoptar, el gatito podrá viajar contigo hasta
+              su nueva familia.
+            </p>
+          </div>
+          <ButtonLink to="/transporte-solidario" size="lg" className="shrink-0">
+            Apuntarme 🚗
+          </ButtonLink>
+        </Card>
       </section>
 
       <section id="donar" className="mt-14 scroll-mt-20 px-4" aria-labelledby="donaciones">

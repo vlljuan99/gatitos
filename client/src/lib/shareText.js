@@ -59,7 +59,7 @@ export function shareCaption(cat, contact = {}, catUrl = '', now = new Date()) {
     health.length ? `Se entrega ${listText(health)}.` : '',
     `💌 ${love} Rellena la solicitud en ${catUrl}`,
     phone && `📞 ${phone}`,
-    '📍 Adopciones en Extremadura (Badajoz y Cáceres). ¡Gracias por compartir!',
+    '📍 Adopciones en Extremadura y, con nuestro transporte solidario, también más lejos. ¡Gracias por compartir!',
     '#adopta #adoptaungato #gatosenadopcion #Almendralejo #Extremadura #Bigotes',
   ]
     .filter(Boolean)

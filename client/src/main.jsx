@@ -64,6 +64,7 @@ const router = createBrowserRouter([
           { path: 'adoptar', lazy: page(() => import('./pages/Adopt.jsx')) },
           { path: 'finales-felices', lazy: page(() => import('./pages/HappyEndings.jsx')) },
           { path: 'colabora', lazy: page(() => import('./pages/Collaborate.jsx')) },
+          { path: 'transporte-solidario', lazy: page(() => import('./pages/Transport.jsx')) },
           { path: 'contacto', lazy: page(() => import('./pages/Contact.jsx')) },
           { path: 'aviso-legal', lazy: page(() => import('./pages/Legal.jsx'), { page: 'aviso' }) },
           { path: 'privacidad', lazy: page(() => import('./pages/Legal.jsx'), { page: 'privacidad' }) },

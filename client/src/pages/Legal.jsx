@@ -77,6 +77,10 @@ function Privacy({ legal, email }) {
           llevar las cuentas de la asociación y dar las gracias.
         </p>
         <p>
+          <strong>Transporte solidario:</strong> tus datos de contacto, desde dónde sales y a dónde viajas, para avisarte cuando
+          un gatito pueda viajar contigo hasta su nueva familia.
+        </p>
+        <p>
           <strong>Avisos de gatos:</strong> el nombre y el teléfono de quien recoge o nos avisa de un gato, en su ficha, por si
           hay que volver a contactar sobre él.
         </p>
@@ -97,7 +101,8 @@ function Privacy({ legal, email }) {
       </Section>
       <Section title="Cuánto tiempo los guardamos">
         <p>
-          Las solicitudes que no siguen adelante y los mensajes archivados se borran automáticamente al cabo de un año. Los datos
+          Las solicitudes que no siguen adelante y los mensajes, ofrecimientos de voluntariado y del transporte solidario que se
+          archivan se borran automáticamente al cabo de un año. Los datos
           de las adopciones realizadas y de las acogidas se conservan mientras dure el seguimiento del gato y los plazos que
           marca la ley; los de las donaciones, lo que exige la ley para las cuentas de la asociación. Cualquier persona puede
           pedir que borremos antes lo que no sea obligatorio guardar.

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { CircleAlert, Mail, Phone, Send, Trash2 } from 'lucide-react';
+import { Car, CircleAlert, Copy, Mail, Phone, Send, Trash2 } from 'lucide-react';
 import { WhatsAppIcon, whatsappUrl } from '../components/BrandIcons.jsx';
 import { CatPhoto } from '../components/CatPhoto.jsx';
 import { useToast } from '../components/Toast.jsx';
@@ -8,7 +8,7 @@ import { Button, Card, ErrorState, Spinner, cx } from '../components/ui.jsx';
 import { api } from '../lib/api.js';
 import { useDraftState } from '../lib/drafts.js';
 import { gendered, statusLabel } from '../lib/cats.js';
-import { APPLICATION_QUESTIONS } from '../lib/forms.js';
+import { APPLICATION_QUESTIONS, frequencyLabel } from '../lib/forms.js';
 import { AdminPage, formatDate, isAdmin, refreshAfterChange, StatusPill, timeAgo, useAdminApi, useAuth, useConfirm } from './common.jsx';
 import { APPLICATION_STATUSES } from './Applications.jsx';
 import { ContractCard } from './Contract.jsx';
@@ -23,6 +23,83 @@ function ContactButton({ href, icon: Icon, label, external }) {
     >
       <Icon className="size-5 text-canela-oscuro" /> {label}
     </a>
+  );
+}
+
+/**
+ * Solicitud de fuera de Extremadura: quién del transporte solidario viaja a
+ * su provincia, con botones para escribirle; si no hay nadie, el enlace para
+ * buscar a alguien.
+ */
+function TransportCard({ app }) {
+  const toast = useToast();
+  const matches = app.transport ?? [];
+  const where = `${app.municipality} (${app.province})`;
+  const link = `${window.location.origin}/transporte-solidario`;
+  const plural = matches.length === 1 ? 'persona viaja' : 'personas viajan';
+  return (
+    <Card className="grid gap-3 bg-mantequilla">
+      <div className="flex items-start gap-3">
+        <Car className="size-8 shrink-0 text-mantequilla-oscuro" aria-hidden />
+        <div>
+          <h2 className="font-display text-lg font-semibold">Vive fuera de Extremadura</h2>
+          <p className="text-sm">
+            {matches.length
+              ? `${where}. ${matches.length} ${plural} a ${app.province} con el transporte solidario:`
+              : `${where}. Nadie del transporte solidario viaja a ${app.province} todavía.`}
+          </p>
+        </div>
+      </div>
+      {matches.length > 0 ? (
+        <ul className="grid gap-2">
+          {matches.map((person) => {
+            const message = `¡Hola, ${person.name.split(' ')[0]}! Te escribimos de Bigotes 🐾 Hay una familia en ${where} que quiere adoptar${
+              app.cat ? ` a ${app.cat.name}` : ' un gatito'
+            }. ¿Te vendría bien llevarlo en uno de tus viajes?`;
+            return (
+              <li key={person.id} className="grid gap-2 rounded-2xl bg-nata p-3">
+                <div>
+                  <p className="font-bold">
+                    {person.name}{' '}
+                    {person.status === 'nuevo' && <span className="text-xs font-semibold text-cacao-suave">(sin confirmar)</span>}
+                  </p>
+                  <p className="text-sm text-cacao-suave">
+                    Va a {person.cities.join(', ')} · {frequencyLabel(person.frequency).toLowerCase()} · sale de {person.origin}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <a href={`tel:${person.phone.replace(/\s/g, '')}`} className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-crema px-3 text-sm font-bold">
+                    <Phone className="size-4" /> Llamar
+                  </a>
+                  <a
+                    href={whatsappUrl(person.phone, message)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-crema px-3 text-sm font-bold"
+                  >
+                    <WhatsAppIcon /> WhatsApp
+                  </a>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <Button
+          variant="secondary"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(link);
+              toast('Enlace copiado: compártelo para encontrar a alguien 🚗');
+            } catch {
+              window.prompt('Copia el enlace:', link);
+            }
+          }}
+        >
+          <Copy className="size-4" /> Copiar enlace para buscar transporte
+        </Button>
+      )}
+    </Card>
   );
 }
 
@@ -188,6 +265,8 @@ function ApplicationDetail() {
             </p>
           </Card>
         )}
+
+        {app.outsideExtremadura && <TransportCard app={app} />}
 
         <Card>
           <h2 className="font-display text-lg font-semibold">Etapa</h2>

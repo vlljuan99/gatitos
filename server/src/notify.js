@@ -46,6 +46,16 @@ export function notifyNewMessage(message) {
   });
 }
 
+export function notifyNewTransport(person) {
+  const places = person.destinations.map((d) => d.city).join(', ');
+  return send({
+    to: MAIL.notifyTo,
+    subject: `🚗 ${person.name} se apunta al transporte solidario`,
+    replyTo: person.email,
+    text: `${person.name} sale de ${person.origin} y viaja a menudo a ${places}.\n\nVer en el panel: ${PUBLIC_URL}/admin/transporte`,
+  });
+}
+
 export function notifyNewVolunteer(volunteer) {
   return send({
     to: MAIL.notifyTo,

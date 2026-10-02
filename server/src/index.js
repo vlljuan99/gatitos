@@ -9,7 +9,7 @@ bootstrapAdmin();
 
 function purge() {
   const removed = purgeOldData();
-  const total = removed.applications + removed.messages + removed.volunteers;
+  const total = Object.values(removed).reduce((sum, n) => sum + n, 0);
   if (total > 0) console.log('[privacidad] Datos antiguos borrados:', removed);
 }
 purge();

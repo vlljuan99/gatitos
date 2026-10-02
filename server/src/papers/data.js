@@ -139,7 +139,7 @@ export function contractPaperData(applicationId) {
   };
 }
 
-/** Persona para el compromiso de confidencialidad: alguien del equipo, una casa de acogida o del voluntariado. */
+/** Persona para el compromiso de confidencialidad: alguien del equipo, una casa de acogida, del voluntariado o del transporte solidario. */
 export function personPaperData(kind, id) {
   const base = { place: 'Almendralejo', date: '' };
   if (kind === 'equipo') {
@@ -150,8 +150,9 @@ export function personPaperData(kind, id) {
     const row = db.prepare('SELECT * FROM fosters WHERE id = ?').get(id);
     return row ? { ...base, name: row.name, dni: row.dni, phone: row.phone, email: row.email, role: 'acogida' } : null;
   }
-  if (kind === 'voluntariado') {
-    const row = db.prepare('SELECT * FROM volunteers WHERE id = ?').get(id);
+  if (kind === 'voluntariado' || kind === 'transporte') {
+    const table = kind === 'voluntariado' ? 'volunteers' : 'transport_volunteers';
+    const row = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(id);
     return row ? { ...base, name: row.name, phone: row.phone, email: row.email, role: 'voluntariado' } : null;
   }
   return null;

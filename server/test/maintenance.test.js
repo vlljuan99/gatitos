@@ -28,7 +28,7 @@ test('borra solo los datos antiguos que ya no hacen falta', () => {
   insertMsg.run('leido', '-13 months');
 
   const removed = purgeOldData(12);
-  assert.deepEqual(removed, { applications: 1, messages: 1, volunteers: 0 });
+  assert.deepEqual(removed, { applications: 1, messages: 1, volunteers: 0, transport: 0 });
   const statuses = db.prepare('SELECT status FROM applications ORDER BY id').all().map((r) => r.status);
   assert.deepEqual(statuses, ['descartada', 'adoptado']);
 });

@@ -318,6 +318,34 @@ export const migrations = [
   CREATE INDEX idx_donations_date ON donations(date);
   `,
   },
+
+  // v4 — transporte solidario: personas que viajan a menudo a otra ciudad y
+  // pueden llevar a un gatito a su nueva familia fuera de Extremadura.
+  // destinations es una lista JSON de { city, province }.
+  `
+  CREATE TABLE transport_volunteers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    origin TEXT NOT NULL DEFAULT '',
+    destinations TEXT NOT NULL DEFAULT '[]',
+    frequency TEXT NOT NULL DEFAULT '',
+    notes TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'nuevo' CHECK (status IN ('nuevo', 'activo', 'archivado')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  -- Datos legales de ejemplo donde aún estén vacíos, para ver los papeles
+  -- completos hasta que la asociación ponga los reales.
+  UPDATE settings SET value = json_set(value,
+    '$.cif', COALESCE(NULLIF(json_extract(value, '$.cif'), ''), 'G12345678'),
+    '$.registry', COALESCE(NULLIF(json_extract(value, '$.registry'), ''), 'Registro de Asociaciones de Extremadura, n.º 1234567'),
+    '$.address', COALESCE(NULLIF(json_extract(value, '$.address'), ''), 'C/ Ejemplo, 12 · 06200 Almendralejo (Badajoz)'),
+    '$.email', COALESCE(NULLIF(json_extract(value, '$.email'), ''), 'hola@bigotes.example'))
+  WHERE key = 'legal' AND json_valid(value);
+  `,
 ];
 
 /**

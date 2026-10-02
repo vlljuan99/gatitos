@@ -19,8 +19,12 @@ se enamore de un gatito y lo adopte.
   y «Siguiente», nada de «no me gusta». Se puede deshacer, filtrar y, al primer
   «Me encanta», sale la pantalla de «¡Os habéis gustado!».
 - **Favoritos** sin registrarse (se guardan en el navegador).
+- **Transporte solidario**: la gente que viaja a menudo a otra ciudad se apunta
+  con sus destinos. Así se puede adoptar también fuera de Extremadura: cada
+  solicitud de otra provincia muestra en el panel quién viaja allí.
 - **Solicitud de adopción** por pasos, con el gatito ya elegido si vienes de
-  su ficha. Solo se admite Extremadura (Badajoz y Cáceres).
+  su ficha. Desde Extremadura o, con transporte solidario, desde cualquier
+  provincia de España.
 - **Cómo trabajamos**, requisitos, cuota y preguntas frecuentes.
 - **Finales felices** con los gatitos adoptados.
 - **Colabora**: formulario de voluntariado y zona de donaciones (Bizum,
@@ -77,7 +81,10 @@ se enamore de un gatito y lo adopte.
 - **Solicitudes** por etapas (nueva → entrevista → visita → aprobada →
   adoptado / descartada), con notas internas y botones para llamar, WhatsApp o
   email.
-- Bandejas de **mensajes** y **voluntariado**.
+- Bandejas de **mensajes**, **voluntariado** y **transporte solidario** (con
+  buscador por ciudad o provincia).
+- Datos legales de ejemplo (CIF G12345678…) para ver los papeles completos;
+  se cambian en **Textos de la web → Datos legales**.
 - **Textos de la web** editables sin tocar código (portada, cómo trabajamos,
   requisitos, preguntas, contacto, donaciones, datos legales).
 - **Resumen** con lo pendiente, avisos (medicación que caduca, cosas que se

@@ -9,7 +9,7 @@ import { adminCatsRouter } from './adminCats.js';
 import { upcomingChecks } from './adminCatRecords.js';
 import { adminDonationsRouter } from './adminDonations.js';
 import { adminFostersRouter } from './adminFosters.js';
-import { adminApplicationsRouter, adminMessagesRouter, adminVolunteersRouter } from './adminInbox.js';
+import { adminApplicationsRouter, adminMessagesRouter, adminTransportRouter, adminVolunteersRouter } from './adminInbox.js';
 import { adminInventoryRouter, inventoryAlerts } from './adminInventory.js';
 import { adminTeamRouter } from './adminTeam.js';
 
@@ -38,6 +38,7 @@ export function adminRouter() {
       },
       messages: { new: count("SELECT COUNT(*) AS n FROM messages WHERE status = 'nuevo'") },
       volunteers: { new: count("SELECT COUNT(*) AS n FROM volunteers WHERE status = 'nuevo'") },
+      transport: { new: count("SELECT COUNT(*) AS n FROM transport_volunteers WHERE status = 'nuevo'") },
       cats: {
         borrador: cats.borrador ?? 0,
         disponible: cats.disponible ?? 0,
@@ -85,6 +86,7 @@ export function adminRouter() {
   router.use('/solicitudes', adminApplicationsRouter());
   router.use('/mensajes', adminMessagesRouter());
   router.use('/voluntariado', adminVolunteersRouter());
+  router.use('/transporte', adminTransportRouter());
   router.use('/equipo', requireAdmin, adminTeamRouter());
 
   return router;

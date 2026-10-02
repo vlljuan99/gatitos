@@ -20,6 +20,10 @@ const STATIC_PAGES = {
   '/adoptar': { title: 'Solicitud de adopción', description: 'Rellena la solicitud para adoptar un gatito de Bigotes. Te leemos con mucho cariño.' },
   '/finales-felices': { title: 'Finales felices', description: 'Gatitos rescatados por Bigotes que ya ronronean en su hogar para siempre.' },
   '/colabora': { title: 'Colabora', description: 'Hazte voluntario o voluntaria de Bigotes y ayúdanos a rescatar gatitos en Almendralejo.' },
+  '/transporte-solidario': {
+    title: 'Transporte solidario',
+    description: '¿Viajas a menudo a otra ciudad? Ayuda a que un gatito de Bigotes llegue a su nueva familia.',
+  },
   '/contacto': { title: 'Contacto', description: 'Escríbenos: estaremos encantados de resolver tus dudas sobre adopción o voluntariado.' },
   '/aviso-legal': { title: 'Aviso legal' },
   '/privacidad': { title: 'Política de privacidad' },

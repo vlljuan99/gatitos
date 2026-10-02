@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Archive, House, Mail, MailOpen, Phone, ShieldCheck, Trash2, UserCheck } from 'lucide-react';
+import { Archive, BadgeCheck, House, Mail, MailOpen, MapPin, Phone, Search, ShieldCheck, Trash2, UserCheck } from 'lucide-react';
 import { WhatsAppIcon, whatsappUrl } from '../components/BrandIcons.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { buttonClass, Card, EmptyState, ErrorState, Spinner, Tag, cx } from '../components/ui.jsx';
 import { api } from '../lib/api.js';
-import { volunteerAreaLabel } from '../lib/forms.js';
+import { frequencyLabel, volunteerAreaLabel } from '../lib/forms.js';
 import { AdminPage, isAdmin, refreshAfterChange, StatusPill, Tabs, timeAgo, useAdminApi, useAuth, useConfirm } from './common.jsx';
 import { PdfLink } from './Papers.jsx';
 
@@ -26,7 +26,13 @@ function ActionButton({ onClick, href, icon: Icon, children, external }) {
 }
 
 /** Bandeja genérica: pestañas por estado, tarjetas desplegables y acciones rápidas. */
-function InboxPage({ title, subtitle, path, statuses, renderItem, emptyText, openStatus }) {
+const normalize = (text) =>
+  String(text ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+
+function InboxPage({ title, subtitle, path, statuses, renderItem, emptyText, openStatus, search, intro }) {
   const toast = useToast();
   const { user } = useAuth();
   const { data, error, loading, reload } = useAdminApi(path);
@@ -55,10 +61,27 @@ function InboxPage({ title, subtitle, path, statuses, renderItem, emptyText, ope
     }
   }
 
-  const items = (data?.items ?? []).filter((item) => item.status === tab);
+  const [query, setQuery] = useState('');
+  const items = (data?.items ?? []).filter(
+    (item) => item.status === tab && (!query || !search || normalize(search.text(item)).includes(normalize(query))),
+  );
 
   return (
     <AdminPage title={title} subtitle={subtitle}>
+      {intro}
+      {search && (
+        <label className="relative mb-3 block">
+          <span className="sr-only">{search.placeholder}</span>
+          <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-cacao-suave" aria-hidden />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={search.placeholder}
+            className="w-full rounded-full border-2 border-borde bg-nata py-3 pl-12 pr-4 focus:border-canela focus:outline-none"
+          />
+        </label>
+      )}
       <Tabs value={tab} onChange={setTab} tabs={statuses.map((s) => ({ ...s, count: s.value === 'archivado' ? 0 : data?.counts[s.value] }))} />
       {loading && <Spinner />}
       {error && <ErrorState error={error} onRetry={reload} />}
@@ -205,6 +228,67 @@ export function Volunteers() {
               >
                 <House className="size-4" /> Hacer casa de acogida
               </Link>
+            </div>
+          </>
+        ),
+      }}
+    />
+  );
+}
+
+/** Destinos «Madrid (Madrid), Coria (Cáceres)». */
+const destinationText = (destinations) =>
+  destinations.map((d) => (d.city === d.province ? d.city : `${d.city} (${d.province})`)).join(', ');
+
+export function Transport() {
+  return (
+    <InboxPage
+      title="Transporte solidario 🚗"
+      subtitle="Gente que viaja a menudo a otra ciudad y puede llevar a un gatito con su nueva familia."
+      path="/transporte"
+      emptyText="No hay nadie en esta lista."
+      search={{
+        placeholder: 'Buscar ciudad o provincia',
+        text: (t) => `${t.name} ${t.origin} ${t.destinations.map((d) => `${d.city} ${d.province}`).join(' ')}`,
+      }}
+      intro={
+        <p className="mb-4 rounded-2xl bg-menta p-3 text-sm text-menta-oscuro">
+          Las solicitudes de fuera de Extremadura muestran quién viaja a su provincia. Comparte el formulario:{' '}
+          <Link to="/transporte-solidario" target="_blank" className="font-bold underline">
+            /transporte-solidario
+          </Link>
+        </p>
+      }
+      statuses={[
+        { value: 'nuevo', label: 'Nuevos', action: 'Marcar como nuevo', icon: Mail },
+        { value: 'activo', label: 'Confirmados', action: 'Confirmar', icon: BadgeCheck },
+        { value: 'archivado', label: 'Archivados', action: 'Archivar', icon: Archive },
+      ]}
+      renderItem={{
+        preview: (t) => `${destinationText(t.destinations)} · ${frequencyLabel(t.frequency)}`,
+        detail: (t) => (
+          <>
+            <p>
+              <strong>Sale de:</strong> {t.origin}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {t.destinations.map((d, i) => (
+                <Tag key={i} tone="menta">
+                  <MapPin className="size-3.5" aria-hidden /> {d.city} · {d.province}
+                </Tag>
+              ))}
+            </div>
+            <p>
+              <strong>Viaja:</strong> {frequencyLabel(t.frequency).toLowerCase()}
+            </p>
+            {t.notes && <p className="whitespace-pre-line">{t.notes}</p>}
+            <p className="break-all text-sm text-cacao-suave">
+              {t.email} · {t.phone}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <PdfLink path={`/confidencialidad/transporte/${t.id}`} label={`Compromiso de confidencialidad de ${t.name}`}>
+                <ShieldCheck className="size-4" /> Confidencialidad
+              </PdfLink>
             </div>
           </>
         ),

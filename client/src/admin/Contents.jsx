@@ -39,6 +39,15 @@ function ListEditor({ items, onChange, empty, render, addLabel }) {
   );
 }
 
+// Datos legales de ejemplo que trae la web (server/src/content.js) para que
+// los papeles se vean completos hasta que la asociación ponga los reales.
+const EXAMPLE_LEGAL = [
+  'G12345678',
+  'Registro de Asociaciones de Extremadura, n.º 1234567',
+  'C/ Ejemplo, 12 · 06200 Almendralejo (Badajoz)',
+  'hola@bigotes.example',
+];
+
 const SECTIONS = [
   {
     key: 'home',
@@ -169,7 +178,16 @@ const SECTIONS = [
     emoji: '⚖️',
     render: (v, set) => (
       <>
-        <p className="text-sm text-cacao-suave">Aparecen en el aviso legal y la política de privacidad. Mientras falten, allí sale «[pendiente]».</p>
+        <p className="text-sm text-cacao-suave">
+          Aparecen en el aviso legal, la política de privacidad y los papeles en PDF (contrato, acuerdo de acogida…). Mientras
+          falten, en la web sale «[pendiente]».
+        </p>
+        {EXAMPLE_LEGAL.some((value) => [v.cif, v.registry, v.address, v.email].includes(value)) && (
+          <p className="rounded-2xl bg-mantequilla p-3 text-sm font-bold text-mantequilla-oscuro">
+            ⚠️ Hay datos de ejemplo (CIF G12345678, n.º 1234567…) para ver los papeles completos. Cámbialos por los reales antes de
+            firmar contratos de verdad.
+          </p>
+        )}
         <TextInput label="Nombre legal de la asociación" value={v.holder} onChange={(x) => set({ ...v, holder: x })} />
         <TextInput label="CIF" value={v.cif} onChange={(x) => set({ ...v, cif: x })} />
         <TextInput label="Registro de asociaciones y número" placeholder="Registro de Asociaciones de Extremadura, n.º …" value={v.registry} onChange={(x) => set({ ...v, registry: x })} />

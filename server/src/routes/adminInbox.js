@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { db } from '../db.js';
 import { requireAdmin } from '../auth.js';
 import { photosFor } from '../cats.js';
+import { EXTREMADURA } from '../forms.js';
 import { nextContractNumber, today } from '../numbers.js';
 import { optionalDay, parseBody, parseId, requiredText, text } from '../validation.js';
 import { setCatStatus } from './adminCats.js';
@@ -34,6 +35,7 @@ function serializeApplication(row) {
     phone: row.phone,
     municipality: row.municipality,
     province: row.province,
+    outsideExtremadura: !EXTREMADURA.includes(row.province),
     catId: row.cat_id,
     catName: row.cat_name,
     catSlug: row.cat_slug ?? null,
@@ -87,6 +89,7 @@ export function adminApplicationsRouter() {
 
   router.get('/', (req, res) => {
     const status = APPLICATION_STATUSES.includes(req.query.estado) ? req.query.estado : null;
+    const transport = transportByProvince();
     const rows = db
       .prepare(
         `SELECT a.*, c.slug AS cat_slug,
@@ -96,7 +99,15 @@ export function adminApplicationsRouter() {
          ORDER BY a.created_at DESC, a.id DESC`,
       )
       .all(...(status ? [status] : []));
-    res.json({ applications: rows.map(serializeApplication), counts: countsBy('applications', APPLICATION_STATUSES) });
+    res.json({
+      applications: rows.map((row) => {
+        const application = serializeApplication(row);
+        // Fuera de Extremadura: cuántas personas del transporte solidario viajan a su provincia.
+        if (application.outsideExtremadura) application.transportCount = transport.get(row.province)?.length ?? 0;
+        return application;
+      }),
+      counts: countsBy('applications', APPLICATION_STATUSES),
+    });
   });
 
   function loadApplication(id) {
@@ -109,8 +120,10 @@ export function adminApplicationsRouter() {
       .prepare('SELECT id, author_name, body, created_at FROM application_notes WHERE application_id = ? ORDER BY id')
       .all(id)
       .map((n) => ({ id: n.id, author: n.author_name, body: n.body, createdAt: n.created_at }));
+    const application = serializeApplication(row);
     return {
-      ...serializeApplication(row),
+      ...application,
+      transport: application.outsideExtremadura ? transportByProvince().get(row.province) ?? [] : null,
       contract: serializeContract(row),
       answers: parseJson(row.answers, {}),
       cat: cat ? { ...cat, photo: photosFor([cat.id]).get(cat.id)[0] ?? null } : null,
@@ -258,6 +271,46 @@ function inboxRouter({ table, statuses, serialize }) {
   return router;
 }
 
+export const TRANSPORT_STATUSES = ['nuevo', 'activo', 'archivado'];
+
+export function serializeTransport(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    phone: row.phone,
+    origin: row.origin,
+    destinations: parseJson(row.destinations, []),
+    frequency: row.frequency,
+    notes: row.notes,
+    status: row.status,
+    createdAt: row.created_at,
+  };
+}
+
+/**
+ * Transporte solidario por provincia de destino (sin las personas
+ * archivadas): primero las ya confirmadas. Cada una lleva las ciudades a las
+ * que va dentro de esa provincia.
+ */
+export function transportByProvince() {
+  const rows = db
+    .prepare(
+      `SELECT * FROM transport_volunteers WHERE status != 'archivado'
+       ORDER BY status = 'activo' DESC, created_at DESC`,
+    )
+    .all()
+    .map(serializeTransport);
+  const map = new Map();
+  for (const person of rows) {
+    for (const province of new Set(person.destinations.map((d) => d.province))) {
+      if (!map.has(province)) map.set(province, []);
+      map.get(province).push({ ...person, cities: person.destinations.filter((d) => d.province === province).map((d) => d.city) });
+    }
+  }
+  return map;
+}
+
 export const MESSAGE_STATUSES = ['nuevo', 'leido', 'archivado'];
 export const VOLUNTEER_STATUSES = ['nuevo', 'contactado', 'archivado'];
 
@@ -294,3 +347,6 @@ export const adminVolunteersRouter = () =>
       createdAt: row.created_at,
     }),
   });
+
+export const adminTransportRouter = () =>
+  inboxRouter({ table: 'transport_volunteers', statuses: TRANSPORT_STATUSES, serialize: serializeTransport });

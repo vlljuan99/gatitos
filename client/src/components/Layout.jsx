@@ -25,6 +25,7 @@ const MORE_LINKS = [
   { to: '/como-trabajamos', label: 'Cómo trabajamos', emoji: '🩺', tone: 'bg-menta' },
   { to: '/finales-felices', label: 'Finales felices', emoji: '💕', tone: 'bg-lavanda' },
   { to: '/colabora', label: 'Colabora', emoji: '🙋', tone: 'bg-mantequilla' },
+  { to: '/transporte-solidario', label: 'Transporte solidario', emoji: '🚗', tone: 'bg-menta' },
   { to: '/contacto', label: 'Contacto', emoji: '✉️', tone: 'bg-cielo' },
 ];
 
@@ -208,7 +209,12 @@ function Footer() {
           <SocialLinks contact={data?.content.contact} className="mt-4" />
         </div>
         <nav aria-label="Pie de página" className="grid grid-cols-2 gap-2 font-bold md:col-span-2 md:grid-cols-3">
-          {[...MAIN_LINKS, { to: '/adoptar', label: 'Quiero adoptar' }, { to: '/favoritos', label: 'Favoritos' }].map((link) => (
+          {[
+            ...MAIN_LINKS,
+            { to: '/adoptar', label: 'Quiero adoptar' },
+            { to: '/favoritos', label: 'Favoritos' },
+            { to: '/transporte-solidario', label: 'Transporte solidario' },
+          ].map((link) => (
             <Link key={link.to} to={link.to} className="py-1 hover:text-canela-oscuro">
               {link.label}
             </Link>

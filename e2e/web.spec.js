@@ -104,10 +104,13 @@ test('solicitud de adopción por pasos', async ({ page }) => {
   await page.getByLabel('Email').fill('rosa@ejemplo.es');
   await page.getByLabel('Teléfono').fill('611 222 333');
   await page.getByLabel('Municipio').fill('Almendralejo');
+  // Fuera de Extremadura se puede seguir: se cruza con el transporte solidario.
   await page.getByText('Otra provincia').click();
-  await expect(page.getByText(/solo damos en adopción en Extremadura/)).toBeVisible();
-  await expect(page.getByRole('button', { name: /Siguiente/ })).toBeDisabled();
+  await page.getByLabel('¿Cuál?').selectOption('Madrid');
+  await expect(page.getByText(/transporte solidario viaja a tu zona/)).toBeVisible();
+  await expect(page.getByRole('link', { name: /Apúntate al transporte solidario/ })).toBeVisible();
   await group('Provincia').getByText('Badajoz', { exact: true }).click();
+  await expect(page.getByText(/transporte solidario viaja a tu zona/)).toHaveCount(0);
   await next();
   await expect(page.getByText('Tienes que ser mayor de edad')).toBeVisible();
   await page.getByText('Soy mayor de edad').click();
@@ -163,4 +166,25 @@ test('vista previa al compartir un gatito', async ({ request }) => {
   const html = await (await request.get('/gatitos/luna')).text();
   expect(html).toContain('<meta property="og:title" content="Luna busca hogar 🐾 · Bigotes" />');
   expect(html).toMatch(/og:image" content="http:\/\/localhost:4173\/uploads\/gatitos\/[0-9a-f-]+-og\.jpg"/);
+});
+
+test('transporte solidario: alguien que viaja a menudo se apunta', async ({ page }) => {
+  await page.goto('/colabora');
+  await page.getByRole('link', { name: /Apuntarme 🚗/ }).click();
+  await expect(page.getByRole('heading', { name: /Transporte solidario/, level: 1 })).toBeVisible();
+
+  await page.getByLabel('Nombre y apellidos').fill('Paco Ruta');
+  await page.getByLabel('Email').fill('paco@ejemplo.es');
+  await page.getByLabel('Teléfono').fill('622 111 000');
+  await page.getByLabel('¿Desde dónde sales?').fill('Almendralejo');
+  await page.getByLabel('Ciudad o pueblo').fill('Sevilla');
+  await page.getByLabel('Provincia').selectOption('Sevilla');
+  await page.getByRole('button', { name: /Añadir otro destino/ }).click();
+  await page.getByLabel('Ciudad o pueblo').nth(1).fill('Madrid');
+  await page.getByLabel('Provincia').nth(1).selectOption('Madrid');
+  await page.getByText('Cada 15 días').click();
+  await page.getByText('Soy mayor de edad').click();
+  await page.getByText(/He leído la/).click();
+  await page.getByRole('button', { name: /Apuntarme al transporte solidario/ }).click();
+  await expect(page.getByText('¡Gracias por apuntarte!')).toBeVisible();
 });

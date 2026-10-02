@@ -2,8 +2,8 @@ import { Router } from 'express';
 import { db } from '../db.js';
 import { getAllContent } from '../content.js';
 import { publicStats, PUBLIC_STATUSES_SQL, serializeCats } from '../cats.js';
-import { applicationSchema, messageSchema, volunteerSchema } from '../forms.js';
-import { notifyNewApplication, notifyNewMessage, notifyNewVolunteer } from '../notify.js';
+import { applicationSchema, messageSchema, transportSchema, volunteerSchema } from '../forms.js';
+import { notifyNewApplication, notifyNewMessage, notifyNewTransport, notifyNewVolunteer } from '../notify.js';
 import { isBot, rateLimit } from '../security.js';
 import { parseBody } from '../validation.js';
 
@@ -116,6 +116,18 @@ export function publicRouter() {
       data.message,
     );
     notifyNewVolunteer(data);
+    res.status(201).json({ ok: true });
+  });
+
+  router.post('/transporte', formLimit(), (req, res) => {
+    if (isBot(req.body)) return res.status(201).json({ ok: true });
+    const data = parseBody(transportSchema, req, res);
+    if (!data) return;
+    db.prepare(
+      `INSERT INTO transport_volunteers (name, email, phone, origin, destinations, frequency, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    ).run(data.name, data.email, data.phone, data.origin, JSON.stringify(data.destinations), data.frequency, data.notes);
+    notifyNewTransport(data);
     res.status(201).json({ ok: true });
   });
 

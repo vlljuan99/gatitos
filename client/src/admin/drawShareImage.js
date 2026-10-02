@@ -344,7 +344,7 @@ export async function renderShareImage({ cat, contact, webUrl, format = 'post', 
     ctx.fillStyle = C.cacaoSuave;
     ctx.textAlign = 'center';
     ctx.font = `700 30px ${TEXT}`;
-    ctx.fillText('Adopciones en Extremadura (Badajoz y Cáceres)', W / 2, L.note);
+    ctx.fillText('Adopciones en Extremadura y, con transporte solidario, más lejos', W / 2, L.note);
   }
 
   return new Promise((resolve, reject) => {

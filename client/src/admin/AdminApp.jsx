@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import {
+  Car,
   Cat,
   ChevronRight,
   ClipboardList,
@@ -33,6 +34,7 @@ const Applications = lazy(() => import('./Applications.jsx'));
 const ApplicationDetail = lazy(() => import('./ApplicationDetail.jsx'));
 const Messages = lazy(() => import('./Inbox.jsx').then((m) => ({ default: m.Messages })));
 const Volunteers = lazy(() => import('./Inbox.jsx').then((m) => ({ default: m.Volunteers })));
+const Transport = lazy(() => import('./Inbox.jsx').then((m) => ({ default: m.Transport })));
 const Contents = lazy(() => import('./Contents.jsx'));
 const Team = lazy(() => import('./Team.jsx'));
 const Account = lazy(() => import('./Account.jsx'));
@@ -102,6 +104,7 @@ function useNavItems(user) {
     { to: '/admin/solicitudes', label: 'Solicitudes', icon: ClipboardList, badge: data?.applications.new, main: true },
     { to: '/admin/mensajes', label: 'Mensajes', icon: Inbox, badge: data?.messages.new, main: true },
     { to: '/admin/voluntariado', label: 'Voluntariado', icon: HeartHandshake, badge: data?.volunteers.new },
+    { to: '/admin/transporte', label: 'Transporte solidario', icon: Car, badge: data?.transport.new },
     { to: '/admin/acogidas', label: 'Casas de acogida', icon: House },
     {
       to: '/admin/inventario',
@@ -255,6 +258,7 @@ export default function AdminApp() {
           <Route path="solicitudes/:id" element={<ApplicationDetail />} />
           <Route path="mensajes" element={<Messages />} />
           <Route path="voluntariado" element={<Volunteers />} />
+          <Route path="transporte" element={<Transport />} />
           <Route path="acogidas" element={<Fosters />} />
           <Route path="inventario" element={<Inventory />} />
           <Route path="donaciones" element={<Donations />} />

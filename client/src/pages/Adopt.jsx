@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Check, Heart, PawPrint, Send } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Car, Check, Heart, PawPrint, Send } from 'lucide-react';
 import { CatPhoto } from '../components/CatPhoto.jsx';
-import { Checkbox, Choice, FormError, Honeypot, TextArea, TextInput } from '../components/form.jsx';
+import { Checkbox, Choice, Field, FormError, Honeypot, TextArea, TextInput } from '../components/form.jsx';
 import { Button, ButtonLink, Card, cx, Spinner } from '../components/ui.jsx';
 import {
   applicationPayload,
@@ -14,7 +14,19 @@ import {
   validateStep,
 } from '../lib/adoption.js';
 import { useFavorites } from '../lib/favorites.js';
-import { ALLERGIES, HOURS_ALONE, HOUSING, KIDS, PETS_ALLOWED, PROVINCES, TENURE, WINDOWS, YES_NO } from '../lib/forms.js';
+import {
+  ALLERGIES,
+  EXTREMADURA,
+  HOURS_ALONE,
+  HOUSING,
+  KIDS,
+  OTHER_PROVINCES,
+  PETS_ALLOWED,
+  PROVINCE_CHOICES,
+  TENURE,
+  WINDOWS,
+  YES_NO,
+} from '../lib/forms.js';
 import { useDraftState } from '../lib/drafts.js';
 import { useForm } from '../lib/useForm.js';
 import { useApi } from '../lib/useApi.js';
@@ -191,7 +203,9 @@ export default function Adopt() {
   if (loading) return <Spinner />;
 
   const key = STEPS[step].key;
-  const outside = values.province === 'otra';
+  // «otra» mientras se elige en la lista; luego, el nombre de la provincia.
+  const otherProvince = Boolean(values.province) && !EXTREMADURA.includes(values.province);
+  const outside = otherProvince && values.province !== 'otra';
 
   return (
     <div className="mx-auto max-w-2xl pb-10">
@@ -239,14 +253,48 @@ export default function Adopt() {
               {...field('phone')}
             />
             <TextInput label="Municipio" autoComplete="address-level2" placeholder="Almendralejo" {...field('municipality')} />
-            <Choice label="Provincia" options={PROVINCES} {...field('province')} error={outside ? undefined : errors.province} />
+            <Choice
+              label="Provincia"
+              options={PROVINCE_CHOICES}
+              value={otherProvince ? 'otra' : values.province}
+              onChange={(v) => set('province', v)}
+              error={otherProvince ? undefined : errors.province}
+            />
+            {otherProvince && (
+              <Field label="¿Cuál?" error={errors.province}>
+                {({ id, describedBy, invalid }) => (
+                  <select
+                    id={id}
+                    value={values.province === 'otra' ? '' : values.province}
+                    onChange={(event) => set('province', event.target.value || 'otra')}
+                    aria-invalid={invalid || undefined}
+                    aria-describedby={describedBy}
+                    className={cx(
+                      'w-full appearance-none rounded-2xl border-2 bg-nata px-4 py-3 text-base focus:border-canela focus:outline-none',
+                      invalid ? 'border-canela-oscuro' : 'border-borde',
+                    )}
+                  >
+                    <option value="">Elige tu provincia</option>
+                    {OTHER_PROVINCES.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </Field>
+            )}
             {outside && (
-              <Card className="bg-melocoton">
-                <p className="font-bold text-melocoton-oscuro">Lo sentimos mucho 😿</p>
-                <p className="mt-1">
-                  {OUTSIDE_EXTREMADURA}, para poder conocernos en persona y hacer el seguimiento. ¡Pero puedes ayudarnos
-                  compartiendo sus fichas!
+              <Card className="bg-mantequilla">
+                <p className="flex items-center gap-2 font-bold text-mantequilla-oscuro">
+                  <Car className="size-5" aria-hidden /> Fuera de Extremadura
                 </p>
+                <p className="mt-1">
+                  {OUTSIDE_EXTREMADURA}. Envía tu solicitud igualmente y te contamos si es posible.
+                </p>
+                <Link to="/transporte-solidario" className="mt-2 inline-block font-bold text-mantequilla-oscuro underline">
+                  ¿Viajas a menudo? Apúntate al transporte solidario
+                </Link>
               </Card>
             )}
             <Checkbox checked={values.adult} onChange={(v) => set('adult', v)} error={errors.adult}>
@@ -339,7 +387,7 @@ export default function Adopt() {
             </Button>
           )}
           {step < STEPS.length - 1 ? (
-            <Button type="submit" size="lg" block disabled={key === 'tu' && outside}>
+            <Button type="submit" size="lg" block>
               Siguiente <ArrowRight className="size-5" />
             </Button>
           ) : (

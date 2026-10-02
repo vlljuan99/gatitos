@@ -47,7 +47,8 @@ export const INITIAL_APPLICATION = {
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const PHONE_RE = /^\+?[\d\s().-]{9,20}$/;
 
-export const OUTSIDE_EXTREMADURA = 'De momento solo damos en adopción en Extremadura (Badajoz y Cáceres)';
+export const OUTSIDE_EXTREMADURA =
+  'Fuera de Extremadura podemos darlo en adopción si alguien de nuestro transporte solidario viaja a tu zona: así llega en buenas manos y podemos hacer el seguimiento';
 
 export function validateStep(key, v) {
   const errors = {};
@@ -59,8 +60,7 @@ export function validateStep(key, v) {
     if (!EMAIL_RE.test(v.email.trim())) errors.email = 'Escribe un email válido';
     if (!PHONE_RE.test(v.phone.trim())) errors.phone = 'Escribe un teléfono válido';
     if (!v.municipality.trim()) errors.municipality = 'Escribe tu municipio';
-    if (!v.province) errors.province = 'Elige tu provincia';
-    else if (v.province === 'otra') errors.province = OUTSIDE_EXTREMADURA;
+    if (!v.province || v.province === 'otra') errors.province = 'Elige tu provincia';
     if (!v.adult) errors.adult = 'Tienes que ser mayor de edad';
   }
   if (key === 'hogar') {

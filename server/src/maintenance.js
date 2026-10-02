@@ -4,8 +4,9 @@ import { createUser } from './auth.js';
 
 /**
  * Borra datos personales que ya no hacen falta, como dice la política de
- * privacidad: solicitudes descartadas y mensajes/voluntariado archivados con
- * más de RETENTION_MONTHS meses sin cambios. Las adopciones se conservan.
+ * privacidad: solicitudes descartadas y mensajes, voluntariado y transporte
+ * solidario archivados con más de RETENTION_MONTHS meses sin cambios. Las
+ * adopciones se conservan.
  */
 export function purgeOldData(months = RETENTION_MONTHS) {
   const cutoff = `-${months} months`;
@@ -18,6 +19,9 @@ export function purgeOldData(months = RETENTION_MONTHS) {
       .run(cutoff).changes,
     volunteers: db
       .prepare("DELETE FROM volunteers WHERE status = 'archivado' AND updated_at < datetime('now', ?)")
+      .run(cutoff).changes,
+    transport: db
+      .prepare("DELETE FROM transport_volunteers WHERE status = 'archivado' AND updated_at < datetime('now', ?)")
       .run(cutoff).changes,
   }))();
 }

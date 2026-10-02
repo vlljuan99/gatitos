@@ -43,7 +43,9 @@ export function adoptionConditions(cat) {
 /** Texto de protección de datos con los datos legales de la asociación. */
 export function privacyText(legal, purpose) {
   const blank = '______________';
-  const who = [legal.holder, `CIF ${legal.cif || blank}`, legal.address].filter(Boolean).join(', ');
+  const who = [legal.holder, `CIF ${legal.cif || blank}`, legal.registry && `inscrita en el ${legal.registry}`, legal.address]
+    .filter(Boolean)
+    .join(', ');
   const contact = legal.email ? `escribiendo a ${legal.email}` : 'dirigiéndose a la asociación';
   return (
     `Responsable: ${who}. Los datos personales de este documento se tratan con la única finalidad de ${purpose} y cumplir con las obligaciones legales, ` +

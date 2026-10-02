@@ -84,10 +84,12 @@ describe('solicitud de adopción', () => {
     assert.equal(answers.name, undefined, 'los datos de contacto van en columnas propias');
   });
 
-  test('solo se admite Extremadura', async () => {
-    const res = await api.post('/api/solicitudes', validApplication({ province: 'Madrid' }));
+  test('se admite cualquier provincia de España (fuera de Extremadura, con transporte solidario)', async () => {
+    const madrid = await api.post('/api/solicitudes', validApplication({ province: 'Madrid' }));
+    assert.equal(madrid.status, 201);
+    const res = await api.post('/api/solicitudes', validApplication({ province: 'Narnia' }));
     assert.equal(res.status, 400);
-    assert.match(res.data.fields.province, /Extremadura/);
+    assert.equal(res.data.fields.province, 'Elige tu provincia');
   });
 
   test('de alquiler hay que decir si se permiten animales', async () => {

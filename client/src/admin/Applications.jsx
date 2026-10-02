@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { ChevronRight, MessageSquareText } from 'lucide-react';
-import { EmptyState, ErrorState, Spinner } from '../components/ui.jsx';
+import { EmptyState, ErrorState, Spinner, cx } from '../components/ui.jsx';
 import { AdminPage, StatusPill, Tabs, timeAgo, useAdminApi } from './common.jsx';
 
 export const APPLICATION_STATUSES = [
@@ -43,6 +43,19 @@ export default function Applications() {
                 <p className="truncate text-sm text-cacao-suave">
                   {app.catName ? `Para ${app.catName}` : 'Sin gatito elegido'} · {app.municipality}
                 </p>
+                {app.outsideExtremadura && (
+                  <p className="mt-1 flex flex-wrap gap-1">
+                    <span className="rounded-full bg-mantequilla px-2 py-0.5 text-xs font-bold text-mantequilla-oscuro">📍 {app.province}</span>
+                    <span
+                      className={cx(
+                        'rounded-full px-2 py-0.5 text-xs font-bold',
+                        app.transportCount ? 'bg-menta text-menta-oscuro' : 'bg-cacao/10 text-cacao-suave',
+                      )}
+                    >
+                      🚗 {app.transportCount ? `${app.transportCount} viaja${app.transportCount === 1 ? '' : 'n'} allí` : 'Sin transporte aún'}
+                    </span>
+                  </p>
+                )}
                 <p className="flex items-center gap-2 text-xs text-cacao-suave">
                   {timeAgo(app.createdAt)}
                   {app.notesCount > 0 && (

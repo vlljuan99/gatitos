@@ -1,10 +1,30 @@
 // Opciones de los formularios públicos con sus etiquetas visibles. Los valores
 // deben coincidir con server/src/forms.js, que es quien valida.
 
+// Provincias de España (igual que en el servidor). Se adopta sobre todo en
+// Extremadura; fuera de ella, si alguien del transporte solidario viaja allí.
+export const EXTREMADURA = ['Badajoz', 'Cáceres'];
 export const PROVINCES = [
+  'A Coruña', 'Álava', 'Albacete', 'Alicante', 'Almería', 'Asturias', 'Ávila', 'Badajoz', 'Barcelona', 'Bizkaia',
+  'Burgos', 'Cáceres', 'Cádiz', 'Cantabria', 'Castellón', 'Ceuta', 'Ciudad Real', 'Córdoba', 'Cuenca', 'Gipuzkoa',
+  'Girona', 'Granada', 'Guadalajara', 'Huelva', 'Huesca', 'Illes Balears', 'Jaén', 'La Rioja', 'Las Palmas', 'León',
+  'Lleida', 'Lugo', 'Madrid', 'Málaga', 'Melilla', 'Murcia', 'Navarra', 'Ourense', 'Palencia', 'Pontevedra',
+  'Salamanca', 'Santa Cruz de Tenerife', 'Segovia', 'Sevilla', 'Soria', 'Tarragona', 'Teruel', 'Toledo', 'Valencia',
+  'Valladolid', 'Zamora', 'Zaragoza',
+];
+export const OTHER_PROVINCES = PROVINCES.filter((p) => !EXTREMADURA.includes(p));
+/** Píldoras de la solicitud: las dos de Extremadura y «Otra provincia» (que abre la lista). */
+export const PROVINCE_CHOICES = [
   { value: 'Badajoz', label: 'Badajoz' },
   { value: 'Cáceres', label: 'Cáceres' },
   { value: 'otra', label: 'Otra provincia' },
+];
+
+export const TRANSPORT_FREQUENCIES = [
+  { value: 'semanal', label: 'Cada semana' },
+  { value: 'quincenal', label: 'Cada 15 días' },
+  { value: 'mensual', label: 'Una vez al mes' },
+  { value: 'ocasional', label: 'De vez en cuando' },
 ];
 
 export const HOUSING = [
@@ -103,3 +123,4 @@ export const APPLICATION_QUESTIONS = [
 ];
 
 export const volunteerAreaLabel = (value) => labelOf(VOLUNTEER_AREAS, value);
+export const frequencyLabel = (value) => labelOf(TRANSPORT_FREQUENCIES, value);

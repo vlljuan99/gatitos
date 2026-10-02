@@ -29,9 +29,9 @@ test('un formulario completo pasa todos los pasos', () => {
   for (const step of STEPS) assert.deepEqual(validateStep(step.key, filled), {}, step.key);
 });
 
-test('fuera de Extremadura no se puede seguir', () => {
-  const errors = validateStep('tu', { ...filled, province: 'otra' });
-  assert.match(errors.province, /Extremadura/);
+test('fuera de Extremadura se puede seguir eligiendo la provincia', () => {
+  assert.equal(validateStep('tu', { ...filled, province: 'otra' }).province, 'Elige tu provincia');
+  assert.deepEqual(validateStep('tu', { ...filled, province: 'Madrid' }), {});
 });
 
 test('de alquiler hay que contestar si se permiten animales', () => {
