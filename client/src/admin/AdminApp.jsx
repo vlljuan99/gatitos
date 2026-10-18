@@ -10,6 +10,7 @@ import {
   HandHeart,
   HeartHandshake,
   House,
+  HouseHeart,
   IdCard,
   Inbox,
   LayoutDashboard,
@@ -45,6 +46,7 @@ const Donations = lazy(() => import('./Donations.jsx'));
 const Members = lazy(() => import('./Members.jsx'));
 const MemberDetail = lazy(() => import('./Members.jsx').then((m) => ({ default: m.MemberDetail })));
 const Papers = lazy(() => import('./Papers.jsx'));
+const Adopted = lazy(() => import('./Adopted.jsx'));
 
 function Login({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -106,6 +108,7 @@ function useNavItems(user) {
     { to: '/admin/gatitos', label: 'Gatitos', icon: Cat, main: true },
     { to: '/admin/solicitudes', label: 'Solicitudes', icon: ClipboardList, badge: data?.applications.new, main: true },
     { to: '/admin/mensajes', label: 'Mensajes', icon: Inbox, badge: data?.messages.new, main: true },
+    { to: '/admin/adoptados', label: 'Adoptados', icon: HouseHeart },
     { to: '/admin/voluntariado', label: 'Voluntariado', icon: HeartHandshake, badge: data?.volunteers.new },
     { to: '/admin/transporte', label: 'Viajes solidarios', icon: Car, badge: data?.transport.new },
     { to: '/admin/acogidas', label: 'Casas de acogida', icon: House },
@@ -260,6 +263,7 @@ export default function AdminApp() {
           <Route path="gatitos/:id" element={<CatEditor />} />
           <Route path="solicitudes" element={<Applications />} />
           <Route path="solicitudes/:id" element={<ApplicationDetail />} />
+          <Route path="adoptados" element={<Adopted />} />
           <Route path="mensajes" element={<Messages />} />
           <Route path="voluntariado" element={<Volunteers />} />
           <Route path="transporte" element={<Transport />} />

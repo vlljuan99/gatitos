@@ -81,7 +81,7 @@ export function publicRouter() {
       )
       .run(cat?.id ?? null, cat?.name ?? '', name, email, phone, municipality, province, JSON.stringify(answers));
 
-    notifyNewApplication({ id: info.lastInsertRowid, name, email, municipality, catName: cat?.name ?? '' });
+    notifyNewApplication({ id: info.lastInsertRowid, name, email, phone, municipality, catName: cat?.name ?? '' });
     res.status(201).json({ ok: true });
   });
 

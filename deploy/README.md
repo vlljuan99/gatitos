@@ -141,6 +141,32 @@ está configurado, y los recibos se pueden abrir en PDF y mandar a mano. Para
 que el remitente sea de la asociación hace falta un dominio propio verificado
 en Resend (con el de sslip.io no se puede).
 
+
+## Avisos por WhatsApp (opcional)
+
+Cada solicitud de adopción nueva puede avisar por WhatsApp al móvil de Bigotes
+y mandar a quien la envía un «la hemos recibido». WhatsApp solo deja que una
+empresa escriba primero con la **API oficial de WhatsApp Business** (Cloud API
+de Meta) y con **plantillas aprobadas**, así que hace falta:
+
+1. Una cuenta de Meta Business y una app con el producto WhatsApp
+   ([developers.facebook.com](https://developers.facebook.com)), con un número
+   que **no** esté en uso en la app normal de WhatsApp.
+2. Dos plantillas de categoría «Utilidad», en español (`es`):
+   - Para el equipo, p. ej. `solicitud_nueva`: «🐾 Nueva solicitud de
+     adopción de {{1}} para {{2}}. Ábrela en el panel: {{3}}».
+   - Para quien adopta, p. ej. `solicitud_recibida`: «¡Hola, {{1}}! Hemos
+     recibido tu solicitud para adoptar a {{2}}. Te escribiremos en unos días.
+     Un ronroneo, Bigotes».
+3. En `app.env`: `WHATSAPP_TOKEN` (token permanente de un usuario del
+   sistema), `WHATSAPP_PHONE_ID` (id del número), `WHATSAPP_NOTIFY_TO` (móvil
+   de Bigotes), `WHATSAPP_TEMPLATE_TEAM` y `WHATSAPP_TEMPLATE_ADOPTER` (nombres
+   de las plantillas) y, si no es `es`, `WHATSAPP_LANGUAGE`. Reinicia la app.
+
+Sin esto no se manda nada por WhatsApp y todo sigue igual: el correo avisa y el
+panel tiene en cada solicitud el botón de WhatsApp con el mensaje ya escrito.
+Meta cobra por conversación iniciada (unos céntimos; las primeras pueden ser
+gratis según la tarifa vigente).
 ## Monitor
 
 `Monitor production` consulta cada 30 minutos la portada y `/api/health`. Un

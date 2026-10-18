@@ -10,7 +10,7 @@ import { purgeOldDrafts } from './lib/drafts.js';
 import Home from './pages/Home.jsx';
 import Cats from './pages/Cats.jsx';
 import CatDetail from './pages/CatDetail.jsx';
-import Match from './pages/Match.jsx';
+import CatBook from './pages/CatBook.jsx';
 
 function RouteError() {
   const error = useRouteError();
@@ -58,7 +58,8 @@ const router = createBrowserRouter([
           { index: true, element: <Home /> },
           { path: 'gatitos', element: <Cats /> },
           { path: 'gatitos/:slug', element: <CatDetail /> },
-          { path: 'match', element: <Match /> },
+          { path: 'libro-de-gatos', element: <CatBook /> },
+          { path: 'match', loader: () => redirect('/libro-de-gatos') },
           { path: 'favoritos', lazy: page(() => import('./pages/Favorites.jsx')) },
           { path: 'como-trabajamos', lazy: page(() => import('./pages/HowWeWork.jsx')) },
           { path: 'adoptar', lazy: page(() => import('./pages/Adopt.jsx')) },

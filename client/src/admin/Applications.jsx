@@ -6,8 +6,7 @@ import { AdminPage, StatusPill, Tabs, timeAgo, useAdminApi } from './common.jsx'
 export const APPLICATION_STATUSES = [
   { value: 'nueva', label: 'Nuevas', single: 'Nueva' },
   { value: 'entrevista', label: 'Entrevista', single: 'Entrevista' },
-  { value: 'visita', label: 'Visita', single: 'Visita' },
-  { value: 'aprobada', label: 'Aprobadas', single: 'Aprobada' },
+  { value: 'aprobada', label: 'Aprobadas (visita)', single: 'Aprobada' },
   { value: 'adoptado', label: 'Adoptados', single: 'Adoptado' },
   { value: 'descartada', label: 'Descartadas', single: 'Descartada' },
 ];

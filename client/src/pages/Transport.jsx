@@ -114,7 +114,7 @@ function TransportForm() {
         <TextInput label="Email" type="email" inputMode="email" autoComplete="email" {...field('email')} />
         <TextInput label="Teléfono" type="tel" inputMode="tel" autoComplete="tel" {...field('phone')} />
       </div>
-      <TextInput label="¿Desde dónde sales?" autoComplete="address-level2" placeholder="Almendralejo" {...field('origin')} />
+      <TextInput label="¿Desde dónde sales?" autoComplete="address-level2" {...field('origin')} />
       <fieldset className="grid gap-3">
         <legend className="mb-1.5 font-bold">¿A dónde viajas a menudo?</legend>
         <ul className="grid gap-3">

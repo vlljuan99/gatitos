@@ -177,7 +177,7 @@ function SignupForm({ settings, donations }) {
       <TextInput label="Email" type="email" inputMode="email" autoComplete="email" hint="Aquí te llegarán tus recibos." {...field('email')} />
       <div className="grid gap-6 sm:grid-cols-2">
         <TextInput label="Teléfono" optional type="tel" inputMode="tel" autoComplete="tel" hint="Para avisarte de la renovación." {...field('phone')} />
-        <TextInput label="Municipio" autoComplete="address-level2" placeholder="Almendralejo" {...field('municipality')} />
+        <TextInput label="Municipio" autoComplete="address-level2" {...field('municipality')} />
       </div>
       <Choice label="¿Cómo prefieres pagar?" options={methods} {...field('method')} />
       <TextArea label="¿Algo que quieras contarnos?" optional rows={2} {...field('message')} />

@@ -289,7 +289,7 @@ function ApplicationDetail() {
           </div>
         </Card>
 
-        {['visita', 'aprobada', 'adoptado'].includes(app.status) || app.contract.number ? <ContractCard app={app} /> : null}
+        {['aprobada', 'adoptado'].includes(app.status) || app.contract.number ? <ContractCard app={app} /> : null}
 
         <Card>
           <h2 className="font-display text-lg font-semibold">Contacto</h2>

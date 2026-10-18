@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Copy, KeyRound, ShieldCheck, UserCheck, UserPlus, UserX } from 'lucide-react';
-import { WhatsAppIcon } from '../components/BrandIcons.jsx';
+import { WhatsAppIcon, whatsappUrl } from '../components/BrandIcons.jsx';
 import { Choice, FormError, TextInput } from '../components/form.jsx';
 import { Sheet } from '../components/Sheet.jsx';
 import { useToast } from '../components/Toast.jsx';
@@ -25,7 +25,7 @@ function PasswordSheet({ info, onClose }) {
       <p className="text-cacao-suave">Pásasela a {info.name}. Por seguridad, no se volverá a mostrar.</p>
       <p className="mt-4 rounded-2xl bg-mantequilla p-4 text-center font-mono text-xl font-bold text-mantequilla-oscuro">{info.password}</p>
       <div className="mt-4 grid gap-3">
-        <a href={`https://wa.me/?text=${encodeURIComponent(message)}`} target="_blank" rel="noreferrer" className={cx(buttonClass({ block: true }), 'bg-[#177a41] hover:bg-[#12663a]')}>
+        <a href={whatsappUrl('', message)} target="_blank" rel="noreferrer" className={cx(buttonClass({ block: true }), 'bg-[#177a41] hover:bg-[#12663a]')}>
           <WhatsAppIcon /> Enviar por WhatsApp
         </a>
         <Button

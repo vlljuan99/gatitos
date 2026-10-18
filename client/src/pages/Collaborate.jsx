@@ -55,7 +55,7 @@ function VolunteerForm() {
         <TextInput label="Email" type="email" inputMode="email" autoComplete="email" {...field('email')} />
         <TextInput label="Teléfono" type="tel" inputMode="tel" autoComplete="tel" {...field('phone')} />
       </div>
-      <TextInput label="Municipio" autoComplete="address-level2" placeholder="Almendralejo" {...field('municipality')} />
+      <TextInput label="Municipio" autoComplete="address-level2" {...field('municipality')} />
       <TextInput label="¿Cuándo sueles tener tiempo?" optional placeholder="Tardes entre semana, sábados por la mañana…" {...field('availability')} />
       <TextArea label="¿Algo más que quieras contarnos?" optional rows={3} {...field('message')} />
       <Checkbox checked={values.adult} onChange={(v) => set('adult', v)} error={errors.adult}>
@@ -261,7 +261,7 @@ export default function Collaborate() {
             <div>
               <h3 className="font-display text-lg font-semibold">Habla de nosotros</h3>
               <p className="text-cacao-suave">
-                Si conoces a alguien que busca gatito, mándale a <Link to="/match" className="font-bold underline">nuestro match</Link>.
+                Si conoces a alguien que busca gatito, mándale a <Link to="/libro-de-gatos" className="font-bold underline">nuestro libro de gatos</Link>.
               </p>
             </div>
           </Card>

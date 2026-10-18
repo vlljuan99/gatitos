@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Check, Copy, Share2 } from 'lucide-react';
 import { Sheet } from './Sheet.jsx';
-import { WhatsAppIcon } from './BrandIcons.jsx';
+import { WhatsAppIcon, whatsappUrl } from './BrandIcons.jsx';
 import { buttonClass, cx } from './ui.jsx';
 
 /** Compartir: usa el menú nativo del móvil y, si no hay, ofrece WhatsApp o copiar enlace. */
@@ -40,7 +40,7 @@ export function ShareButton({ title, text, path, className, label = 'Compartir' 
       <Sheet open={open} onClose={() => setOpen(false)} title="Compartir">
         <div className="grid gap-3">
           <a
-            href={`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`}
+            href={whatsappUrl('', `${text} ${url}`)}
             target="_blank"
             rel="noreferrer"
             className={cx(buttonClass({ block: true }), 'bg-[#177a41] hover:bg-[#12663a]')}

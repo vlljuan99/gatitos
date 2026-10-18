@@ -14,7 +14,7 @@ const DEFAULT_IMAGE = { url: '/og-bigotes.jpg', width: 1200, height: 630 };
 const STATIC_PAGES = {
   '/': { title: 'Bigotes · Adopción de gatitos en Almendralejo' },
   '/gatitos': { title: 'Gatitos en adopción', description: 'Conoce a los gatitos de Bigotes que buscan una familia para siempre en Extremadura.' },
-  '/match': { title: 'Encuentra tu match gatuno', description: 'Desliza, dale «Me encanta» y descubre qué gatito de Bigotes está hecho para ti.' },
+  '/libro-de-gatos': { title: 'Libro de gatos', description: 'Pasa las páginas y conoce a los gatitos de Bigotes que buscan familia.' },
   '/favoritos': { title: 'Tus favoritos' },
   '/como-trabajamos': { title: 'Cómo trabajamos', description: 'Rescate, veterinario, casa de acogida y adopción responsable: así cuidamos a cada gatito.' },
   '/adoptar': { title: 'Solicitud de adopción', description: 'Rellena la solicitud para adoptar un gatito de Bigotes. Te leemos con mucho cariño.' },
@@ -31,7 +31,8 @@ const STATIC_PAGES = {
     title: 'Viajes solidarios',
     description: '¿Viajas a menudo a otra ciudad? Ayuda a que un gatito de Bigotes llegue a su nueva familia.',
   },
-  // Dirección antigua: la SPA redirige, pero la vista previa ya sale bien.
+  // Direcciones antiguas: la SPA redirige, pero la vista previa ya sale bien.
+  '/match': { title: 'Libro de gatos', description: 'Pasa las páginas y conoce a los gatitos de Bigotes que buscan familia.' },
   '/transporte-solidario': {
     title: 'Viajes solidarios',
     description: '¿Viajas a menudo a otra ciudad? Ayuda a que un gatito de Bigotes llegue a su nueva familia.',
@@ -127,7 +128,8 @@ export function injectHead(template, pathname, meta) {
 
 export function sitemapXml() {
   const cats = db.prepare(`SELECT slug, updated_at FROM cats WHERE status IN (${PUBLIC_STATUSES_SQL})`).all();
-  const pages = Object.keys(STATIC_PAGES).filter((p) => !['/favoritos', '/aviso-legal', '/privacidad', '/cookies'].includes(p));
+  const hidden = ['/favoritos', '/aviso-legal', '/privacidad', '/cookies', '/match', '/transporte-solidario'];
+  const pages = Object.keys(STATIC_PAGES).filter((p) => !hidden.includes(p));
   const urls = [
     ...pages.map((p) => `<url><loc>${PUBLIC_URL}${p}</loc></url>`),
     ...cats.map(

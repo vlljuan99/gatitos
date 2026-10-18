@@ -21,24 +21,27 @@ export function adoptionConditions(cat) {
   const p = pronouns(cat?.sex);
   const items = [
     'Me comprometo a ofrecer al gato un hogar seguro, estable y lleno de cariño.',
-    'No abandonaré al gato ni lo cederé a terceros sin comunicarlo previamente a la asociación.',
+    'No abandonaré al gato ni lo cederé a terceros.',
     'Mantendré su identificación (microchip) y comunicaré cualquier cambio de domicilio o de datos de contacto.',
     'Garantizaré su atención veterinaria siempre que sea necesaria.',
   ];
   // Si se entrega sin esterilizar, la esterilización queda como compromiso.
   if (!cat?.sterilized) {
     items.push(
-      `Si se entrega sin esterilizar, me comprometo a esterilizarl${p.o} antes del ____ / ____ / ________ (o cuando lo indique la veterinaria) y a enviar el justificante a BIGOTES.`,
+      `Como se entrega sin esterilizar, me comprometo a esterilizarl${p.o} antes del ____ / ____ / ________ (o cuando lo indique la veterinaria) y a enviar el justificante a BIGOTES.`,
     );
   }
   items.push(
-    `En caso de que, por cualquier motivo, no pueda seguir haciéndome cargo de ${p.him}, me comprometo a contactar con BIGOTES y devolver${p.it} a la asociación.`,
-    'Acepto recibir visitas de seguimiento o contacto periódico para conocer su adaptación.',
-    'Declaro que toda la información facilitada es veraz.',
-    'He leído y acepto las condiciones de adopción de BIGOTES.',
+    `En caso de que, por cualquier motivo, no pueda seguir haciéndome cargo de ${p.him}, me comprometo a contactar con BIGOTES para valorar la situación y buscar conjuntamente la mejor solución para el animal.`,
+    'Acepto mantener contacto periódico para conocer su adaptación.',
+    'Declaro que toda la información facilitada es verdadera.',
   );
   return items;
 }
+
+/** Aviso al pie del contrato. */
+export const CONTRACT_DISCLAIMER =
+  'BIGOTES no se hace responsable de las enfermedades genéticas, congénitas u otras patologías que los gatos rescatados puedan desarrollar a lo largo de su vida y que no hayan podido detectarse previamente.';
 
 /** Texto de protección de datos con los datos legales de la asociación. */
 export function privacyText(legal, purpose, { example = 'por ejemplo, el registro del microchip' } = {}) {
@@ -61,7 +64,7 @@ function a4Header(k, { numberLabel, number, date, centered = false }) {
     k.logo(172, 20, 252);
     return;
   }
-  k.logo(150, 20, 252);
+  k.logo(186, 22, 224);
   const bx = 432;
   k.rect(bx, 24, 567 - bx, 76, { radius: 9, fill: COLORS.box });
   k.text(numberLabel, bx + 12, 43, { font: 'extrabold', size: 9, spacing: 0.4 });
@@ -71,6 +74,11 @@ function a4Header(k, { numberLabel, number, date, centered = false }) {
 }
 
 function titleBand(k, y, title, subtitle) {
+  if (!subtitle) {
+    k.rect(28, y, 539, 40, { radius: 16, fill: COLORS.band });
+    k.text(title, 28, y + 26, { font: 'display', size: 21, color: COLORS.ink, width: 539, align: 'center', spacing: 5 });
+    return y + 40;
+  }
   k.rect(28, y, 539, 54, { radius: 18, fill: COLORS.band });
   k.text(title, 28, y + 28, { font: 'display', size: 22, color: COLORS.ink, width: 539, align: 'center', spacing: 4 });
   const sw = k.width(subtitle, 'semibold', 7.6, { characterSpacing: 3 });
@@ -112,54 +120,50 @@ export function adoptionContract(data, { legal }) {
         const fs = 8.4;
         if (draw) {
           a4Header(k, { numberLabel: 'N.º DE CONTRATO', number: contract.number, date: contract.date });
-          titleBand(k, 122, 'CONTRATO DE ADOPCIÓN', 'UN HOGAR RESPONSABLE CAMBIA HISTORIAS');
+          titleBand(k, 118, 'CONTRATO DE ADOPCIÓN');
         }
-        let y = 186;
+        let y = 168;
         const half = 262;
-        const RX = X + half + 11;
-        const RW = W - half - 11;
+        const RX = X + half + 15;
+        const RW = W - half - 15;
+        const boxH = 184;
 
         // Datos del gato y del adoptante
         if (draw) {
-          let top = k.section(X, y, half, 206, 'Datos del gato', { icon: 'cat' });
+          let top = k.section(X, y, half, boxH, 'Datos del gato', { icon: 'cat' });
           k.field(X + 11, top + 18, half - 22, 'Nombre (provisional/definitivo):', cat.name, { size: fs });
-          k.field(X + 11, top + 37, half - 22, 'N.º de ficha:', cat.fileNumber, { size: fs });
-          k.text('Sexo:', X + 11, top + 56, { size: fs, color: COLORS.label });
-          k.options(X + 40, top + 56, SEX(cat.sex, known), { size: fs, gap: 9 });
-          k.field(X + 11, top + 75, half - 22, 'Edad aproximada:', cat.age, { size: fs });
-          k.field(X + 11, top + 94, half - 22, 'Raza / tipo:', cat.breed, { size: fs });
-          k.field(X + 11, top + 113, half - 22, 'Color y rasgos identificativos:', cat.coat, { size: fs, lines: 2, gap: 17 });
-          k.field(X + 11, top + 155, half - 22, 'N.º de microchip:', cat.microchipNumber, { size: fs });
+          k.field(X + 11, top + 36, half - 22, 'N.º de ficha:', cat.fileNumber, { size: fs });
+          k.text('Sexo:', X + 11, top + 54, { size: fs, color: COLORS.label });
+          k.options(X + 40, top + 54, SEX(cat.sex, known), { size: fs, gap: 9 });
+          k.field(X + 11, top + 72, half - 22, 'Edad aproximada:', cat.age, { size: fs });
+          k.field(X + 11, top + 90, half - 22, 'Raza / tipo:', cat.breed, { size: fs });
+          k.field(X + 11, top + 108, half - 22, 'Color y rasgos identificativos:', cat.coat, { size: fs, lines: 2, gap: 17 });
+          k.field(X + 11, top + 145, half - 22, 'N.º de microchip:', cat.microchipNumber, { size: fs });
 
-          top = k.section(RX, y, RW, 146, 'Datos del adoptante', { icon: 'user' });
-          k.field(RX + 11, top + 17, RW - 22, 'Nombre y apellidos:', a.name, { size: fs });
-          k.field(RX + 11, top + 34, 116, 'DNI / NIE:', a.dni, { size: fs });
-          k.dateField(RX + 134, top + 34, 'Fecha nac.:', a.birthDate, { size: fs, part: 14, year: 24 });
-          k.field(RX + 11, top + 51, RW - 22, 'Dirección:', a.address, { size: fs });
-          k.field(RX + 11, top + 68, 160, 'Localidad:', a.municipality, { size: fs });
-          k.field(RX + 178, top + 68, RW - 189, 'C.P.:', a.postalCode, { size: fs });
-          k.field(RX + 11, top + 85, RW - 22, 'Provincia:', a.province, { size: fs });
-          k.field(RX + 11, top + 102, RW - 22, 'Teléfono:', a.phone, { size: fs });
-          k.field(RX + 11, top + 119, RW - 22, 'Correo electrónico:', a.email, { size: fs });
-
-          top = k.section(RX, y + 154, RW, 52, 'Contacto alternativo', { icon: 'phone', note: '(opcional)' });
-          k.field(RX + 11, top + 13, RW - 22, 'Nombre y apellidos:', a.altContactName, { size: fs });
-          k.field(RX + 11, top + 27, 132, 'Teléfono:', a.altContactPhone, { size: fs });
-          k.field(RX + 150, top + 27, RW - 161, 'Relación:', a.altContactRelation, { size: fs });
+          top = k.section(RX, y, RW, boxH, 'Datos del adoptante', { icon: 'user' });
+          k.field(RX + 11, top + 18, RW - 22, 'Nombre y apellidos:', a.name, { size: fs });
+          k.field(RX + 11, top + 36, RW - 22, 'DNI / NIE:', a.dni, { size: fs });
+          k.field(RX + 11, top + 54, RW - 22, 'Dirección:', a.address, { size: fs, lines: 2, gap: 17 });
+          k.field(RX + 11, top + 91, RW - 22, 'Localidad:', a.municipality, { size: fs });
+          k.field(RX + 11, top + 109, 150, 'Provincia:', a.province, { size: fs });
+          k.field(RX + 168, top + 109, RW - 179, 'C.P.:', a.postalCode, { size: fs });
+          k.field(RX + 11, top + 127, RW - 22, 'Teléfono:', a.phone, { size: fs });
+          k.field(RX + 11, top + 145, RW - 22, 'Correo electrónico:', a.email, { size: fs });
         }
-        y += 206 + 9;
+        y += boxH + 10;
 
         // Condiciones
         const textW = W - 150;
         k.use('text', size);
-        const heights = conditions.map((text) => Math.max(8, k.doc.heightOfString(text, { width: textW - 15, lineGap: 1 })));
-        const condH = 21 + 10 + heights.reduce((s, h) => s + h + 5, 0) + 4;
+        const heights = conditions.map((text) => Math.max(8, k.doc.heightOfString(text, { width: textW - 12, lineGap: 1.2 })));
+        const condH = Math.max(21 + 10 + heights.reduce((s, h) => s + h + 6, 0) + 4, 21 + 128);
         if (draw) {
           const top = k.section(X, y, W, condH, 'Condiciones de adopción', { icon: 'fileText' });
-          let cy = top + 9;
+          let cy = top + 10;
           conditions.forEach((text, i) => {
-            k.checkItem(X + 12, cy, textW, text, { size, lineGap: 1 });
-            cy += heights[i] + 5;
+            k.paw(X + 12, cy - 0.5, 7);
+            k.paragraph(text, X + 24, cy - 0.5, textW - 12, { size, lineGap: 1.2, color: COLORS.label });
+            cy += heights[i] + 6;
           });
           // Adorno: gato y corazón.
           const iy = top + Math.max(4, (condH - 21 - 110) / 2);
@@ -167,10 +171,10 @@ export function adoptionContract(data, { legal }) {
           k.icon('cat', X + W - 120, iy + 18, 100, { color: COLORS.brown, stroke: 1.1 });
           k.icon('heart', X + W - 44, iy, 22, { color: COLORS.brown, stroke: 1.6 });
         }
-        y += condH + 9;
+        y += condH + 10;
 
         // Documentación y firmas
-        const docsH = 108;
+        const docsH = 112;
         if (draw) {
           let top = k.section(X, y, half, docsH, 'Documentación que se entrega', { icon: 'folderOpen' });
           const docs = [
@@ -179,20 +183,18 @@ export function adoptionContract(data, { legal }) {
             ['Justificante de microchip', Boolean(cat.microchipped)],
             ['Hoja informativa de cuidados', false],
           ];
-          docs.forEach(([label, checked], i) => k.checkItem(X + 12, top + 9 + i * 15.5, half - 24, label, { checked, size: fs }));
-          k.checkbox(X + 12, top + 9 + 4 * 15.5 + 0.5, false);
-          k.field(X + 27, top + 9 + 4 * 15.5 + 7.5, half - 39, 'Otro:', '', { size: fs });
+          docs.forEach(([label, checked], i) => k.checkItem(X + 12, top + 10 + i * 16, half - 24, label, { checked, size: fs }));
+          k.checkbox(X + 12, top + 10 + 4 * 16 + 0.5, false);
+          k.field(X + 27, top + 10 + 4 * 16 + 7.5, half - 39, 'Otro:', '', { size: fs });
 
           top = k.section(RX, y, RW, docsH, 'Firmas', { icon: 'penLine' });
           const bw = (RW - 34) / 2;
-          k.text('Firma del adoptante:', RX + 12, top + 14, { size: 7.8, color: COLORS.label, width: bw, align: 'center' });
-          k.text('Firma y sello Asociación BIGOTES:', RX + 22 + bw, top + 14, { size: 7.8, color: COLORS.label, width: bw, align: 'center' });
-          k.signatureBox(RX + 12, top + 20, bw, 44);
-          k.signatureBox(RX + 22 + bw, top + 20, bw, 44);
-          k.field(RX + 12, top + 79, 118, 'Lugar:', contract.place, { size: fs });
-          k.dateField(RX + 138, top + 79, 'Fecha:', contract.date, { size: fs, part: 15, year: 28 });
+          k.text('Firma del adoptante:', RX + 12, top + 15, { size: 7.8, color: COLORS.label, width: bw, align: 'center' });
+          k.text('Firma y sello Asociación BIGOTES:', RX + 22 + bw, top + 15, { size: 7.8, color: COLORS.label, width: bw, align: 'center' });
+          k.signatureBox(RX + 12, top + 22, bw, 62);
+          k.signatureBox(RX + 22 + bw, top + 22, bw, 62);
         }
-        y += docsH + 9;
+        y += docsH + 10;
 
         // Protección de datos
         k.use('text', size - 0.9);
@@ -203,10 +205,15 @@ export function adoptionContract(data, { legal }) {
         }
         y += privH + 12;
         if (draw) motto(k, y);
-        return y + 22;
+        y += 30;
+        // Aviso de responsabilidad, en cursiva bajo el lema.
+        k.use('italic', size - 1);
+        const noteH = k.doc.heightOfString(CONTRACT_DISCLAIMER, { width: W - 40, lineGap: 0.8, align: 'center' });
+        if (draw) k.paragraph(CONTRACT_DISCLAIMER, X + 20, y, W - 40, { font: 'italic', size: size - 1, lineGap: 0.8, color: COLORS.label, align: 'center' });
+        return y + noteH;
       };
-      let size = 8.4;
-      while (size > 6.6 && layout(size, false) > 838) size -= 0.1;
+      let size = 8.6;
+      while (size > 6.6 && layout(size, false) > 828) size -= 0.1;
       layout(size, true);
     },
   ];

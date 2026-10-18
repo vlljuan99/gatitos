@@ -28,16 +28,18 @@ test('con la raya de inicio del iPhone, nada queda tapado por la barra inferior'
   await page.addStyleTag({ content: ':root { --zona-segura: 34px !important; }' });
   const cta = page.getByRole('link', { name: /Quiero adoptarle/ });
   await expect(cta).toBeVisible();
-  const bubble = mainNav(page).getByRole('link', { name: 'Match' }).locator('span').first();
+  const bubble = mainNav(page).getByRole('link', { name: 'Libro' }).locator('span').first();
   const [ctaBox, bubbleBox] = [await cta.boundingBox(), await bubble.boundingBox()];
   expect(ctaBox.y + ctaBox.height).toBeLessThanOrEqual(bubbleBox.y);
 
-  await page.goto('/match');
+  await page.goto('/libro-de-gatos');
   await page.addStyleTag({ content: ':root { --zona-segura: 34px !important; }' });
-  const like = page.getByRole('button', { name: 'Me encanta', exact: true });
+  await page.mouse.wheel(0, 2000);
+  const next = page.getByRole('button', { name: 'Página siguiente' });
+  await expect(next).toBeInViewport();
   const navBox = await mainNav(page).boundingBox();
-  const likeBox = await like.boundingBox();
-  expect(likeBox.y + likeBox.height).toBeLessThanOrEqual(navBox.y);
+  const nextBox = await next.boundingBox();
+  expect(nextBox.y + nextBox.height).toBeLessThanOrEqual(navBox.y);
 });
 
 test('filtros del catálogo', async ({ page }) => {
@@ -47,58 +49,50 @@ test('filtros del catálogo', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Tofu' })).toHaveCount(0);
 });
 
-test('modo match: me encanta, siguiente, deshacer y deslizar', async ({ page }) => {
+test('libro de gatos: pasar páginas con flechas y con el dedo', async ({ page }) => {
   await page.goto('/match');
-  const card = page.getByTestId('match-card');
-  const name = card.getByRole('heading');
-  await expect(card).toBeVisible();
+  // El antiguo match lleva al libro.
+  await expect(page).toHaveURL(/\/libro-de-gatos$/);
+  const pages = page.getByTestId('book-page');
+  const counter = page.getByText(/^\d+ de \d+$/);
+  await expect(counter).toHaveText(/^1 de /);
+  await expect(page.getByRole('button', { name: 'Página anterior' })).toBeDisabled();
 
-  await page.getByRole('button', { name: 'Me encanta', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText('¡Os habéis gustado!');
-  await page.getByRole('button', { name: 'Seguir mirando' }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Página siguiente' }).click();
+  await expect(counter).toHaveText(/^2 de /);
+  await expect(pages.nth(1)).toBeInViewport({ ratio: 0.9 });
 
-  const second = await name.textContent();
-  await page.getByRole('button', { name: 'Siguiente', exact: true }).click();
-  await expect(name).not.toHaveText(second);
-  await page.getByRole('button', { name: 'Deshacer' }).click();
-  await expect(name).toHaveText(second);
-  // La tarjeta recuperada vuelve animada desde el lado: esperar a que llegue.
-  await expect.poll(async () => Math.round((await card.boundingBox()).x)).toBeGreaterThanOrEqual(0);
-  await page.waitForTimeout(400);
-
-  // Deslizar con el dedo: a la izquierda es «Siguiente» y a la derecha «Me encanta».
+  // Deslizar con el dedo hacia la izquierda pasa a la página siguiente.
   const touch = await page.context().newCDPSession(page);
-  async function swipe(direction) {
-    const box = await card.boundingBox();
-    let x = box.x + box.width / 2;
-    const y = box.y + box.height / 2;
-    await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
-    for (let i = 0; i < 12; i += 1) {
-      x += direction * 20;
-      await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y }] });
-    }
-    await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  const box = await pages.nth(1).boundingBox();
+  let x = box.x + box.width * 0.8;
+  const y = box.y + 120;
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+  for (let i = 0; i < 10; i += 1) {
+    x -= 25;
+    await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y }] });
   }
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await expect(counter).toHaveText(/^3 de /);
 
-  await swipe(-1);
-  await expect(name).not.toHaveText(second);
-  const third = await name.textContent();
-  await page.waitForTimeout(400);
-
-  await swipe(1);
-  await expect(page.getByText(/guardad[oa] en favoritos/)).toBeVisible();
-  await expect(name).not.toHaveText(third);
-
-  // Nada de «no me gusta»: solo «Me encanta» y «Siguiente».
+  // El corazón guarda en favoritos; nada de «no me gusta».
+  const third = (await pages.nth(2).getByRole('heading').textContent()).trim();
+  await pages.nth(2).getByRole('button', { name: `Me encanta ${third}` }).click();
+  await expect(page.getByRole('link', { name: 'Favoritos (1)' })).toBeVisible();
   await expect(page.getByText(/no me gusta/i)).toHaveCount(0);
+
+  // Al volver desde la ficha se abre por la misma página.
+  await pages.nth(2).getByRole('link', { name: `Conocer más a ${third}` }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(third);
+  await page.goBack();
+  await expect(counter).toHaveText(/^3 de /);
 });
 
-test('del match a la solicitud, sin pasar por la lista de gatitos', async ({ page }) => {
-  await page.goto('/match');
-  const name = (await page.getByTestId('match-card').getByRole('heading').textContent()).trim();
-  await page.getByRole('button', { name: 'Me encanta', exact: true }).click();
-  await page.getByRole('dialog').getByRole('link', { name: /Quiero conocer/ }).click();
+test('del libro de gatos a la solicitud, sin pasar por la lista de gatitos', async ({ page }) => {
+  await page.goto('/libro-de-gatos');
+  const first = page.getByTestId('book-page').first();
+  const name = (await first.getByRole('heading').textContent()).trim();
+  await first.getByRole('link', { name: /Quiero adoptar/ }).click();
   // Directamente al formulario, con su gatito ya elegido.
   await expect(page.getByLabel('Nombre y apellidos')).toBeVisible();
   await expect(page.getByText('Solicitud para')).toContainText(name);

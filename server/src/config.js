@@ -61,3 +61,16 @@ export const MAIL = {
 // Meses que se guardan las solicitudes descartadas y los mensajes archivados
 // antes de borrarlos automáticamente (política de privacidad).
 export const RETENTION_MONTHS = Number(process.env.RETENTION_MONTHS) || 12;
+
+// Avisos por WhatsApp (opcionales) con la Cloud API de WhatsApp Business.
+// Las plantillas se crean y aprueban en Meta; ver deploy/README.md.
+export const WHATSAPP = {
+  token: process.env.WHATSAPP_TOKEN ?? '',
+  phoneId: process.env.WHATSAPP_PHONE_ID ?? '',
+  language: process.env.WHATSAPP_LANGUAGE ?? 'es',
+  // Móvil de Bigotes que recibe el aviso de cada solicitud nueva.
+  notifyTo: process.env.WHATSAPP_NOTIFY_TO ?? '',
+  // Plantillas: {{1}} nombre, {{2}} gatito, {{3}} enlace al panel / {{1}} nombre, {{2}} gatito.
+  teamTemplate: process.env.WHATSAPP_TEMPLATE_TEAM ?? '',
+  adopterTemplate: process.env.WHATSAPP_TEMPLATE_ADOPTER ?? '',
+};

@@ -260,7 +260,7 @@ describe('contrato de adopción', () => {
   test('las condiciones piden esterilizar solo si se entrega sin esterilizar, y hablan de ella o de él', () => {
     const female = adoptionConditions({ sex: 'hembra', sterilized: false });
     assert.ok(female.some((c) => c.includes('esterilizarla')));
-    assert.ok(female.some((c) => c.includes('de ella') && c.includes('devolverla')));
+    assert.ok(female.some((c) => c.includes('cargo de ella')));
     assert.ok(!adoptionConditions({ sex: 'macho', sterilized: true }).some((c) => c.includes('esterilizar')));
   });
 });

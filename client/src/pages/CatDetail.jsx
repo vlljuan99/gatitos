@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, CalendarHeart, Check, CircleHelp, MapPin, Play, Sparkles, X } from 'lucide-react';
+import { ArrowLeft, BookHeart, CalendarHeart, Check, CircleHelp, MapPin, Play, X } from 'lucide-react';
 import { CatPhoto } from '../components/CatPhoto.jsx';
 import { SexIcon, CatCard } from '../components/CatCard.jsx';
 import { FavoriteButton } from '../components/FavoriteButton.jsx';
@@ -44,7 +44,7 @@ function Gallery({ cat }) {
     scroller.current?.scrollTo({ left: i * scroller.current.clientWidth, behavior });
   }
 
-  // Desde el match («▶ Vídeo») se llega con ?video: se abre directamente en él.
+  // Desde el libro de gatos («▶ Vídeo») se llega con ?video: se abre directamente en él.
   const wantsVideo = params.has('video');
   useEffect(() => {
     if (wantsVideo && firstVideo > 0) goTo(firstVideo, 'instant');
@@ -311,8 +311,8 @@ export default function CatDetail() {
             ))}
           </ul>
           <div className="mt-6 text-center">
-            <ButtonLink to="/match" variant="soft">
-              <Sparkles className="size-5" /> Descubre tu match
+            <ButtonLink to="/libro-de-gatos" variant="soft">
+              <BookHeart className="size-5" /> Hojea el libro de gatos
             </ButtonLink>
           </div>
         </section>

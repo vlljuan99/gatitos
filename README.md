@@ -15,16 +15,18 @@ se enamore de un gatito y lo adopte.
   salud, necesidades especiales, su historia y botón para compartir por
   WhatsApp. Cada ficha tiene
   su propia vista previa (foto y nombre) al compartir el enlace.
-- **Modo match**: tarjetas que se deslizan con el dedo. Solo hay «Me encanta»
-  y «Siguiente», nada de «no me gusta». Se puede deshacer, filtrar y, al primer
-  «Me encanta», sale la pantalla de «¡Os habéis gustado!».
+- **Libro de gatos** (`/libro-de-gatos`; `/match` redirige): un carrusel con
+  una página por gatito disponible que se pasa con el dedo o con las flechas.
+  Cada página tiene su foto, lo esencial, el corazón de favoritos y «Quiero
+  adoptarle», que abre la solicitud con ese gatito. Se puede filtrar y, al
+  volver de la ficha, se abre por la misma página.
 - **Favoritos** sin registrarse (se guardan en el navegador), con su corazón
   en la cabecera.
 - **Viajes solidarios** (antes «transporte solidario», `/viajes-solidarios`):
   la gente que viaja a menudo a otra ciudad se apunta con sus destinos. Así se
   puede adoptar también fuera de Extremadura: cada solicitud de otra provincia
   muestra en el panel quién viaja allí.
-- **Solicitud de adopción** por pasos. Si vienes de un match o de la ficha de
+- **Solicitud de adopción** por pasos. Si vienes del libro de gatos o de la ficha de
   un gatito, empieza directamente por tus datos con el gatito ya elegido.
   Desde Extremadura o, con los viajes solidarios, desde cualquier provincia.
 - **Cómo trabajamos**, requisitos, cuota y preguntas frecuentes.
@@ -97,9 +99,13 @@ se enamore de un gatito y lo adopte.
   Al apuntar un pago se crea su **recibo** (`R-2026-001`) con el importe y el
   periodo que cubre, y se le manda por correo con el PDF adjunto.
 - **Donaciones** de dinero y de material, con los totales del año.
-- **Solicitudes** por etapas (nueva → entrevista → visita → aprobada →
-  adoptado / descartada), con notas internas y botones para llamar, WhatsApp o
-  email.
+- **Solicitudes** por etapas (nueva → entrevista → aprobada, que incluye la
+  visita → adoptado / descartada), con notas internas y botones para llamar,
+  WhatsApp o email. Cada solicitud nueva avisa al equipo por correo y, si está
+  configurado, por WhatsApp; quien la envía recibe su confirmación igual.
+- **Adoptados**: cada gatito con casa junto a quien lo adoptó, su contrato y
+  botones para el seguimiento, con buscador y filtros por año, zona (Extremadura,
+  fuera o una provincia), sexo y si tiene adoptante en el panel.
 - Bandejas de **mensajes**, **voluntariado** y **viajes solidarios** (con
   buscador por ciudad o provincia).
 - Datos legales de ejemplo (CIF G12345678…) para ver los papeles completos;
@@ -108,7 +114,7 @@ se enamore de un gatito y lo adopte.
   requisitos, preguntas, contacto, socios, donaciones, datos legales).
 - **Resumen** con lo pendiente, avisos (medicación que caduca, cosas que se
   acaban, revisiones veterinarias, altas de socios por confirmar y cuotas por
-  renovar), los gatitos más queridos en el match y los
+  renovar), los gatitos más queridos («Me encanta») y los
   que necesitan un empujón.
 
 ## Stack
@@ -146,10 +152,10 @@ npm run test:e2e      # pruebas de extremo a extremo en un móvil (Playwright)
 
 ```
 client/src/
-  pages/        Páginas públicas (portada, catálogo, ficha, match, adoptar…)
+  pages/        Páginas públicas (portada, catálogo, ficha, libro de gatos, adoptar…)
   admin/        Panel del equipo (se descarga aparte)
   components/   Piezas de la interfaz (tarjetas, hojas, formularios…)
-  lib/          Lógica sin interfaz: API, favoritos, edad, baraja del match…
+  lib/          Lógica sin interfaz: API, favoritos, edad, páginas del libro de gatos…
 server/src/
   app.js        Express: seguridad, API, fotos y la SPA con su Open Graph
   db.js         SQLite y migraciones (fuente de verdad del modelo de datos)

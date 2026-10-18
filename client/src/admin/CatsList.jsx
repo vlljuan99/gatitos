@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Plus, Search, Star } from 'lucide-react';
+import { ChevronRight, Plus, Search, Star } from 'lucide-react';
 import { CatPhoto } from '../components/CatPhoto.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { ButtonLink, EmptyState, ErrorState, Spinner } from '../components/ui.jsx';
@@ -103,6 +103,11 @@ export default function CatsList() {
           { value: 'colonia', label: 'Colonias', count: counts.colonia },
         ]}
       />
+      {status === 'adoptado' && (
+        <Link to="/admin/adoptados" className="mb-3 flex min-h-11 items-center justify-between rounded-2xl bg-lavanda px-4 font-bold text-lavanda-oscuro">
+          Ver con quién se fueron y filtrar <ChevronRight className="size-5" />
+        </Link>
+      )}
       {loading && <Spinner />}
       {error && <ErrorState error={error} onRetry={reload} />}
       {data && cats.length === 0 && (

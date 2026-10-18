@@ -1,6 +1,6 @@
 import { ageGroup } from './cats.js';
 
-// Lógica del modo match, separada de la interfaz para poder probarla.
+// Lógica del libro de gatos, separada de la interfaz para poder probarla.
 
 export const EMPTY_FILTERS = { ages: [], sex: 'todos', kids: false, cats: false, dogs: false };
 
@@ -23,21 +23,10 @@ export function matchesFilters(cat, filters, now = new Date()) {
   return true;
 }
 
-export function shuffle(items, random = Math.random) {
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-
 /**
- * Baraja del match: solo gatitos disponibles (los reservados no, para no
- * ilusionar a nadie), que pasen los filtros y que no estén ya en favoritos.
+ * Páginas del libro: los gatitos disponibles que pasen los filtros (los
+ * reservados no, para no ilusionar a nadie; los adoptados, tampoco).
  */
-export function buildDeck(cats, { filters = EMPTY_FILTERS, exclude = [], random = Math.random, now = new Date() } = {}) {
-  const skip = new Set(exclude);
-  const pool = cats.filter((cat) => cat.status === 'disponible' && !skip.has(cat.slug) && matchesFilters(cat, filters, now));
-  return shuffle(pool, random).map((cat) => cat.slug);
+export function bookPages(cats, { filters = EMPTY_FILTERS, now = new Date() } = {}) {
+  return cats.filter((cat) => cat.status === 'disponible' && matchesFilters(cat, filters, now));
 }

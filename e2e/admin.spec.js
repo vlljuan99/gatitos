@@ -143,6 +143,23 @@ test('la administración lleva una solicitud por sus etapas', async ({ page, req
   await expect(page.getByText(/Entrevista → Aprobada/)).toBeVisible();
   const canelo = (await (await request.get('/api/gatitos/canelo')).json()).cat;
   expect(canelo.status).toBe('reservado');
+
+  // Ya no hay etapa «Visita»: va dentro de «Aprobada».
+  await expect(page.getByRole('button', { name: 'Visita', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Adoptado', exact: true }).click();
+  await page.getByRole('button', { name: /Sí, marcar como adoptado/ }).click();
+  await expect(page.getByText(/Aprobada → Adoptado/)).toBeVisible();
+
+  // En «Adoptados» sale con quien lo adoptó y se puede filtrar.
+  await page.goto('/admin/adoptados');
+  const item = page.getByRole('listitem').filter({ hasText: 'Canelo' });
+  await expect(item).toContainText('Marta Gómez');
+  await expect(item).toContainText('Mérida (Badajoz)');
+  await page.getByLabel('Zona').selectOption('fuera');
+  await expect(page.getByRole('listitem').filter({ hasText: 'Canelo' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Quitar filtros' }).click();
+  await page.getByPlaceholder(/Gatito, adoptante/).fill('622333444');
+  await expect(page.getByRole('listitem').filter({ hasText: 'Marta Gómez' })).toHaveCount(1);
 });
 
 test('papeles: parte veterinario y contrato de adopción listos para imprimir', async ({ page, request }) => {

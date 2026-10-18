@@ -26,12 +26,21 @@ export function WhatsAppIcon({ className = 'size-5' }) {
   );
 }
 
-/** Enlace de WhatsApp a partir de un teléfono español escrito de cualquier forma. */
+/**
+ * Enlace de WhatsApp a partir de un teléfono español escrito de cualquier
+ * forma (sin teléfono, para elegir a quién mandarlo). Se usa
+ * api.whatsapp.com/send y no wa.me: la redirección de wa.me estropea los
+ * emojis y algunas tildes del mensaje en varios móviles.
+ */
 export function whatsappUrl(phone, text) {
   let digits = String(phone ?? '').replace(/\D/g, '');
   if (digits.length === 9) digits = `34${digits}`;
   if (digits.startsWith('0034')) digits = digits.slice(2);
-  return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
+  const params = new URLSearchParams();
+  if (digits) params.set('phone', digits);
+  if (text) params.set('text', text.normalize('NFC'));
+  // URLSearchParams codifica los espacios como «+», que WhatsApp no siempre entiende.
+  return `https://api.whatsapp.com/send?${params.toString().replaceAll('+', '%20')}`;
 }
 
 export function instagramUrl(handle) {

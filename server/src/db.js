@@ -398,6 +398,13 @@ export const migrations = [
   CREATE INDEX idx_member_payments_member ON member_payments(member_id, period_to);
   CREATE INDEX idx_member_payments_paid ON member_payments(paid_on);
   `,
+
+  // v6 — la etapa «visita» se une a «aprobada»: la visita a casa se hace con
+  // la solicitud ya aprobada. (El CHECK de la tabla aún admite 'visita', pero
+  // la aplicación ya no la usa.)
+  `
+  UPDATE applications SET status = 'aprobada', updated_at = datetime('now') WHERE status = 'visita';
+  `,
 ];
 
 /**

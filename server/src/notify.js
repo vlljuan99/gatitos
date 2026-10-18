@@ -1,5 +1,6 @@
-import { MAIL, PUBLIC_URL } from './config.js';
+import { MAIL, PUBLIC_URL, WHATSAPP } from './config.js';
 import { escapeHtml } from './og.js';
+import { sendTemplate } from './whatsapp.js';
 
 // Avisos por email mediante la API de Resend. Si no hay clave configurada no
 // se envía nada: todo queda igualmente en el panel. Un fallo al enviar nunca
@@ -74,9 +75,17 @@ const textEmail = ({ title, paragraphs, rows = [], footer }) =>
     .filter((line) => line !== null && line !== undefined)
     .join('\n');
 
+/**
+ * Solicitud de adopción completada: aviso al equipo (email y WhatsApp al
+ * móvil de Bigotes) y confirmación a quien la envía (email y WhatsApp).
+ */
 export function notifyNewApplication(application) {
   const cat = application.catName ? ` para ${application.catName}` : '';
+  const panel = `${PUBLIC_URL}/admin/solicitudes/${application.id}`;
+  const catName = application.catName || 'un gatito';
   return Promise.all([
+    sendTemplate(WHATSAPP.notifyTo, WHATSAPP.teamTemplate, [application.name, catName, panel]),
+    sendTemplate(application.phone, WHATSAPP.adopterTemplate, [firstName(application.name), catName]),
     send({
       to: MAIL.notifyTo,
       subject: `🐾 Nueva solicitud de adopción${cat}`,

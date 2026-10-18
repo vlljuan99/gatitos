@@ -158,7 +158,7 @@ export default function Adopt() {
   const cats = useMemo(() => (data?.cats ?? []).filter((c) => c.status === 'disponible' || c.slug === values.catSlug), [data, values.catSlug]);
   const chosen = cats.find((c) => c.slug === values.catSlug) ?? null;
 
-  // Si se llega con un gatito concreto (desde el match o desde su ficha), no
+  // Si se llega con un gatito concreto (desde el libro de gatos o desde su ficha), no
   // hace falta elegirlo otra vez: se empieza directamente por el formulario.
   // Antes de pintar, para que no asome la cuadrícula de gatitos.
   const autoSkip = useRef(Boolean(gatito));
@@ -262,7 +262,7 @@ export default function Adopt() {
               hint="Te llamaremos o escribiremos por WhatsApp para conocernos."
               {...field('phone')}
             />
-            <TextInput label="Municipio" autoComplete="address-level2" placeholder="Almendralejo" {...field('municipality')} />
+            <TextInput label="Municipio" autoComplete="address-level2" {...field('municipality')} />
             <Choice
               label="Provincia"
               options={PROVINCE_CHOICES}
@@ -376,7 +376,7 @@ export default function Adopt() {
               Me comprometo a esterilizarlo si todavía no lo está, cuando tenga edad.
             </Checkbox>
             <Checkbox checked={values.commitFollowUp} onChange={(v) => set('commitFollowUp', v)} error={errors.commitFollowUp}>
-              Acepto firmar el contrato de adopción y el seguimiento posterior de la asociación.
+              Una vez finalizado el proceso, si sigue adelante, aceptaría firmar el contrato de adopción y el seguimiento posterior de la asociación.
             </Checkbox>
             <Checkbox checked={values.privacy} onChange={(v) => set('privacy', v)} error={errors.privacy}>
               He leído la{' '}

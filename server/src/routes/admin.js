@@ -9,7 +9,7 @@ import { adminCatsRouter } from './adminCats.js';
 import { upcomingChecks } from './adminCatRecords.js';
 import { adminDonationsRouter } from './adminDonations.js';
 import { adminFostersRouter } from './adminFosters.js';
-import { adminApplicationsRouter, adminMessagesRouter, adminTransportRouter, adminVolunteersRouter } from './adminInbox.js';
+import { adminApplicationsRouter, adminMessagesRouter, adminTransportRouter, adminVolunteersRouter, adoptedCats } from './adminInbox.js';
 import { adminInventoryRouter, inventoryAlerts } from './adminInventory.js';
 import { adminMembersRouter } from './adminMembers.js';
 import { memberAlerts } from '../members.js';
@@ -36,7 +36,7 @@ export function adminRouter() {
     res.json({
       applications: {
         new: count("SELECT COUNT(*) AS n FROM applications WHERE status = 'nueva'"),
-        open: count("SELECT COUNT(*) AS n FROM applications WHERE status IN ('nueva', 'entrevista', 'visita', 'aprobada')"),
+        open: count("SELECT COUNT(*) AS n FROM applications WHERE status IN ('nueva', 'entrevista', 'aprobada')"),
       },
       messages: { new: count("SELECT COUNT(*) AS n FROM messages WHERE status = 'nuevo'") },
       volunteers: { new: count("SELECT COUNT(*) AS n FROM volunteers WHERE status = 'nuevo'") },
@@ -52,7 +52,7 @@ export function adminRouter() {
       },
       // Avisos: medicación que caduca, cosas que se acaban y revisiones cercanas.
       alerts: { ...inventoryAlerts(), checks: upcomingChecks() },
-      // Los más queridos en el match y los que necesitan un empujón.
+      // Los más queridos («Me encanta») y los que necesitan un empujón.
       mostLoved: available('likes DESC, created_at DESC'),
       needLove: available('likes ASC, COALESCE(arrived_at, created_at) ASC'),
     });
@@ -81,6 +81,11 @@ export function adminRouter() {
   // panel: en una pestaña nueva, en el visor del móvil o al descargarlos.
   router.post('/papeles/permiso', (req, res) => {
     res.json(pdfToken(req.user));
+  });
+
+  // Adoptados con su adoptante (los filtros se aplican en el panel).
+  router.get('/adoptados', (req, res) => {
+    res.json({ cats: adoptedCats() });
   });
 
   router.use('/gatitos', adminCatsRouter());

@@ -8,11 +8,11 @@ import { nextContractNumber, today } from '../numbers.js';
 import { optionalDay, parseBody, parseId, requiredText, text } from '../validation.js';
 import { setCatStatus } from './adminCats.js';
 
-export const APPLICATION_STATUSES = ['nueva', 'entrevista', 'visita', 'aprobada', 'adoptado', 'descartada'];
+// La visita a casa va dentro de «Aprobada» (la etapa «visita» se quitó; la migración 6 las pasó a aprobada).
+export const APPLICATION_STATUSES = ['nueva', 'entrevista', 'aprobada', 'adoptado', 'descartada'];
 const STATUS_LABELS = {
   nueva: 'Nueva',
   entrevista: 'Entrevista',
-  visita: 'Visita',
   aprobada: 'Aprobada',
   adoptado: 'Adoptado',
   descartada: 'Descartada',
@@ -350,3 +350,48 @@ export const adminVolunteersRouter = () =>
 
 export const adminTransportRouter = () =>
   inboxRouter({ table: 'transport_volunteers', statuses: TRANSPORT_STATUSES, serialize: serializeTransport });
+
+/**
+ * Gatitos adoptados con quien los adoptó: la solicitud «adoptado» de ese
+ * gatito (o, si no la hay, la que tiene contrato). Los adoptados a mano, sin
+ * solicitud en el panel, salen con adopter = null.
+ */
+export function adoptedCats() {
+  const cats = db
+    .prepare(
+      `SELECT id, slug, name, sex, file_number, adopted_at, microchip_number
+       FROM cats WHERE status = 'adoptado'
+       ORDER BY COALESCE(adopted_at, updated_at) DESC, id DESC`,
+    )
+    .all();
+  const findAdopter = db.prepare(
+    `SELECT * FROM applications WHERE cat_id = ? AND (status = 'adoptado' OR contract_number IS NOT NULL)
+     ORDER BY status = 'adoptado' DESC, COALESCE(contract_date, updated_at) DESC, id DESC LIMIT 1`,
+  );
+  const photos = photosFor(cats.map((c) => c.id));
+  return cats.map((cat) => {
+    const row = findAdopter.get(cat.id);
+    return {
+      id: cat.id,
+      slug: cat.slug,
+      name: cat.name,
+      sex: cat.sex,
+      fileNumber: cat.file_number ?? '',
+      microchipNumber: cat.microchip_number ?? '',
+      adoptedAt: cat.adopted_at ?? '',
+      photo: photos.get(cat.id)?.[0] ?? null,
+      adopter: row
+        ? {
+            applicationId: row.id,
+            name: row.name,
+            email: row.email,
+            phone: row.phone,
+            municipality: row.municipality,
+            province: row.province,
+            contractNumber: row.contract_number ?? '',
+            contractDate: row.contract_date ?? '',
+          }
+        : null,
+    };
+  });
+}

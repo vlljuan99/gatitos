@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Cat, ChevronRight, HandHeart, Heart, House, Menu, Sparkles } from 'lucide-react';
+import { BookHeart, Cat, ChevronRight, HandHeart, Heart, House, Menu } from 'lucide-react';
 import { Logo, LogoFull, LogoMark } from './Logo.jsx';
 import { Sheet } from './Sheet.jsx';
 import { buttonClass, cx } from './ui.jsx';
@@ -13,7 +13,7 @@ export const useSite = () => useApi('/sitio');
 
 const MAIN_LINKS = [
   { to: '/gatitos', label: 'Gatitos' },
-  { to: '/match', label: 'Match' },
+  { to: '/libro-de-gatos', label: 'Libro de gatos' },
   { to: '/como-trabajamos', label: 'Cómo trabajamos' },
   { to: '/finales-felices', label: 'Finales felices' },
   { to: '/colabora', label: 'Colabora' },
@@ -119,7 +119,7 @@ function BottomNav({ onMore }) {
         <NavLink to="/gatitos" className={item}>
           <Cat className="size-6" /> Gatitos
         </NavLink>
-        <NavLink to="/match" className={({ isActive }) => cx(item({ isActive }), '-mt-5')}>
+        <NavLink to="/libro-de-gatos" className={({ isActive }) => cx(item({ isActive }), '-mt-5')}>
           {({ isActive }) => (
             <>
               <motion.span
@@ -129,9 +129,9 @@ function BottomNav({ onMore }) {
                   isActive ? 'bg-canela-oscuro' : 'bg-canela',
                 )}
               >
-                <Sparkles className="size-6" />
+                <BookHeart className="size-6" />
               </motion.span>
-              Match
+              Libro
             </>
           )}
         </NavLink>
@@ -274,7 +274,7 @@ function Footer() {
 export function PublicLayout() {
   const [moreOpen, setMoreOpen] = useState(false);
   const location = useLocation();
-  const immersive = location.pathname === '/match';
+  const immersive = location.pathname === '/libro-de-gatos';
   return (
     <>
       <a href="#contenido" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-nata focus:px-4 focus:py-2">
