@@ -255,3 +255,59 @@ export function donationsList(data, { methods, k, blank = false }) {
     note: 'Gracias a cada donante: cada gesto cuenta',
   });
 }
+
+/** Libro de socios y socias: quién es socio/a, su cuota y hasta cuándo está al día. */
+export function membersList(data, { periods, k, blank = false }) {
+  const { members = [], totals = {}, today } = data ?? {};
+  const columns = [
+    { label: 'N.º', width: 30, align: 'center', bold: true },
+    { label: 'Nombre y DNI', width: 134, bold: true },
+    { label: 'Contacto', width: 120 },
+    { label: 'Municipio', width: 70 },
+    { label: 'Cuota', width: 62 },
+    { label: 'Alta', width: 56 },
+    { label: 'Al día hasta', width: 67, alert: true },
+  ];
+  const row = (m) => ({
+    tone: m.state === 'caducada' ? 'alert' : undefined,
+    cells: [
+      m.number ? String(m.number) : '',
+      [m.name, m.dni].filter(Boolean).join('\n'),
+      [m.phone, m.email].filter(Boolean).join('\n'),
+      m.municipality,
+      `${amount(m.fee)}\n${periods[m.period]?.label ?? ''}`,
+      formatDate(m.joinedOn),
+      m.status === 'baja' ? `Baja ${formatDate(m.leftOn)}` : `${formatDate(m.paidUntil)}${m.state === 'caducada' ? '\nCaducada' : ''}`,
+    ],
+  });
+  const current = members.filter((m) => m.status === 'activo');
+  const gone = members.filter((m) => m.status === 'baja');
+  const rows = blank ? [] : [...current.map(row), ...(gone.length ? [{ group: 'Bajas' }, ...gone.map(row)] : [])];
+  const intro = blank
+    ? null
+    : {
+        height: 40,
+        draw(kk, y) {
+          const boxes = [
+            ['Socios y socias al día', String(totals.active ?? 0)],
+            ['Por renovar', String(totals.renew ?? 0)],
+            [`Cuotas cobradas en ${totals.year ?? ''}`, amount(totals.collected ?? 0)],
+          ];
+          const bw = (W - 20) / 3;
+          boxes.forEach(([label, value], i) => {
+            const bx = X + i * (bw + 10);
+            kk.rect(bx, y, bw, 40, { radius: 8, fill: COLORS.box });
+            kk.text(label, bx + 12, y + 15, { font: 'semibold', size: 7.8, color: COLORS.brown });
+            kk.text(value, bx + 12, y + 32, { font: 'display', size: 14, color: COLORS.ink });
+          });
+        },
+      };
+  return listDocument(k, {
+    title: 'Libro de socios y socias',
+    subtitle: blank ? 'Para rellenar a mano' : `Situación a ${formatDate(today)}`,
+    columns,
+    rows,
+    intro,
+    note: 'Datos personales: solo para la gestión de la asociación',
+  });
+}

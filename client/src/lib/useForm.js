@@ -26,9 +26,10 @@ export function useForm(initial, { draft, omit, override } = {}) {
     setSending(true);
     setFormError('');
     try {
-      await api(path, { method: 'POST', body });
+      const data = await api(path, { method: 'POST', body });
       draftState.discard();
-      return true;
+      // La respuesta del servidor (o true), por si trae algo que enseñar.
+      return data || true;
     } catch (error) {
       if (error instanceof ApiError) {
         setErrors(error.fields ?? {});

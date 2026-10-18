@@ -52,7 +52,7 @@ export default function Applications() {
                         app.transportCount ? 'bg-menta text-menta-oscuro' : 'bg-cacao/10 text-cacao-suave',
                       )}
                     >
-                      🚗 {app.transportCount ? `${app.transportCount} viaja${app.transportCount === 1 ? '' : 'n'} allí` : 'Sin transporte aún'}
+                      🚗 {app.transportCount ? `${app.transportCount} viaja${app.transportCount === 1 ? '' : 'n'} allí` : 'Nadie viaja allí aún'}
                     </span>
                   </p>
                 )}

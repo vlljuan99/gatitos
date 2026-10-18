@@ -10,6 +10,7 @@ import {
   HandHeart,
   HeartHandshake,
   House,
+  IdCard,
   Inbox,
   LayoutDashboard,
   LogOut,
@@ -41,6 +42,8 @@ const Account = lazy(() => import('./Account.jsx'));
 const Fosters = lazy(() => import('./Fosters.jsx'));
 const Inventory = lazy(() => import('./Inventory.jsx'));
 const Donations = lazy(() => import('./Donations.jsx'));
+const Members = lazy(() => import('./Members.jsx'));
+const MemberDetail = lazy(() => import('./Members.jsx').then((m) => ({ default: m.MemberDetail })));
 const Papers = lazy(() => import('./Papers.jsx'));
 
 function Login({ onLogin }) {
@@ -104,7 +107,7 @@ function useNavItems(user) {
     { to: '/admin/solicitudes', label: 'Solicitudes', icon: ClipboardList, badge: data?.applications.new, main: true },
     { to: '/admin/mensajes', label: 'Mensajes', icon: Inbox, badge: data?.messages.new, main: true },
     { to: '/admin/voluntariado', label: 'Voluntariado', icon: HeartHandshake, badge: data?.volunteers.new },
-    { to: '/admin/transporte', label: 'Transporte solidario', icon: Car, badge: data?.transport.new },
+    { to: '/admin/transporte', label: 'Viajes solidarios', icon: Car, badge: data?.transport.new },
     { to: '/admin/acogidas', label: 'Casas de acogida', icon: House },
     {
       to: '/admin/inventario',
@@ -112,6 +115,7 @@ function useNavItems(user) {
       icon: Package,
       badge: (data?.alerts.expiring.length ?? 0) + (data?.alerts.low.length ?? 0),
     },
+    { to: '/admin/socios', label: 'Socios y socias', icon: IdCard, badge: data?.members?.new },
     { to: '/admin/donaciones', label: 'Donaciones', icon: HandHeart },
     { to: '/admin/papeles', label: 'Papeles', icon: Printer },
     { to: '/admin/contenidos', label: 'Textos de la web', icon: FileText },
@@ -261,6 +265,8 @@ export default function AdminApp() {
           <Route path="transporte" element={<Transport />} />
           <Route path="acogidas" element={<Fosters />} />
           <Route path="inventario" element={<Inventory />} />
+          <Route path="socios" element={<Members />} />
+          <Route path="socios/:id" element={<MemberDetail />} />
           <Route path="donaciones" element={<Donations />} />
           <Route path="papeles" element={<Papers />} />
           <Route path="contenidos" element={<Contents />} />

@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { createBrowserRouter, Outlet, RouterProvider, useRouteError } from 'react-router-dom';
+import { createBrowserRouter, Outlet, redirect, RouterProvider, useRouteError } from 'react-router-dom';
 import { MotionConfig } from 'framer-motion';
 import './index.css';
 import { PublicLayout } from './components/Layout.jsx';
@@ -64,7 +64,10 @@ const router = createBrowserRouter([
           { path: 'adoptar', lazy: page(() => import('./pages/Adopt.jsx')) },
           { path: 'finales-felices', lazy: page(() => import('./pages/HappyEndings.jsx')) },
           { path: 'colabora', lazy: page(() => import('./pages/Collaborate.jsx')) },
-          { path: 'transporte-solidario', lazy: page(() => import('./pages/Transport.jsx')) },
+          { path: 'hazte-socio', lazy: page(() => import('./pages/Members.jsx')) },
+          { path: 'viajes-solidarios', lazy: page(() => import('./pages/Transport.jsx')) },
+          // Dirección antigua (se llamó «Transporte solidario»): los enlaces ya compartidos siguen funcionando.
+          { path: 'transporte-solidario', loader: () => redirect('/viajes-solidarios') },
           { path: 'contacto', lazy: page(() => import('./pages/Contact.jsx')) },
           { path: 'aviso-legal', lazy: page(() => import('./pages/Legal.jsx'), { page: 'aviso' }) },
           { path: 'privacidad', lazy: page(() => import('./pages/Legal.jsx'), { page: 'privacidad' }) },

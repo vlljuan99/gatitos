@@ -48,7 +48,7 @@ export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const PHONE_RE = /^\+?[\d\s().-]{9,20}$/;
 
 export const OUTSIDE_EXTREMADURA =
-  'Fuera de Extremadura podemos darlo en adopción si alguien de nuestro transporte solidario viaja a tu zona: así llega en buenas manos y podemos hacer el seguimiento';
+  'Fuera de Extremadura podemos darlo en adopción si alguien de nuestros viajes solidarios va a tu zona: así llega en buenas manos y podemos hacer el seguimiento';
 
 export function validateStep(key, v) {
   const errors = {};

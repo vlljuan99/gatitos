@@ -45,9 +45,14 @@ export function catHistory(catId) {
   };
 }
 
+// Al apuntar una vacuna, una desparasitación, la esterilización o el
+// microchip se puede marcar a la vez en su ficha (y en la web).
+const HEALTH_MARKS = { vaccinated: 'vaccinated', dewormed: 'dewormed', sterilized: 'sterilized', microchipped: 'microchipped' };
+
 const entrySchema = z.object({
   date: requiredDay(),
   body: requiredText(2000, 'Escribe la nota'),
+  mark: z.enum(Object.keys(HEALTH_MARKS)).optional(),
 });
 
 const newVisitSchema = z.object({
@@ -87,14 +92,19 @@ export function catRecordsRouter() {
   router.post('/historial', (req, res) => {
     const data = parseBody(entrySchema, req, res);
     if (!data) return;
-    db.prepare('INSERT INTO cat_log (cat_id, date, body, user_id, author_name) VALUES (?, ?, ?, ?, ?)').run(
-      req.catId,
-      data.date,
-      data.body,
-      req.user.id,
-      req.user.name,
-    );
-    res.status(201).json(catHistory(req.catId));
+    db.transaction(() => {
+      db.prepare('INSERT INTO cat_log (cat_id, date, body, user_id, author_name) VALUES (?, ?, ?, ?, ?)').run(
+        req.catId,
+        data.date,
+        data.body,
+        req.user.id,
+        req.user.name,
+      );
+      if (data.mark) {
+        db.prepare(`UPDATE cats SET ${HEALTH_MARKS[data.mark]} = 1, updated_at = datetime('now') WHERE id = ?`).run(req.catId);
+      }
+    })();
+    res.status(201).json({ ...catHistory(req.catId), marked: data.mark ?? null });
   });
 
   router.delete('/historial/:entryId', (req, res) => {

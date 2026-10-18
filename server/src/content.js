@@ -105,7 +105,7 @@ export const CONTENT = {
     defaults: {
       requirements: [
         'Ser mayor de edad.',
-        'Vivir en Extremadura o en una zona a la que viaje alguien de nuestro transporte solidario, para que el gatito llegue en buenas manos y podamos hacer el seguimiento.',
+        'Vivir en Extremadura o en una zona a la que vaya alguien de nuestros viajes solidarios, para que el gatito llegue en buenas manos y podamos hacer el seguimiento.',
         'Que todas las personas de casa estén de acuerdo con la adopción.',
         'Tener ventanas y balcones protegidos con redes o mallas, o comprometerte a ponerlas antes de que llegue el gatito.',
         'Si vives de alquiler, contar con permiso para tener animales.',
@@ -128,7 +128,7 @@ export const CONTENT = {
         { q: '¿Cuánto cuesta adoptar?', a: DEFAULT_FEE },
         {
           q: '¿Puedo adoptar si no vivo en Extremadura?',
-          a: 'Sí, si alguien de nuestro transporte solidario viaja a tu zona: así el gatito llega acompañado por alguien de confianza y podemos hacer la visita y el seguimiento. Envía tu solicitud y te contamos si es posible. Y si viajas a menudo a otra ciudad, ¡apúntate al transporte solidario!',
+          a: 'Sí, si alguien de nuestros viajes solidarios va a tu zona: así el gatito llega acompañado por alguien de confianza y podemos hacer la visita y el seguimiento. Envía tu solicitud y te contamos si es posible. Y si viajas a menudo a otra ciudad, ¡apúntate a los viajes solidarios!',
         },
         {
           q: '¿Cuánto tarda el proceso?',
@@ -148,7 +148,7 @@ export const CONTENT = {
         },
         {
           q: '¿Puedo ayudar sin adoptar?',
-          a: 'Sí, y mucho. Puedes hacerte voluntario o voluntaria, compartir las fichas de los gatitos en tus redes o, muy pronto, colaborar con una donación.',
+          a: 'Sí, y mucho. Puedes hacerte socio o socia con una pequeña cuota, hacerte voluntario o voluntaria, apuntarte a los viajes solidarios, compartir las fichas de los gatitos en tus redes o hacer una donación.',
         },
       ],
     },
@@ -188,6 +188,35 @@ export const CONTENT = {
       iban: '',
       teaming: '',
       paypal: '',
+    },
+  },
+  // Cuotas que se ofrecen en «Hazte socio/a». Son un ejemplo: la asociación
+  // pone las suyas en «Textos de la web → Socios».
+  members: {
+    schema: z.object({
+      intro: line(1000),
+      fees: z
+        .array(
+          z.object({
+            amount: z.coerce.number('Escribe el importe').min(1, 'La cuota mínima es 1 €').max(10000),
+            period: z.enum(['mensual', 'trimestral', 'semestral', 'anual'], 'Elige cada cuánto'),
+          }),
+        )
+        .min(1, 'Ofrece al menos una cuota')
+        .max(6, 'Como mucho 6 cuotas'),
+      allowCustom: z.boolean(),
+      thanks: line(1000),
+    }),
+    defaults: {
+      intro:
+        'Con una cuota fija nos ayudas a planificar: pienso, vacunas, esterilizaciones y urgencias durante todo el año. Tú eliges cuánto y cada cuánto, y puedes darte de baja cuando quieras.',
+      fees: [
+        { amount: 5, period: 'mensual' },
+        { amount: 15, period: 'trimestral' },
+        { amount: 50, period: 'anual' },
+      ],
+      allowCustom: true,
+      thanks: 'Gracias por formar parte de Bigotes: tu cuota se convierte en cuidados para los gatos de Almendralejo.',
     },
   },
   volunteering: {

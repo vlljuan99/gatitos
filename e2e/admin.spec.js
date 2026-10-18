@@ -86,6 +86,7 @@ test('el alta de un gatito y los cambios sin guardar sobreviven a recargar', asy
   // En la ficha de un gatito, los cambios sin guardar también se recuperan.
   await page.goto('/admin/gatitos');
   await page.getByRole('link', { name: /Tofu/ }).first().click();
+  await page.getByRole('tab', { name: /En la web/ }).click();
   await page.getByLabel('Frase corta').fill('Un torbellino con patitas enormes.');
   await expect(page.getByText('Cambios sin guardar')).toBeVisible();
   await page.reload();
@@ -148,7 +149,25 @@ test('papeles: parte veterinario y contrato de adopción listos para imprimir', 
   await login(page, 'cuidabigotes@bigotes.local');
   await page.getByRole('navigation', { name: 'Panel' }).getByRole('link', { name: /Gatitos/ }).click();
   await page.getByRole('link', { name: /Luna/ }).first().click();
-  await expect(page.getByRole('heading', { name: 'Papeles para imprimir 🖨️' })).toBeVisible();
+  // La ficha se abre en «Día a día»: seguimiento y papeles a mano.
+  await expect(page.getByRole('tab', { name: /Día a día/ })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('heading', { name: 'Papeles 🖨️' })).toBeVisible();
+
+  // Apuntar con un toque: el peso, con la fecha de hoy.
+  await page.getByRole('button', { name: 'Peso', exact: true }).click();
+  const note = page.getByRole('dialog', { name: /Peso/ });
+  await expect(note.getByLabel('Detalles')).toHaveValue('Peso: ');
+  await note.getByLabel('Detalles').fill('Peso: 3,2 kg');
+  await note.getByRole('button', { name: 'Guardar' }).click();
+  await expect(page.getByText('Peso: 3,2 kg')).toBeVisible();
+
+  // Vista previa de la ficha de seguimiento dentro del panel (pdf.js), con lo apuntado.
+  await page.getByRole('button', { name: 'Ver la ficha de seguimiento' }).first().click();
+  const preview = page.getByRole('dialog', { name: 'Ficha de seguimiento' });
+  await expect(preview.locator('canvas')).toBeVisible({ timeout: 20_000 });
+  await expect(preview.getByRole('link', { name: /Abrir Ficha de seguimiento para imprimir/ })).toHaveAttribute('href', /seguimiento\?t=/);
+  await preview.getByRole('button', { name: 'Cerrar' }).click();
+  await expect(preview).toHaveCount(0);
 
   // Los enlaces llevan su permiso: se abren aunque no viaje la cookie (app instalada, visor del móvil).
   const ficha = page.getByRole('link', { name: 'Abrir Ficha del gato en PDF' });
@@ -212,7 +231,7 @@ test('papeles: parte veterinario y contrato de adopción listos para imprimir', 
   await expect(page.getByRole('link', { name: 'Abrir Contrato de adopción en PDF' })).toHaveAttribute('href', /en-blanco\/contrato/);
 });
 
-test('una solicitud de Madrid muestra quién del transporte solidario viaja allí', async ({ page, request }) => {
+test('una solicitud de Madrid muestra quién de los viajes solidarios va allí', async ({ page, request }) => {
   const signup = await request.post('/api/transporte', {
     data: {
       name: 'Inés Carretera',
@@ -262,7 +281,7 @@ test('una solicitud de Madrid muestra quién del transporte solidario viaja all�
   await expect(page.getByText('Inés Carretera')).toBeVisible();
   await expect(page.getByText(/Va a Alcalá de Henares/)).toBeVisible();
 
-  // En la bandeja del transporte se confirma y se busca por ciudad.
+  // En la bandeja de viajes solidarios se confirma y se busca por ciudad.
   await page.goto('/admin/transporte');
   await page.getByPlaceholder('Buscar ciudad o provincia').fill('alcala');
   await page.getByRole('button', { name: /Inés Carretera/ }).click();
@@ -304,6 +323,7 @@ test('vídeos: se suben desde la ficha y salen en la web', async ({ page }) => {
   await page.getByRole('navigation', { name: 'Panel' }).getByRole('link', { name: /Gatitos/ }).click();
   await page.getByRole('link', { name: /Morena/ }).first().click();
   await expect(page.getByRole('heading', { name: 'Morena', level: 1 })).toBeVisible();
+  await page.getByRole('tab', { name: /En la web/ }).click();
 
   await page.locator('input[type=file][accept="video/*"]').setInputFiles(file);
   await expect(page.getByText('Preparando el vídeo…')).toBeVisible();
@@ -317,4 +337,43 @@ test('vídeos: se suben desde la ficha y salen en la web', async ({ page }) => {
   const video = page.getByLabel('Vídeo de Morena');
   await expect(video).toBeInViewport();
   expect(await video.getAttribute('poster')).toMatch(/-poster\.webp$/);
+});
+
+test('socios: se apunta un pago y queda su recibo', async ({ page, request }) => {
+  const signup = await request.post('/api/socios', {
+    data: {
+      name: 'Nuria Cuota',
+      email: 'nuria@ejemplo.es',
+      phone: '666 777 888',
+      municipality: 'Almendralejo',
+      amount: 15,
+      period: 'trimestral',
+      method: 'transferencia',
+      adult: true,
+      privacy: true,
+    },
+  });
+  expect(signup.status()).toBe(201);
+
+  await login(page, 'cuidabigotes@bigotes.local');
+  // El resumen avisa de que alguien quiere hacerse socia.
+  await page.getByRole('link', { name: /quiere hacerse socia: falta su primer pago/ }).click();
+  await page.getByRole('link', { name: /Nuria Cuota/ }).click();
+  await expect(page.getByText('Pendiente del primer pago')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Apuntar pago' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Apuntar un pago' });
+  await expect(sheet.getByLabel('Importe (€)')).toHaveValue('15');
+  await sheet.getByRole('button', { name: 'Una cuota más' }).click();
+  await expect(sheet.getByLabel('Importe (€)')).toHaveValue('30');
+  await expect(sheet.getByText(/^del \d{2}\/\d{2}\/\d{4} al \d{2}\/\d{2}\/\d{4}$/)).toBeVisible();
+  await sheet.getByRole('button', { name: /Apuntar pago y crear recibo/ }).click();
+
+  // Sin correo configurado (en las pruebas), el recibo se guarda y se puede ver.
+  await expect(page.getByText(/Recibo R-\d{4}-\d{3} guardado/)).toBeVisible();
+  await expect(page.getByText('Al día', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Socio\/a n\.º \d+/)).toBeVisible();
+  await page.getByRole('button', { name: /^Ver Recibo R-/ }).click();
+  const preview = page.getByRole('dialog', { name: /^Recibo R-/ });
+  await expect(preview.locator('canvas')).toBeVisible({ timeout: 20_000 });
 });

@@ -2,7 +2,7 @@
 // deben coincidir con server/src/forms.js, que es quien valida.
 
 // Provincias de España (igual que en el servidor). Se adopta sobre todo en
-// Extremadura; fuera de ella, si alguien del transporte solidario viaja allí.
+// Extremadura; fuera de ella, si alguien de los viajes solidarios va allí.
 export const EXTREMADURA = ['Badajoz', 'Cáceres'];
 export const PROVINCES = [
   'A Coruña', 'Álava', 'Albacete', 'Alicante', 'Almería', 'Asturias', 'Ávila', 'Badajoz', 'Barcelona', 'Bizkaia',

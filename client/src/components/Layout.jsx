@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Cat, ChevronRight, Heart, House, Menu, Sparkles } from 'lucide-react';
+import { Cat, ChevronRight, HandHeart, Heart, House, Menu, Sparkles } from 'lucide-react';
 import { Logo, LogoFull, LogoMark } from './Logo.jsx';
 import { Sheet } from './Sheet.jsx';
 import { buttonClass, cx } from './ui.jsx';
@@ -20,13 +20,26 @@ const MAIN_LINKS = [
   { to: '/contacto', label: 'Contacto' },
 ];
 
-const MORE_LINKS = [
-  { to: '/adoptar', label: 'Quiero adoptar', emoji: '🏡', tone: 'bg-canela-claro' },
-  { to: '/como-trabajamos', label: 'Cómo trabajamos', emoji: '🩺', tone: 'bg-menta' },
-  { to: '/finales-felices', label: 'Finales felices', emoji: '💕', tone: 'bg-lavanda' },
-  { to: '/colabora', label: 'Colabora', emoji: '🙋', tone: 'bg-mantequilla' },
-  { to: '/transporte-solidario', label: 'Transporte solidario', emoji: '🚗', tone: 'bg-menta' },
-  { to: '/contacto', label: 'Contacto', emoji: '✉️', tone: 'bg-cielo' },
+// Formas de ayudar: arriba del todo en «Más», en el pie y en la portada.
+export const HELP_LINKS = [
+  { to: '/hazte-socio', label: 'Hazte socio/a', emoji: '💛', tone: 'bg-mantequilla', text: 'Una cuota pequeña que cuida todo el año' },
+  { to: '/colabora#donar', label: 'Haz una donación', emoji: '🐷', tone: 'bg-canela-claro', text: 'Bizum, transferencia o material' },
+  { to: '/viajes-solidarios', label: 'Viajes solidarios', emoji: '🚗', tone: 'bg-menta', text: 'Si viajas a menudo, lleva a un gatito a su familia' },
+  { to: '/colabora#voluntariado', label: 'Voluntariado', emoji: '🙋', tone: 'bg-lavanda', text: 'Cuidados, veterinario, fotos, redes…' },
+];
+
+const MORE_GROUPS = [
+  { title: 'Ayuda a los gatitos', links: HELP_LINKS },
+  {
+    title: 'Adopta y conócenos',
+    links: [
+      { to: '/adoptar', label: 'Quiero adoptar', emoji: '🏡', tone: 'bg-canela-claro' },
+      { to: '/favoritos', label: 'Mis favoritos', emoji: '💕', tone: 'bg-melocoton', favorites: true },
+      { to: '/como-trabajamos', label: 'Cómo trabajamos', emoji: '🩺', tone: 'bg-menta' },
+      { to: '/finales-felices', label: 'Finales felices', emoji: '🥰', tone: 'bg-lavanda' },
+      { to: '/contacto', label: 'Contacto', emoji: '✉️', tone: 'bg-cielo' },
+    ],
+  },
 ];
 
 function FavoritesBadge({ count, className }) {
@@ -67,14 +80,20 @@ function Header() {
             </NavLink>
           ))}
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 md:gap-2">
           <Link
             to="/favoritos"
-            className="relative hidden size-11 place-items-center rounded-full text-canela hover:bg-canela-claro md:grid"
+            className="relative grid size-11 place-items-center rounded-full text-canela hover:bg-canela-claro"
             aria-label={`Favoritos (${slugs.length})`}
           >
             <Heart className="size-6" />
             <FavoritesBadge count={slugs.length} className="-right-0.5 -top-0.5" />
+          </Link>
+          <Link
+            to="/hazte-socio"
+            className={buttonClass({ variant: 'soft', size: 'sm', className: 'max-sm:hidden md:min-h-11 md:px-5 md:text-base' })}
+          >
+            💛 Hazte socio/a
           </Link>
           <Link to="/adoptar" className={buttonClass({ size: 'sm', className: 'md:min-h-11 md:px-5 md:text-base' })}>
             Quiero adoptar
@@ -86,7 +105,6 @@ function Header() {
 }
 
 function BottomNav({ onMore }) {
-  const { slugs } = useFavorites();
   const item = ({ isActive }) =>
     cx('flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-bold transition', isActive ? 'text-canela-oscuro' : 'text-cacao-suave');
   return (
@@ -117,12 +135,8 @@ function BottomNav({ onMore }) {
             </>
           )}
         </NavLink>
-        <NavLink to="/favoritos" className={item}>
-          <span className="relative">
-            <Heart className="size-6" />
-            <FavoritesBadge count={slugs.length} className="-right-2.5 -top-1.5" />
-          </span>
-          Favoritos
+        <NavLink to="/colabora" className={item}>
+          <HandHeart className="size-6" /> Colabora
         </NavLink>
         <button type="button" onClick={onMore} className={item({ isActive: false })}>
           <Menu className="size-6" /> Más
@@ -133,26 +147,36 @@ function BottomNav({ onMore }) {
 }
 
 function MoreSheet({ open, onClose }) {
+  const { slugs } = useFavorites();
   return (
     <Sheet open={open} onClose={onClose} title="Más cositas">
-      <ul className="grid gap-2">
-        {MORE_LINKS.map((link) => (
-          <li key={link.to}>
-            <Link
-              to={link.to}
-              onClick={onClose}
-              className="flex min-h-14 items-center gap-3 rounded-2xl bg-nata px-4 font-bold shadow-suave"
-            >
-              <span className={cx('grid size-10 place-items-center rounded-xl text-xl', link.tone)} aria-hidden>
-                {link.emoji}
-              </span>
-              <span className="flex-1">{link.label}</span>
-              <ChevronRight className="size-5 text-cacao-suave" />
-            </Link>
-          </li>
-        ))}
-      </ul>
-      <div className="mt-5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-cacao-suave">
+      {MORE_GROUPS.map((group) => (
+        <section key={group.title} className="mb-5">
+          <h3 className="mb-2 font-display text-lg font-semibold">{group.title}</h3>
+          <ul className="grid gap-2">
+            {group.links.map((link) => (
+              <li key={link.to}>
+                <Link
+                  to={link.to}
+                  onClick={onClose}
+                  className="flex min-h-14 items-center gap-3 rounded-2xl bg-nata px-4 py-2 font-bold shadow-suave"
+                >
+                  <span className={cx('grid size-10 shrink-0 place-items-center rounded-xl text-xl', link.tone)} aria-hidden>
+                    {link.emoji}
+                  </span>
+                  <span className="flex-1">
+                    {link.label}
+                    {link.favorites && slugs.length > 0 && <span className="font-normal text-cacao-suave"> ({slugs.length})</span>}
+                    {link.text && <span className="block text-sm font-normal text-cacao-suave">{link.text}</span>}
+                  </span>
+                  <ChevronRight className="size-5 shrink-0 text-cacao-suave" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-cacao-suave">
         <Link to="/aviso-legal" onClick={onClose} className="underline">
           Aviso legal
         </Link>
@@ -208,17 +232,22 @@ function Footer() {
           </p>
           <SocialLinks contact={data?.content.contact} className="mt-4" />
         </div>
-        <nav aria-label="Pie de página" className="grid grid-cols-2 gap-2 font-bold md:col-span-2 md:grid-cols-3">
-          {[
-            ...MAIN_LINKS,
-            { to: '/adoptar', label: 'Quiero adoptar' },
-            { to: '/favoritos', label: 'Favoritos' },
-            { to: '/transporte-solidario', label: 'Transporte solidario' },
-          ].map((link) => (
-            <Link key={link.to} to={link.to} className="py-1 hover:text-canela-oscuro">
-              {link.label}
-            </Link>
-          ))}
+        <nav aria-label="Pie de página" className="grid grid-cols-2 gap-6 md:col-span-2">
+          <div className="grid content-start gap-2 font-bold">
+            {[...MAIN_LINKS, { to: '/adoptar', label: 'Quiero adoptar' }, { to: '/favoritos', label: 'Favoritos' }].map((link) => (
+              <Link key={link.to} to={link.to} className="py-1 hover:text-canela-oscuro">
+                {link.label}
+              </Link>
+            ))}
+          </div>
+          <div className="grid content-start gap-2">
+            <p className="font-display text-lg font-semibold">Ayuda a los gatitos</p>
+            {HELP_LINKS.map((link) => (
+              <Link key={link.to} to={link.to} className="py-1 font-bold hover:text-canela-oscuro">
+                <span aria-hidden>{link.emoji}</span> {link.label}
+              </Link>
+            ))}
+          </div>
         </nav>
       </div>
       <div className="mx-auto mt-8 flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 text-sm text-cacao-suave">
@@ -259,7 +288,8 @@ export function PublicLayout() {
       {immersive && <div className="h-28 md:hidden" aria-hidden />}
       <BottomNav onMore={() => setMoreOpen(true)} />
       <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} />
-      <ScrollRestoration />
+      {/* Por ruta: al entrar desde fuera (o recargar) en otra página no se hereda el desplazamiento de la anterior. */}
+      <ScrollRestoration getKey={(location) => location.pathname} />
     </>
   );
 }

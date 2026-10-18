@@ -7,7 +7,7 @@ import { PROVINCES, TRANSPORT_FREQUENCIES } from '../lib/forms.js';
 import { useForm } from '../lib/useForm.js';
 import { useTitle } from '../lib/useTitle.js';
 
-// Transporte solidario: gente que viaja a menudo a otra ciudad y puede llevar
+// Viajes solidarios: gente que viaja a menudo a otra ciudad y puede llevar
 // a un gatito con su nueva familia. Así se puede adoptar también fuera de
 // Extremadura (el panel cruza cada solicitud con quien viaja a su provincia).
 
@@ -156,17 +156,17 @@ function TransportForm() {
       </Checkbox>
       <FormError>{formError}</FormError>
       <Button type="submit" size="lg" block loading={sending}>
-        <Car className="size-5" /> Apuntarme al transporte solidario
+        <Car className="size-5" /> Apuntarme a los viajes solidarios
       </Button>
     </form>
   );
 }
 
 export default function Transport() {
-  useTitle('Transporte solidario');
+  useTitle('Viajes solidarios');
   return (
     <>
-      <PageHeader title="Transporte solidario" emoji="🚗">
+      <PageHeader title="Viajes solidarios" emoji="🚗">
         ¿Viajas a menudo a otra ciudad? Puedes ayudar a que un gatito de Bigotes llegue a su familia, aunque viva lejos de
         Extremadura.
       </PageHeader>

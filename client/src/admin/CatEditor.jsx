@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clapperboard,
@@ -28,7 +29,7 @@ import { ageText, gendered, PERSONALITY_TAGS, statusLabel } from '../lib/cats.js
 import { useDraftState } from '../lib/drafts.js';
 import { clearFiles, loadFiles, saveFiles } from '../lib/fileDrafts.js';
 import { CatHistory } from './CatHistory.jsx';
-import { AdminPage, isAdmin, refreshAfterChange, todayIso, useAdminApi, useAuth, useConfirm } from './common.jsx';
+import { AdminPage, isAdmin, refreshAfterChange, shortDate, Tabs, todayIso, useAdminApi, useAuth, useConfirm } from './common.jsx';
 import { CatPapers } from './Papers.jsx';
 import { shrinkImage, uploadPhotos } from './photos.js';
 import { ShareImageSheet, sharePhotos } from './ShareImage.jsx';
@@ -337,45 +338,51 @@ function PublishFields({ form, showStatus = true }) {
 const selectClass =
   'w-full appearance-none rounded-2xl border-2 border-borde bg-nata px-4 py-3 text-base text-cacao transition focus:border-canela focus:outline-none';
 
-/** Ficha interna: datos para los papeles (ficha del gato, partes, contratos). */
-function RecordFields({ form, showFileNumber = true }) {
+/**
+ * Grupo plegable de la ficha interna. Cerrado enseña en una línea lo que ya
+ * tiene; se abre solo si dentro hay un error que corregir.
+ */
+function RecordGroup({ title, summary, defaultOpen = false, hasError = false, children }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <details open={open || hasError} onToggle={(event) => setOpen(event.currentTarget.open)} className="group rounded-3xl bg-crema">
+      <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-lg font-semibold">{title}</span>
+          <span className="block truncate text-sm text-cacao-suave">{summary || 'Sin rellenar'}</span>
+        </span>
+        <ChevronDown className="size-5 shrink-0 transition group-open:rotate-180" aria-hidden />
+      </summary>
+      <div className="grid gap-4 px-4 pb-4">{children}</div>
+    </details>
+  );
+}
+
+/**
+ * Ficha interna: datos para los papeles (ficha del gato, partes, contratos).
+ * Arriba lo que más se usa (casa de acogida, tratamiento, pendientes); el
+ * resto, en grupos plegables. En el alta (intake) se abre «Cómo llegó».
+ */
+function RecordFields({ form, showFileNumber = true, intake = false }) {
   const { values, set, errors } = form;
   const r = values.record;
   const { data } = useAdminApi('/acogidas');
   const fosters = (data?.fosters ?? []).filter((f) => f.active || f.id === r.fosterId);
   const err = (key) => errors[`record.${key}`];
   const field = (key) => ({ value: r[key], onChange: (v) => set(`record.${key}`, v), error: err(key) });
+  const any = (...keys) => keys.some((key) => err(key));
   const g = (word) => gendered(word, values.sex);
+  const colonySummary =
+    r.colonyMember === 'no'
+      ? 'No es de una colonia'
+      : [r.colonyMember === 'si' && 'De una colonia', r.colonyName, r.colonyCaretaker && `cuida ${r.colonyCaretaker}`].filter(Boolean).join(' · ');
   return (
     <>
-      {showFileNumber && (
-        <TextInput label="N.º de ficha" hint="Se pone solo al darlo de alta. Cámbialo si ya tenía uno en papel." maxLength={20} {...field('fileNumber')} />
-      )}
       <div className="grid gap-4 sm:grid-cols-2">
-        <TextInput label="Raza / tipo" optional placeholder="Común europeo" maxLength={80} {...field('breed')} />
-        <TextInput label="N.º de microchip" optional inputMode="numeric" maxLength={30} {...field('microchipNumber')} />
-      </div>
-      <fieldset className="grid gap-4 rounded-3xl bg-crema p-4">
-        <legend className="px-1 font-display text-lg font-semibold">Cómo llegó</legend>
-        <TextInput label="Lugar exacto de recogida" optional maxLength={200} {...field('intakePlace')} />
-        <TextInput label="Quién lo recogió o avisó" optional maxLength={120} {...field('intakeBy')} />
-        <TextInput label="Su teléfono" optional type="tel" inputMode="tel" maxLength={30} {...field('intakePhone')} />
-        <TextInput label="Motivo" optional placeholder="Abandonado, herido, camada en la calle…" maxLength={300} {...field('intakeReason')} />
-      </fieldset>
-      <fieldset className="grid gap-4 rounded-3xl bg-crema p-4">
-        <legend className="px-1 font-display text-lg font-semibold">Colonia</legend>
-        <Choice label="¿Es de una colonia?" options={TRI} value={r.colonyMember} onChange={(v) => set('record.colonyMember', v)} />
-        {r.colonyMember !== 'no' && (
-          <>
-            <TextInput label="Nombre o ubicación de la colonia" optional maxLength={200} {...field('colonyName')} />
-            <TextInput label="Quién la cuida o alimenta" optional maxLength={200} {...field('colonyCaretaker')} />
-            <Choice label={`¿Está ${g('marcado')} en la oreja (CER)?`} options={TRI} value={r.earTipped} onChange={(v) => set('record.earTipped', v)} />
-          </>
+        {showFileNumber && (
+          <TextInput label="N.º de ficha" hint="Se pone solo al darlo de alta. Cámbialo si ya tenía uno en papel." maxLength={20} {...field('fileNumber')} />
         )}
-      </fieldset>
-      <fieldset className="grid gap-4 rounded-3xl bg-crema p-4">
-        <legend className="px-1 font-display text-lg font-semibold">Casa de acogida</legend>
-        <Field label="¿Dónde vive ahora?" error={err('fosterId')} hint={fosters.length === 0 ? 'Todavía no hay casas de acogida apuntadas.' : undefined}>
+        <Field label="Casa de acogida" error={err('fosterId')} hint={fosters.length === 0 ? 'Todavía no hay casas de acogida apuntadas.' : undefined}>
           {({ id, describedBy }) => (
             <select
               id={id}
@@ -397,22 +404,55 @@ function RecordFields({ form, showFileNumber = true }) {
             </select>
           )}
         </Field>
-        {r.fosterId && <TextInput label="Está con ella desde" type="date" {...field('fosterSince')} />}
-        <Link to="/admin/acogidas" className="justify-self-start text-sm font-bold text-canela-oscuro underline">
-          Gestionar casas de acogida
-        </Link>
-      </fieldset>
+        {r.fosterId && <TextInput label="Con ella desde" type="date" {...field('fosterSince')} />}
+      </div>
       <Checkbox checked={r.inTreatment} onChange={(v) => set('record.inTreatment', v)}>
         <strong>Está en tratamiento</strong> <span className="text-cacao-suave">Sale marcado en su ficha.</span>
       </Checkbox>
       <TextArea
         label="Pendiente"
         optional
-        rows={3}
+        rows={2}
         hint="Lo que queda por hacer: vacunas, revisiones, compras… Sale en su ficha de seguimiento."
         maxLength={1000}
         {...field('pending')}
       />
+      <RecordGroup
+        title="Cómo llegó"
+        summary={[r.intakePlace, r.intakeBy && `avisó ${r.intakeBy}`, r.intakeReason].filter(Boolean).join(' · ')}
+        defaultOpen={intake}
+        hasError={any('intakePlace', 'intakeBy', 'intakePhone', 'intakeReason')}
+      >
+        <TextInput label="Lugar exacto de recogida" optional maxLength={200} {...field('intakePlace')} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextInput label="Quién lo recogió o avisó" optional maxLength={120} {...field('intakeBy')} />
+          <TextInput label="Su teléfono" optional type="tel" inputMode="tel" maxLength={30} {...field('intakePhone')} />
+        </div>
+        <TextInput label="Motivo" optional placeholder="Abandonado, herido, camada en la calle…" maxLength={300} {...field('intakeReason')} />
+      </RecordGroup>
+      <RecordGroup
+        title="Raza y microchip"
+        summary={[r.breed, r.microchipNumber && `Chip ${r.microchipNumber}`].filter(Boolean).join(' · ')}
+        hasError={any('breed', 'microchipNumber')}
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextInput label="Raza / tipo" optional placeholder="Común europeo" maxLength={80} {...field('breed')} />
+          <TextInput label="N.º de microchip" optional inputMode="numeric" maxLength={30} {...field('microchipNumber')} />
+        </div>
+      </RecordGroup>
+      <RecordGroup title="Colonia" summary={r.colonyMember === 'desconocido' && !r.colonyName ? '' : colonySummary} hasError={any('colonyName', 'colonyCaretaker')}>
+        <Choice label="¿Es de una colonia?" options={TRI} value={r.colonyMember} onChange={(v) => set('record.colonyMember', v)} />
+        {r.colonyMember !== 'no' && (
+          <>
+            <TextInput label="Nombre o ubicación de la colonia" optional maxLength={200} {...field('colonyName')} />
+            <TextInput label="Quién la cuida o alimenta" optional maxLength={200} {...field('colonyCaretaker')} />
+            <Choice label={`¿Está ${g('marcado')} en la oreja (CER)?`} options={TRI} value={r.earTipped} onChange={(v) => set('record.earTipped', v)} />
+          </>
+        )}
+      </RecordGroup>
+      <Link to="/admin/acogidas" className="justify-self-start text-sm font-bold text-canela-oscuro underline">
+        Gestionar casas de acogida
+      </Link>
     </>
   );
 }
@@ -800,7 +840,7 @@ function NewCat() {
         )}
         {step === 4 && (
           <Section title="Ficha interna 🗂️" hint="Todo opcional y no sale en la web: es lo que se imprime en sus papeles. Puedes completarlo más tarde.">
-            <RecordFields form={form} showFileNumber={false} />
+            <RecordFields form={form} showFileNumber={false} intake />
           </Section>
         )}
         {step === 5 && (
@@ -1009,6 +1049,38 @@ function EditVideos({ cat, onChange }) {
   );
 }
 
+// Pestañas de la ficha de un gatito en el panel: lo del día a día primero.
+const EDIT_TABS = [
+  { value: 'dia', label: '📋 Día a día' },
+  { value: 'web', label: '🌐 En la web' },
+  { value: 'interna', label: '🗂️ Ficha interna' },
+];
+
+/** Resumen de su ficha interna arriba del día a día: casa, tratamiento y pendientes. */
+function DaySummary({ cat, foster, onEdit }) {
+  const r = cat.record ?? {};
+  const facts = [
+    r.fileNumber && `Ficha ${r.fileNumber}`,
+    foster ? `Con ${foster.name}${r.fosterSince ? ` desde ${shortDate(r.fosterSince)}` : ''}` : 'Sin casa de acogida',
+    r.inTreatment && 'En tratamiento',
+  ].filter(Boolean);
+  return (
+    <Card className="grid gap-2 bg-mantequilla/70">
+      <p className="text-sm font-bold text-mantequilla-oscuro">{facts.join(' · ')}</p>
+      {r.pending ? (
+        <p className="whitespace-pre-line">
+          <strong>Pendiente:</strong> {r.pending}
+        </p>
+      ) : (
+        <p className="text-sm text-cacao-suave">No hay nada pendiente apuntado.</p>
+      )}
+      <button type="button" onClick={onEdit} className="justify-self-start text-sm font-bold text-canela-oscuro underline">
+        Cambiar casa, tratamiento o pendientes
+      </button>
+    </Card>
+  );
+}
+
 function EditCat({ initial }) {
   const navigate = useNavigate();
   const toast = useToast();
@@ -1033,6 +1105,20 @@ function EditCat({ initial }) {
   }, [params, setParams]);
   const canShare = sharePhotos(cat).length > 0;
   const [reporting, setReporting] = useState(false);
+  const [noting, setNoting] = useState(null);
+  const [tab, setTab] = useState(() => (EDIT_TABS.some((t) => t.value === params.get('pestana')) ? params.get('pestana') : 'dia'));
+  function changeTab(value) {
+    setTab(value);
+    setParams(value === 'dia' ? {} : { pestana: value }, { replace: true });
+  }
+  // Al apuntar «vacuna», «esterilización»… con la casilla marcada, el servidor
+  // ya lo ha guardado en su ficha: se refleja sin tocar otros cambios a medias.
+  function markHealth(flag) {
+    setCat((c) => ({ ...c, health: { ...c.health, [flag]: true } }));
+    setSaved((s) => ({ ...s, health: { ...s.health, [flag]: true } }));
+    form.set(`health.${flag}`, true);
+    refreshAfterChange();
+  }
   const { data: fosterData } = useAdminApi('/acogidas');
   const foster = fosterData?.fosters.find((f) => f.id === cat.record?.fosterId);
 
@@ -1061,7 +1147,12 @@ function EditCat({ initial }) {
       refreshAfterChange();
       toast('Cambios guardados ✨');
     } catch (err) {
-      if (err instanceof ApiError) form.setErrors(err.fields);
+      if (err instanceof ApiError) {
+        form.setErrors(err.fields);
+        // El error puede estar en otra pestaña: se salta a la del primer campo.
+        const first = Object.keys(err.fields ?? {})[0];
+        if (first) changeTab(first.startsWith('record.') ? 'interna' : 'web');
+      }
       setError(err.message);
     } finally {
       setSaving(false);
@@ -1095,44 +1186,60 @@ function EditCat({ initial }) {
 
   return (
     <AdminPage title={cat.name} back="/admin/gatitos" subtitle={`${statusLabel(cat.status, cat.sex)} · ${cat.likes} 💕 en la web`} action={publicLink}>
+      <Tabs tabs={EDIT_TABS} value={tab} onChange={changeTab} />
       <div className="grid gap-4">
-        <Card className="flex flex-wrap items-center gap-3 bg-lavanda">
-          <Megaphone className="size-8 shrink-0 text-lavanda-oscuro" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <h2 className="font-display text-lg font-semibold">Compártelo en redes</h2>
-            <p className="text-sm">
-              {canShare ? 'Imagen lista para Instagram o WhatsApp, con sus fotos y vuestro contacto.' : 'Añade una foto y podrás crear una imagen para redes.'}
-            </p>
-          </div>
-          <Button onClick={() => setSharing(true)} disabled={!canShare}>
-            Crear imagen
-          </Button>
-        </Card>
-        <CatPapers cat={cat} dirty={dirty} onNewReport={() => setReporting(true)} />
-        <EditPhotos cat={cat} onChange={setCat} />
-        <EditVideos cat={cat} onChange={setCat} />
-        <Section title="Estado y portada">
-          <PublishFields form={form} />
-        </Section>
-        <Section title="Lo básico">
-          <BasicsFields form={form} />
-        </Section>
-        <Section title="Su carácter">
-          <PersonalityFields form={form} />
-        </Section>
-        <Section title="Convivencia y salud">
-          <HealthFields form={form} />
-        </Section>
-        <Section title="Ficha interna 🗂️" hint="No sale en la web. Es lo que se imprime en sus papeles.">
-          <RecordFields form={form} />
-        </Section>
-        <CatHistory
-          cat={cat}
-          reportOpen={reporting}
-          onReportOpen={() => setReporting(true)}
-          onReportClose={() => setReporting(false)}
-          carrier={foster ? { name: foster.name, phone: foster.phone } : undefined}
-        />
+        {tab === 'dia' && (
+          <>
+            <DaySummary cat={cat} foster={foster} onEdit={() => changeTab('interna')} />
+            <CatHistory
+              cat={cat}
+              reportOpen={reporting}
+              onReportOpen={() => setReporting(true)}
+              onReportClose={() => setReporting(false)}
+              carrier={foster ? { name: foster.name, phone: foster.phone } : undefined}
+              noting={noting}
+              onNote={setNoting}
+              onNoteClose={() => setNoting(null)}
+              onMarked={markHealth}
+            />
+            <CatPapers cat={cat} dirty={dirty} onNewReport={() => setReporting(true)} onNewNote={() => setNoting('nota')} />
+          </>
+        )}
+        {tab === 'web' && (
+          <>
+            <Card className="flex flex-wrap items-center gap-3 bg-lavanda">
+              <Megaphone className="size-8 shrink-0 text-lavanda-oscuro" aria-hidden />
+              <div className="min-w-0 flex-1">
+                <h2 className="font-display text-lg font-semibold">Compártelo en redes</h2>
+                <p className="text-sm">
+                  {canShare ? 'Imagen lista para Instagram o WhatsApp, con sus fotos y vuestro contacto.' : 'Añade una foto y podrás crear una imagen para redes.'}
+                </p>
+              </div>
+              <Button onClick={() => setSharing(true)} disabled={!canShare}>
+                Crear imagen
+              </Button>
+            </Card>
+            <Section title="Estado y portada">
+              <PublishFields form={form} />
+            </Section>
+            <EditPhotos cat={cat} onChange={setCat} />
+            <EditVideos cat={cat} onChange={setCat} />
+            <Section title="Lo básico">
+              <BasicsFields form={form} />
+            </Section>
+            <Section title="Su carácter">
+              <PersonalityFields form={form} />
+            </Section>
+            <Section title="Convivencia y salud">
+              <HealthFields form={form} />
+            </Section>
+          </>
+        )}
+        {tab === 'interna' && (
+          <Section title="Ficha interna 🗂️" hint="No sale en la web. Es lo que se imprime en sus papeles.">
+            <RecordFields form={form} />
+          </Section>
+        )}
         <FormError>{error}</FormError>
         {isAdmin(user) && (
           <Button variant="danger" onClick={destroy} className="justify-self-start">

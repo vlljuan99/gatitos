@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Car, Check, Copy, Gift, Landmark, Megaphone, PiggyBank, Share2, Smartphone } from 'lucide-react';
-import { useSite } from '../components/Layout.jsx';
+import { ArrowRight, Car, Gift, Landmark, Megaphone, Package, PiggyBank, Share2, Smartphone } from 'lucide-react';
+import { CopyValue } from '../components/CopyValue.jsx';
+import { HELP_LINKS, useSite } from '../components/Layout.jsx';
 import { Checkbox, FormError, Honeypot, MultiChoice, TextArea, TextInput } from '../components/form.jsx';
 import { Button, ButtonLink, Card, ErrorState, PageHeader, Spinner, cx } from '../components/ui.jsx';
 import { VOLUNTEER_AREAS } from '../lib/forms.js';
+import { euros, MEMBER_PERIODS } from '../lib/members.js';
 import { useForm } from '../lib/useForm.js';
 import { useTitle } from '../lib/useTitle.js';
 
@@ -74,28 +76,6 @@ function VolunteerForm() {
   );
 }
 
-function CopyValue({ value }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <button
-      type="button"
-      onClick={async () => {
-        try {
-          await navigator.clipboard.writeText(value);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        } catch {
-          window.prompt('Copia el dato:', value);
-        }
-      }}
-      className="mt-2 flex w-full items-center justify-between gap-2 rounded-2xl bg-crema px-4 py-3 text-left font-mono text-sm font-bold"
-    >
-      <span className="break-all">{value}</span>
-      {copied ? <Check className="size-5 shrink-0 text-menta-oscuro" aria-label="Copiado" /> : <Copy className="size-5 shrink-0" aria-label="Copiar" />}
-    </button>
-  );
-}
-
 function DonationMethod({ icon: Icon, title, tone, children, value, href, hrefLabel }) {
   const available = Boolean(value || href);
   return (
@@ -123,49 +103,64 @@ export default function Collaborate() {
   const { data, error, loading, reload } = useSite();
   if (loading) return <Spinner />;
   if (error) return <ErrorState error={error} onRetry={reload} />;
-  const { volunteering, donations } = data.content;
+  const { volunteering, donations, members } = data.content;
+  const anyMethod = Boolean(donations.bizum || donations.iban || donations.teaming || donations.paypal);
 
   return (
     <>
-      <PageHeader title="Colabora con Bigotes" emoji="🙋">
-        Hay muchas formas de ayudar a los gatitos. ¡Todas cuentan!
+      <PageHeader title="Colabora con Bigotes" emoji="🐾">
+        Rescatar, curar y buscar familia a cada gatito es posible gracias a gente como tú. ¡Todas las formas de ayudar cuentan!
       </PageHeader>
 
-      <section className="grid gap-6 px-4 md:grid-cols-5" aria-labelledby="voluntariado">
-        <div className="md:col-span-2">
-          <h2 id="voluntariado" className="font-display text-2xl font-semibold">
-            Hazte voluntario/a
-          </h2>
-          <p className="mt-2 whitespace-pre-line text-lg text-cacao-suave">{volunteering.intro}</p>
-        </div>
-        <div className="md:col-span-3">
-          <VolunteerForm />
-        </div>
-      </section>
+      {/* Accesos a cada forma de ayudar, a primera vista. */}
+      <nav aria-label="Formas de colaborar" className="px-4">
+        <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {HELP_LINKS.map((link) => (
+            <li key={link.to}>
+              <Link
+                to={link.to}
+                className={cx('flex h-full flex-col gap-1 rounded-3xl p-4 shadow-suave transition hover:-translate-y-0.5', link.tone)}
+              >
+                <span className="text-3xl" aria-hidden>
+                  {link.emoji}
+                </span>
+                <span className="font-display text-lg font-semibold leading-tight">{link.label}</span>
+                <span className="text-sm text-cacao-suave">{link.text}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
-      <section className="mt-14 px-4" aria-labelledby="transporte">
-        <Card className="flex flex-col gap-4 bg-menta sm:flex-row sm:items-center">
-          <Car className="size-10 shrink-0 text-menta-oscuro" aria-hidden />
-          <div className="flex-1">
-            <h2 id="transporte" className="font-display text-2xl font-semibold">
-              Transporte solidario
+      <section id="socios" className="mt-12 scroll-mt-20 px-4" aria-labelledby="socios-titulo">
+        <Card className="grid gap-5 bg-mantequilla md:grid-cols-5 md:items-center">
+          <div className="md:col-span-3">
+            <h2 id="socios-titulo" className="font-display text-3xl font-semibold">
+              Hazte socio/a 💛
             </h2>
-            <p className="mt-1">
-              ¿Viajas a menudo a otra ciudad? Apúntate y, cuando alguien de allí quiera adoptar, el gatito podrá viajar contigo hasta
-              su nueva familia.
-            </p>
+            <p className="mt-2 text-lg">{members.intro}</p>
+            <p className="mt-2 text-cacao-suave">Cada vez que pagues te llegará tu recibo por correo.</p>
           </div>
-          <ButtonLink to="/transporte-solidario" size="lg" className="shrink-0">
-            Apuntarme 🚗
-          </ButtonLink>
+          <div className="grid gap-3 md:col-span-2">
+            <ul className="flex flex-wrap gap-2">
+              {members.fees.map((fee) => (
+                <li key={`${fee.amount}-${fee.period}`} className="rounded-2xl bg-nata px-4 py-2 font-bold shadow-suave">
+                  <span className="font-display text-xl text-mantequilla-oscuro">{euros(fee.amount)}</span> {MEMBER_PERIODS[fee.period].every}
+                </li>
+              ))}
+            </ul>
+            <ButtonLink to="/hazte-socio" size="lg" block>
+              Quiero ser socio/a <ArrowRight className="size-5" />
+            </ButtonLink>
+          </div>
         </Card>
       </section>
 
       <section id="donar" className="mt-14 scroll-mt-20 px-4" aria-labelledby="donaciones">
         <div className="flex items-center gap-3">
           <PiggyBank className="size-8 text-canela" aria-hidden />
-          <h2 id="donaciones" className="font-display text-2xl font-semibold">
-            Donaciones
+          <h2 id="donaciones" className="font-display text-3xl font-semibold">
+            Haz una donación
           </h2>
         </div>
         <p className="mt-2 max-w-2xl whitespace-pre-line text-lg text-cacao-suave">{donations.intro}</p>
@@ -189,6 +184,62 @@ export default function Collaborate() {
             Con tarjeta o con tu cuenta de PayPal.
           </DonationMethod>
         </div>
+        {!anyMethod && (
+          <p className="mt-3 text-cacao-suave">
+            Mientras preparamos las donaciones online, puedes{' '}
+            <Link to="/hazte-socio" className="font-bold text-canela-oscuro underline">
+              hacerte socio/a
+            </Link>{' '}
+            o{' '}
+            <Link to="/contacto" className="font-bold text-canela-oscuro underline">
+              escribirnos
+            </Link>
+            .
+          </p>
+        )}
+        <Card className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center">
+          <Package className="size-9 shrink-0 text-canela" aria-hidden />
+          <div className="flex-1">
+            <h3 className="font-display text-xl font-semibold">¿Prefieres donar pienso, arena o mantas?</h3>
+            <p className="text-cacao-suave">
+              También nos vienen genial transportines, rascadores o medicinas sin caducar. Escríbenos y te contamos qué hace más
+              falta ahora.
+            </p>
+          </div>
+          <ButtonLink to="/contacto" variant="secondary" className="shrink-0">
+            Escribirnos
+          </ButtonLink>
+        </Card>
+      </section>
+
+      <section id="voluntariado" className="mt-14 grid scroll-mt-20 gap-6 px-4 md:grid-cols-5" aria-labelledby="voluntariado-titulo">
+        <div className="md:col-span-2">
+          <h2 id="voluntariado-titulo" className="font-display text-3xl font-semibold">
+            Hazte voluntario/a 🙋
+          </h2>
+          <p className="mt-2 whitespace-pre-line text-lg text-cacao-suave">{volunteering.intro}</p>
+        </div>
+        <div className="md:col-span-3">
+          <VolunteerForm />
+        </div>
+      </section>
+
+      <section id="viajes" className="mt-14 scroll-mt-20 px-4" aria-labelledby="viajes-titulo">
+        <Card className="flex flex-col gap-4 bg-menta sm:flex-row sm:items-center">
+          <Car className="size-10 shrink-0 text-menta-oscuro" aria-hidden />
+          <div className="flex-1">
+            <h2 id="viajes-titulo" className="font-display text-2xl font-semibold">
+              Viajes solidarios
+            </h2>
+            <p className="mt-1">
+              ¿Viajas a menudo a otra ciudad? Apúntate y, cuando alguien de allí quiera adoptar, el gatito podrá viajar contigo hasta
+              su nueva familia.
+            </p>
+          </div>
+          <ButtonLink to="/viajes-solidarios" size="lg" className="shrink-0">
+            Apuntarme 🚗
+          </ButtonLink>
+        </Card>
       </section>
 
       <section className="mt-14 px-4" aria-labelledby="otras">

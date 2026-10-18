@@ -18,18 +18,26 @@ se enamore de un gatito y lo adopte.
 - **Modo match**: tarjetas que se deslizan con el dedo. Solo hay «Me encanta»
   y «Siguiente», nada de «no me gusta». Se puede deshacer, filtrar y, al primer
   «Me encanta», sale la pantalla de «¡Os habéis gustado!».
-- **Favoritos** sin registrarse (se guardan en el navegador).
-- **Transporte solidario**: la gente que viaja a menudo a otra ciudad se apunta
-  con sus destinos. Así se puede adoptar también fuera de Extremadura: cada
-  solicitud de otra provincia muestra en el panel quién viaja allí.
-- **Solicitud de adopción** por pasos, con el gatito ya elegido si vienes de
-  su ficha. Desde Extremadura o, con transporte solidario, desde cualquier
-  provincia de España.
+- **Favoritos** sin registrarse (se guardan en el navegador), con su corazón
+  en la cabecera.
+- **Viajes solidarios** (antes «transporte solidario», `/viajes-solidarios`):
+  la gente que viaja a menudo a otra ciudad se apunta con sus destinos. Así se
+  puede adoptar también fuera de Extremadura: cada solicitud de otra provincia
+  muestra en el panel quién viaja allí.
+- **Solicitud de adopción** por pasos. Si vienes de un match o de la ficha de
+  un gatito, empieza directamente por tus datos con el gatito ya elegido.
+  Desde Extremadura o, con los viajes solidarios, desde cualquier provincia.
 - **Cómo trabajamos**, requisitos, cuota y preguntas frecuentes.
 - **Finales felices** con los gatitos adoptados.
-- **Colabora**: formulario de voluntariado y zona de donaciones (Bizum,
-  transferencia, Teaming, PayPal) que sale como «Muy pronto» hasta que se
-  rellenen los datos.
+- **Colabora**, bien a la vista: en la barra inferior del móvil, en la portada
+  («¿No puedes adoptar? ¡Ayúdanos igual!»), en «Más» y al final de la ficha de
+  cada gatito. Reúne hazte socio/a, donaciones (Bizum, transferencia, Teaming,
+  PayPal y material; cada método sale como «Muy pronto» hasta que se rellenen
+  sus datos), voluntariado y viajes solidarios.
+- **Hazte socio/a** (`/hazte-socio`): se elige una cuota (las de «Textos de la
+  web → Socios» u otra cantidad) y cómo pagar. Aún sin pasarela de pago: al
+  terminar se enseña cómo pagar (Bizum o IBAN) y, cuando el equipo apunta el
+  pago en el panel, le llega su recibo por correo.
 - **Contacto**, aviso legal, privacidad y cookies (sin banner: la web no usa
   cookies de terceros ni analítica, y las tipografías se sirven desde aquí).
 
@@ -59,36 +67,48 @@ se enamore de un gatito y lo adopte.
   «Adoptado» el gatito pasa solo a Finales felices. Los **gatos de colonia**
   que se atienden y se devuelven a su sitio quedan registrados como «En su
   colonia», sin salir nunca en la web.
+- La ficha de cada gato tiene tres pestañas: **Día a día** (resumen, seguimiento
+  y papeles), **En la web** (fotos, vídeos, estado y lo que se publica) y
+  **Ficha interna**.
 - **Ficha interna** de cada gato (no sale en la web): n.º de ficha del año
-  (`2026-001`), dónde y quién lo recogió, raza, microchip, colonia, casa de
-  acogida, si está en tratamiento y lo que queda pendiente.
-- **Historial y veterinario**: notas con fecha y visitas a la clínica. Cada
-  visita nace con su **parte veterinario** numerado (`V-2026-001`): sin parte,
+  (`2026-001`), casa de acogida, tratamiento y pendientes a la vista; cómo
+  llegó, raza, microchip y colonia en grupos plegables.
+- **Seguimiento y veterinario**: se apunta con un toque (nota, vacuna,
+  desparasitación, esterilización, microchip, peso, medicación), con la fecha
+  de hoy y, si se quiere, marcándolo a la vez en su ficha. Cada visita a la
+  clínica nace con su **parte veterinario** numerado (`V-2026-001`): sin parte,
   la clínica no atiende a cargo de la asociación. Al volver se completa con
   diagnóstico, tratamiento, próxima revisión e importe.
 - **Papeles en PDF** listos para imprimir (o escribir encima): ficha del gato,
   ficha de seguimiento, acuerdo de acogida, parte veterinario, contrato de
-  adopción (`A-2026-001`), compromiso de confidencialidad, inventarios y
-  registro de donaciones. Salen rellenos con lo que hay en el panel y con
-  líneas en blanco para lo que falte; también se pueden sacar en blanco. Los
-  A5 se pueden imprimir dos por folio. Todo está en **Papeles** y en la ficha
-  de cada gato o solicitud.
+  adopción (`A-2026-001`), compromiso de confidencialidad, inventarios,
+  registro de donaciones, recibos de cuota, hoja de inscripción y libro de
+  socios. Salen rellenos con lo que hay en el panel y con líneas en blanco para
+  lo que falte; también se pueden sacar en blanco. Cada uno tiene **Ver** (vista
+  previa dentro del panel, también en Android) y los A5 se pueden imprimir dos
+  por folio. Todo está en **Papeles** y en la ficha de cada gato, solicitud o
+  socio/a.
 - **Casas de acogida** con sus datos (van al acuerdo de acogida y salen en la
   ficha de cada gato).
 - **Inventario** de medicación (caducidad e instrucciones) y general, con
   sumar/restar de un toque y avisos de lo que caduca o se acaba.
+- **Socios y socias**: altas de la web y del panel, cuota y periodicidad, n.º
+  de socio/a, bajas y avisos de renovación (con mensaje de WhatsApp ya escrito).
+  Al apuntar un pago se crea su **recibo** (`R-2026-001`) con el importe y el
+  periodo que cubre, y se le manda por correo con el PDF adjunto.
 - **Donaciones** de dinero y de material, con los totales del año.
 - **Solicitudes** por etapas (nueva → entrevista → visita → aprobada →
   adoptado / descartada), con notas internas y botones para llamar, WhatsApp o
   email.
-- Bandejas de **mensajes**, **voluntariado** y **transporte solidario** (con
+- Bandejas de **mensajes**, **voluntariado** y **viajes solidarios** (con
   buscador por ciudad o provincia).
 - Datos legales de ejemplo (CIF G12345678…) para ver los papeles completos;
   se cambian en **Textos de la web → Datos legales**.
 - **Textos de la web** editables sin tocar código (portada, cómo trabajamos,
-  requisitos, preguntas, contacto, donaciones, datos legales).
+  requisitos, preguntas, contacto, socios, donaciones, datos legales).
 - **Resumen** con lo pendiente, avisos (medicación que caduca, cosas que se
-  acaban, revisiones veterinarias), los gatitos más queridos en el match y los
+  acaban, revisiones veterinarias, altas de socios por confirmar y cuotas por
+  renovar), los gatitos más queridos en el match y los
   que necesitan un empujón.
 
 ## Stack

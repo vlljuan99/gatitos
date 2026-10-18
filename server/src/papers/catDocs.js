@@ -17,7 +17,7 @@ const triOptions = (value, unknown = 'Desconocido') => [
 const yes = (flag) => (flag ? 'si' : '');
 
 /** Cabecera de las hojas A5: logo a la izquierda y caja con el título. */
-function a5Header(k, { title, subtitle, x = 14, w = 392, compact = false }) {
+export function a5Header(k, { title, subtitle, x = 14, w = 392, compact = false }) {
   k.logo(x + 4, compact ? 12 : 14, compact ? 160 : 176);
   const bx = x + 196;
   const bw = w - 196;

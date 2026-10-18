@@ -11,10 +11,15 @@ import {
   donationsPaperData,
   inventoryPaperData,
   legalData,
+  memberSignupPaperData,
+  membersPaperData,
   personPaperData,
+  receiptPaperData,
   visitPaperData,
 } from './data.js';
-import { donationsList, inventoryList, medicationList } from './lists.js';
+import { donationsList, inventoryList, medicationList, membersList } from './lists.js';
+import { memberReceipt, memberSignupSheet } from './memberDocs.js';
+import { MEMBER_PERIODS } from '../members.js';
 import { renderPdf } from './pdf.js';
 
 // /api/papeles: los papeles de la asociación en PDF, listos para imprimir.
@@ -48,15 +53,27 @@ const PAPERS = {
     title: 'Registro de donaciones',
     pages: (data, ctx) => (k) => donationsList(data, { methods: data?.methods ?? {}, k, blank: !data }),
   },
+  recibo: { size: 'A5', title: 'Recibo de cuota', pages: (data, ctx) => memberReceipt(data, ctx) },
+  inscripcion: { size: 'A5', title: 'Inscripción de socio/a', pages: (data, ctx) => memberSignupSheet(data, ctx) },
+  socios: {
+    size: 'A4',
+    title: 'Libro de socios y socias',
+    pages: (data) => (k) => membersList(data, { periods: MEMBER_PERIODS, k, blank: !data }),
+  },
 };
 
-async function send(req, res, type, data, name) {
+/** Dibuja un papel y devuelve { pdf, file }. También lo usa el correo con el recibo. */
+export async function renderPaper(type, data, name = [], { twoUp = false } = {}) {
   const paper = PAPERS[type];
-  const legal = legalData();
-  const ctx = { legal, today: today() };
-  const twoUp = req.query.hoja === 'a4' && paper.size.startsWith('A5');
+  const ctx = { legal: legalData(), today: today() };
   const pdf = await renderPdf({ size: paper.size, pages: paper.pages(data, ctx), twoUp, title: `${paper.title} · Bigotes` });
   const file = `${[type, ...name.filter(Boolean).map((part) => slugify(String(part)))].join('-')}${twoUp ? '-a4' : ''}.pdf`;
+  return { pdf, file };
+}
+
+async function send(req, res, type, data, name) {
+  const twoUp = req.query.hoja === 'a4' && PAPERS[type].size.startsWith('A5');
+  const { pdf, file } = await renderPaper(type, data, name, { twoUp });
   res.set('Content-Type', 'application/pdf');
   res.set('Content-Disposition', `inline; filename="${file}"`);
   res.send(pdf);
@@ -118,6 +135,26 @@ export function papersRouter() {
 
   router.get('/inventario', async (req, res) => {
     await send(req, res, 'inventario', inventoryPaperData('general'), []);
+  });
+
+  router.get('/recibo/:paymentId', async (req, res) => {
+    const id = parseId(req.params.paymentId, res);
+    if (id === null) return;
+    const data = receiptPaperData(id);
+    if (!data) return res.status(404).json({ error: NOT_FOUND });
+    await send(req, res, 'recibo', data, [data.payment.receiptNumber, data.member.name]);
+  });
+
+  router.get('/socio/:id/inscripcion', async (req, res) => {
+    const id = parseId(req.params.id, res);
+    if (id === null) return;
+    const data = memberSignupPaperData(id);
+    if (!data) return res.status(404).json({ error: NOT_FOUND });
+    await send(req, res, 'inscripcion', data, [data.member.name]);
+  });
+
+  router.get('/socios', async (req, res) => {
+    await send(req, res, 'socios', membersPaperData(), [today()]);
   });
 
   // Por defecto, el año en curso. ?desde=AAAA-MM-DD&hasta=AAAA-MM-DD para otro periodo.

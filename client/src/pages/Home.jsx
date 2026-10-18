@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, HeartHandshake, PiggyBank, Sparkles } from 'lucide-react';
-import { useSite } from '../components/Layout.jsx';
+import { ArrowRight, Sparkles } from 'lucide-react';
+import { HELP_LINKS, useSite } from '../components/Layout.jsx';
 import { CatCard } from '../components/CatCard.jsx';
 import { CatPhoto } from '../components/CatPhoto.jsx';
 import { CatIllustration } from '../components/CatIllustration.jsx';
-import { ButtonLink, Card, SectionTitle, cx } from '../components/ui.jsx';
+import { ButtonLink, SectionTitle, cx } from '../components/ui.jsx';
+import { euros, MEMBER_PERIODS } from '../lib/members.js';
 import { useApi } from '../lib/useApi.js';
 import { useTitle } from '../lib/useTitle.js';
 
@@ -38,6 +39,57 @@ function Polaroids({ cats }) {
         </motion.div>
       ))}
     </div>
+  );
+}
+
+/**
+ * Formas de ayudar, bien a la vista: hacerse socio/a (la que más ayuda a
+ * planificar) en grande y el resto en tarjetas.
+ */
+function HelpSection({ members }) {
+  const [member, ...others] = HELP_LINKS;
+  // «Desde 5 € al mes»: la cuota más pequeña que se ofrece.
+  const cheapest = members?.fees?.length ? [...members.fees].sort((a, b) => a.amount - b.amount)[0] : null;
+  return (
+    <section className="mt-12 px-4" aria-labelledby="ayuda">
+      <SectionTitle>
+        <span id="ayuda">¿No puedes adoptar? ¡Ayúdanos igual! 🐾</span>
+      </SectionTitle>
+      <div className="grid gap-3 md:grid-cols-2">
+        <Link to={member.to} className="flex flex-col justify-between gap-4 rounded-[2rem] bg-mantequilla p-6 shadow-suave transition hover:-translate-y-0.5">
+          <div>
+            <span className="text-4xl" aria-hidden>
+              {member.emoji}
+            </span>
+            <h3 className="mt-2 font-display text-3xl font-semibold">{member.label}</h3>
+            <p className="mt-1 text-lg text-cacao-suave">
+              {cheapest
+                ? `Desde ${euros(cheapest.amount)} ${MEMBER_PERIODS[cheapest.period].every}: pienso, vacunas y esterilizaciones todo el año.`
+                : member.text}
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-1.5 self-start rounded-full bg-nata px-5 py-3 font-display text-lg font-medium text-mantequilla-oscuro shadow-suave">
+            Quiero ser socio/a <ArrowRight className="size-5" />
+          </span>
+        </Link>
+        <ul className="grid gap-3">
+          {others.map((link) => (
+            <li key={link.to}>
+              <Link to={link.to} className="flex min-h-20 items-center gap-4 rounded-3xl bg-nata p-4 shadow-suave transition hover:-translate-y-0.5">
+                <span className={cx('grid size-14 shrink-0 place-items-center rounded-2xl text-3xl', link.tone)} aria-hidden>
+                  {link.emoji}
+                </span>
+                <span className="flex-1">
+                  <span className="block font-display text-xl font-semibold">{link.label}</span>
+                  <span className="text-cacao-suave">{link.text}</span>
+                </span>
+                <ArrowRight className="size-5 shrink-0 text-canela" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
   );
 }
 
@@ -81,6 +133,9 @@ export default function Home() {
               Ver todos los gatitos
             </ButtonLink>
           </div>
+          <Link to="/colabora" className="mt-4 inline-flex items-center gap-1 font-bold text-canela-oscuro">
+            ¿No puedes adoptar? Hazte socio/a, dona o viaja con un gatito <ArrowRight className="size-4" />
+          </Link>
         </div>
         <div className="relative mt-10 md:mt-0">
           <Polaroids cats={featured} />
@@ -119,7 +174,9 @@ export default function Home() {
         </section>
       )}
 
-      <section className="mt-10 px-4">
+      <HelpSection members={site.data?.content.members} />
+
+      <section className="mt-12 px-4">
         <SectionTitle>Adoptar es así de fácil</SectionTitle>
         <ol className="grid gap-3 md:grid-cols-4">
           {STEPS.map((step, i) => (
@@ -167,27 +224,6 @@ export default function Home() {
           </ul>
         </section>
       )}
-
-      <section className="mt-12 grid gap-3 px-4 md:grid-cols-2">
-        <Card className="bg-lavanda">
-          <HeartHandshake className="size-8 text-lavanda-oscuro" aria-hidden />
-          <h2 className="mt-2 font-display text-2xl font-semibold">¿Nos echas una pata?</h2>
-          <p className="mt-1 text-cacao-suave">
-            Hazte voluntario o voluntaria: cuidados, transporte al veterinario, fotos, redes… ¡Todo suma!
-          </p>
-          <ButtonLink to="/colabora" variant="secondary" className="mt-4">
-            Quiero ayudar
-          </ButtonLink>
-        </Card>
-        <Card className="bg-mantequilla">
-          <PiggyBank className="size-8 text-mantequilla-oscuro" aria-hidden />
-          <h2 className="mt-2 font-display text-2xl font-semibold">Pienso, arena y veterinario</h2>
-          <p className="mt-1 text-cacao-suave">Cada euro se convierte en cuidados. Muy pronto podrás donar desde la web.</p>
-          <ButtonLink to="/colabora#donar" variant="secondary" className="mt-4">
-            Cómo colaborar
-          </ButtonLink>
-        </Card>
-      </section>
     </>
   );
 }

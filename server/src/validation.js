@@ -62,6 +62,10 @@ export const decimal = ({ min = 0, max = 1_000_000, message = 'Escribe un númer
       return number;
     });
 
+/** Como decimal(), pero obligatorio: vacío da el error required. */
+export const requiredDecimal = ({ required = 'Escribe el importe', ...options } = {}) =>
+  decimal(options).refine((value) => value !== null, required);
+
 export const idParam = z.coerce.number().int().positive();
 
 /** Convierte un id de la URL en número o responde 404. */

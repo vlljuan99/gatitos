@@ -317,6 +317,20 @@ export default function CatDetail() {
           </div>
         </section>
       )}
+
+      {/* Para quien no puede adoptar: otras formas de cuidar de gatitos como este. */}
+      <section className="mx-4 mt-12 rounded-[2rem] bg-mantequilla p-5 md:mx-0 md:flex md:items-center md:gap-6 md:p-6">
+        <div className="flex-1">
+          <h2 className="font-display text-2xl font-semibold">¿No puedes adoptar? También puedes cuidar de {cat.name} 💛</h2>
+          <p className="mt-1 text-cacao-suave">Como socio/a o con una donación pagas su pienso, sus vacunas y su esterilización.</p>
+        </div>
+        <div className="mt-4 grid gap-2 sm:flex md:mt-0 md:shrink-0">
+          <ButtonLink to="/hazte-socio">Hazte socio/a</ButtonLink>
+          <ButtonLink to="/colabora#donar" variant="secondary">
+            Donar
+          </ButtonLink>
+        </div>
+      </section>
     </article>
   );
 }

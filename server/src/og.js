@@ -19,9 +19,21 @@ const STATIC_PAGES = {
   '/como-trabajamos': { title: 'Cómo trabajamos', description: 'Rescate, veterinario, casa de acogida y adopción responsable: así cuidamos a cada gatito.' },
   '/adoptar': { title: 'Solicitud de adopción', description: 'Rellena la solicitud para adoptar un gatito de Bigotes. Te leemos con mucho cariño.' },
   '/finales-felices': { title: 'Finales felices', description: 'Gatitos rescatados por Bigotes que ya ronronean en su hogar para siempre.' },
-  '/colabora': { title: 'Colabora', description: 'Hazte voluntario o voluntaria de Bigotes y ayúdanos a rescatar gatitos en Almendralejo.' },
+  '/colabora': {
+    title: 'Colabora',
+    description: 'Hazte socio/a, dona, apúntate al voluntariado o a los viajes solidarios: así ayudas a los gatitos de Almendralejo.',
+  },
+  '/hazte-socio': {
+    title: 'Hazte socio/a',
+    description: 'Con una pequeña cuota ayudas a Bigotes a cuidar de los gatos de Almendralejo todo el año. Te mandamos el recibo por correo.',
+  },
+  '/viajes-solidarios': {
+    title: 'Viajes solidarios',
+    description: '¿Viajas a menudo a otra ciudad? Ayuda a que un gatito de Bigotes llegue a su nueva familia.',
+  },
+  // Dirección antigua: la SPA redirige, pero la vista previa ya sale bien.
   '/transporte-solidario': {
-    title: 'Transporte solidario',
+    title: 'Viajes solidarios',
     description: '¿Viajas a menudo a otra ciudad? Ayuda a que un gatito de Bigotes llegue a su nueva familia.',
   },
   '/contacto': { title: 'Contacto', description: 'Escríbenos: estaremos encantados de resolver tus dudas sobre adopción o voluntariado.' },

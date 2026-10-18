@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { db } from '../db.js';
-import { getAllContent } from '../content.js';
+import { getAllContent, getContent } from '../content.js';
 import { publicStats, PUBLIC_STATUSES_SQL, serializeCats } from '../cats.js';
-import { applicationSchema, messageSchema, transportSchema, volunteerSchema } from '../forms.js';
-import { notifyNewApplication, notifyNewMessage, notifyNewTransport, notifyNewVolunteer } from '../notify.js';
+import { applicationSchema, memberSignupSchema, messageSchema, transportSchema, volunteerSchema } from '../forms.js';
+import { paymentInstructions } from '../members.js';
+import { notifyNewApplication, notifyNewMember, notifyNewMessage, notifyNewTransport, notifyNewVolunteer } from '../notify.js';
 import { isBot, rateLimit } from '../security.js';
 import { parseBody } from '../validation.js';
 
@@ -129,6 +130,27 @@ export function publicRouter() {
     ).run(data.name, data.email, data.phone, data.origin, JSON.stringify(data.destinations), data.frequency, data.notes);
     notifyNewTransport(data);
     res.status(201).json({ ok: true });
+  });
+
+  // Hazte socio/a: queda pendiente hasta que el equipo apunte el primer pago
+  // en el panel, que es cuando le llega su recibo.
+  router.post('/socios', formLimit(), (req, res) => {
+    if (isBot(req.body)) return res.status(201).json({ ok: true });
+    const data = parseBody(memberSignupSchema, req, res);
+    if (!data) return;
+    const settings = getContent('members');
+    const offered = settings.fees.some((fee) => fee.period === data.period && Math.round(fee.amount * 100) === Math.round(data.amount * 100));
+    if (!offered && !settings.allowCustom) {
+      return res.status(400).json({ error: 'Revisa los campos marcados', fields: { amount: 'Elige una de las cuotas' } });
+    }
+    db.prepare(
+      `INSERT INTO members (name, email, phone, municipality, fee_cents, period, method, message, source)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'web')`,
+    ).run(data.name, data.email, data.phone, data.municipality, Math.round(data.amount * 100), data.period, data.method, data.message);
+    const payment = paymentInstructions(data);
+    const contact = getContent('contact').email;
+    notifyNewMember(data, { ...payment, replyTo: contact });
+    res.status(201).json({ ok: true, payment: { concept: payment.concept, fee: payment.fee, bizum: payment.bizum, iban: payment.iban } });
   });
 
   return router;

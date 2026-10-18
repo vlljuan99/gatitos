@@ -158,7 +158,9 @@ export function kit(doc) {
         if (s - 0.5 < min) {
           // No cabe ni con la letra más pequeña: se corta con «…».
           const cut = lines.slice(0, widths.length);
-          const last = widths.length - 1;
+          // La última línea con texto (una sola palabra más ancha que la línea
+          // también acaba aquí, y no debe dejar huecos).
+          const last = cut.length - 1;
           let tail = cut[last] ?? '';
           while (tail && doc.widthOfString(`${tail}…`) > widths[last]) tail = tail.slice(0, -1);
           cut[last] = `${tail.trimEnd()}…`;

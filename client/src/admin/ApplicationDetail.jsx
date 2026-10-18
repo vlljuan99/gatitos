@@ -27,7 +27,7 @@ function ContactButton({ href, icon: Icon, label, external }) {
 }
 
 /**
- * Solicitud de fuera de Extremadura: quién del transporte solidario viaja a
+ * Solicitud de fuera de Extremadura: quién de los viajes solidarios va a
  * su provincia, con botones para escribirle; si no hay nadie, el enlace para
  * buscar a alguien.
  */
@@ -35,7 +35,7 @@ function TransportCard({ app }) {
   const toast = useToast();
   const matches = app.transport ?? [];
   const where = `${app.municipality} (${app.province})`;
-  const link = `${window.location.origin}/transporte-solidario`;
+  const link = `${window.location.origin}/viajes-solidarios`;
   const plural = matches.length === 1 ? 'persona viaja' : 'personas viajan';
   return (
     <Card className="grid gap-3 bg-mantequilla">
@@ -45,8 +45,8 @@ function TransportCard({ app }) {
           <h2 className="font-display text-lg font-semibold">Vive fuera de Extremadura</h2>
           <p className="text-sm">
             {matches.length
-              ? `${where}. ${matches.length} ${plural} a ${app.province} con el transporte solidario:`
-              : `${where}. Nadie del transporte solidario viaja a ${app.province} todavía.`}
+              ? `${where}. ${matches.length} ${plural} a ${app.province} con los viajes solidarios:`
+              : `${where}. Nadie de los viajes solidarios va a ${app.province} todavía.`}
           </p>
         </div>
       </div>
@@ -96,7 +96,7 @@ function TransportCard({ app }) {
             }
           }}
         >
-          <Copy className="size-4" /> Copiar enlace para buscar transporte
+          <Copy className="size-4" /> Copiar enlace para buscar quien viaje
         </Button>
       )}
     </Card>

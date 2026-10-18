@@ -73,11 +73,16 @@ function Privacy({ legal, email }) {
           acuerdo de acogida y para coordinar sus cuidados.
         </p>
         <p>
+          <strong>Socios y socias:</strong> tu nombre, email, teléfono (si nos lo das), municipio, la cuota que eliges y los pagos
+          que haces, para gestionar tu cuota, mandarte por correo el recibo de cada pago y avisarte de la renovación. Si nos lo
+          das, también el DNI y la dirección, para el libro de socios y socias.
+        </p>
+        <p>
           <strong>Donaciones:</strong> el nombre y el contacto de quien dona (si quiere darlos), la fecha y lo donado, para
           llevar las cuentas de la asociación y dar las gracias.
         </p>
         <p>
-          <strong>Transporte solidario:</strong> tus datos de contacto, desde dónde sales y a dónde viajas, para avisarte cuando
+          <strong>Viajes solidarios:</strong> tus datos de contacto, desde dónde sales y a dónde viajas, para avisarte cuando
           un gatito pueda viajar contigo hasta su nueva familia.
         </p>
         <p>
@@ -94,25 +99,28 @@ function Privacy({ legal, email }) {
       <Section title="Base legal">
         <p>
           Tu consentimiento, que nos das al enviar cada formulario o al darnos tus datos (art. 6.1.a del RGPD), y, en las
-          adopciones y las acogidas, el contrato o acuerdo que firmamos contigo y los pasos previos a él (art. 6.1.b). Las cuentas
-          de las donaciones, además, son una obligación legal de la asociación (art. 6.1.c). Puedes retirar tu consentimiento
-          cuando quieras.
+          adopciones, las acogidas y las cuotas de socios y socias, el contrato o acuerdo que tenemos contigo y los pasos previos
+          a él (art. 6.1.b). Las cuentas de las cuotas y las donaciones, además, son una obligación legal de la asociación
+          (art. 6.1.c). Puedes retirar tu consentimiento cuando quieras.
         </p>
       </Section>
       <Section title="Cuánto tiempo los guardamos">
         <p>
-          Las solicitudes que no siguen adelante y los mensajes, ofrecimientos de voluntariado y del transporte solidario que se
-          archivan se borran automáticamente al cabo de un año. Los datos
-          de las adopciones realizadas y de las acogidas se conservan mientras dure el seguimiento del gato y los plazos que
-          marca la ley; los de las donaciones, lo que exige la ley para las cuentas de la asociación. Cualquier persona puede
-          pedir que borremos antes lo que no sea obligatorio guardar.
+          Las solicitudes que no siguen adelante y los mensajes, ofrecimientos de voluntariado y de los viajes solidarios que se
+          archivan se borran automáticamente al cabo de un año, igual que las altas de socios y socias que nunca llegan a pagar.
+          Los datos de las adopciones realizadas y de las acogidas se conservan mientras dure el seguimiento del gato y los
+          plazos que marca la ley; los de socios, socias y donaciones, mientras dure la relación y lo que exige la ley para las
+          cuentas de la asociación (los recibos). Cualquier persona puede pedir que borremos antes lo que no sea obligatorio
+          guardar.
         </p>
       </Section>
       <Section title="Quién más los ve">
         <p>
           Nadie fuera del equipo de la asociación, que firma un compromiso de confidencialidad. No cedemos ni vendemos datos,
           salvo cuando lo exige la ley (por ejemplo, el registro del microchip al cambiar de titular). La web está alojada en
-          servidores de Hetzner Online GmbH en la Unión Europea, que actúa como encargado del tratamiento.
+          servidores de Hetzner Online GmbH en la Unión Europea, que actúa como encargado del tratamiento. Los correos que te
+          mandamos (avisos y recibos de socios y socias) salen a través del servicio de envío Resend, también como encargado del
+          tratamiento.
         </p>
       </Section>
       <Section title="Tus derechos">

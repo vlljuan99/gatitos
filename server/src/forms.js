@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { email, phone, requiredText, text } from './validation.js';
+import { email, phone, requiredDecimal, requiredText, text } from './validation.js';
 
 // Esquemas de los formularios públicos. Los valores de las opciones deben
 // coincidir con client/src/lib/forms.js, que tiene las etiquetas visibles.
 
 // Provincias de España. Se adopta sobre todo en Extremadura; fuera de ella,
-// cuando alguien del transporte solidario viaja a la zona (el panel lo cruza).
+// cuando alguien de los viajes solidarios va a la zona (el panel lo cruza).
 export const EXTREMADURA = ['Badajoz', 'Cáceres'];
 export const PROVINCES = [
   'A Coruña', 'Álava', 'Albacete', 'Alicante', 'Almería', 'Asturias', 'Ávila', 'Badajoz', 'Barcelona', 'Bizkaia',
@@ -66,7 +66,7 @@ export const messageSchema = z.object({
 
 export const VOLUNTEER_AREAS = ['cuidados', 'transporte', 'eventos', 'fotos', 'redes', 'difusion', 'otros'];
 
-// Transporte solidario: gente que viaja a menudo a otra ciudad y puede llevar
+// Viajes solidarios (antes «transporte solidario»): gente que viaja a menudo a otra ciudad y puede llevar
 // a un gatito con su nueva familia.
 export const TRANSPORT_FREQUENCIES = ['semanal', 'quincenal', 'mensual', 'ocasional'];
 
@@ -99,6 +99,24 @@ export const volunteerSchema = z.object({
   areas: z.array(z.enum(VOLUNTEER_AREAS)).min(1, 'Elige al menos una forma de ayudar'),
   availability: text(500).default(''),
   message: text(2000).default(''),
+  adult,
+  privacy,
+});
+
+// Hazte socio/a. Cómo prefiere pagar quien se apunta desde la web (en el
+// panel hay más formas). Deben coincidir con client/src/lib/members.js.
+export const MEMBER_PERIOD_KEYS = ['mensual', 'trimestral', 'semestral', 'anual'];
+export const MEMBER_SIGNUP_METHODS = ['bizum', 'transferencia', 'efectivo'];
+
+export const memberSignupSchema = z.object({
+  name: requiredText(100, 'Escribe tu nombre y apellidos'),
+  email: email(),
+  phone: z.union([z.literal(''), phone()]).default(''),
+  municipality: requiredText(100, 'Escribe tu municipio'),
+  amount: requiredDecimal({ min: 1, max: 10000, message: 'La cuota tiene que ser de al menos 1 €', required: 'Elige tu cuota' }),
+  period: z.enum(MEMBER_PERIOD_KEYS, 'Elige cada cuánto'),
+  method: z.enum(MEMBER_SIGNUP_METHODS, 'Elige cómo prefieres pagar'),
+  message: text(1000).default(''),
   adult,
   privacy,
 });

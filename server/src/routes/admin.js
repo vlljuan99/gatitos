@@ -11,6 +11,8 @@ import { adminDonationsRouter } from './adminDonations.js';
 import { adminFostersRouter } from './adminFosters.js';
 import { adminApplicationsRouter, adminMessagesRouter, adminTransportRouter, adminVolunteersRouter } from './adminInbox.js';
 import { adminInventoryRouter, inventoryAlerts } from './adminInventory.js';
+import { adminMembersRouter } from './adminMembers.js';
+import { memberAlerts } from '../members.js';
 import { adminTeamRouter } from './adminTeam.js';
 
 // Todo lo de /api/admin exige sesión del equipo. Lo exclusivo de la
@@ -39,6 +41,8 @@ export function adminRouter() {
       messages: { new: count("SELECT COUNT(*) AS n FROM messages WHERE status = 'nuevo'") },
       volunteers: { new: count("SELECT COUNT(*) AS n FROM volunteers WHERE status = 'nuevo'") },
       transport: { new: count("SELECT COUNT(*) AS n FROM transport_volunteers WHERE status = 'nuevo'") },
+      // Socios: altas de la web pendientes del primer pago y cuotas por renovar.
+      members: memberAlerts(),
       cats: {
         borrador: cats.borrador ?? 0,
         disponible: cats.disponible ?? 0,
@@ -83,6 +87,7 @@ export function adminRouter() {
   router.use('/acogidas', adminFostersRouter());
   router.use('/inventario', adminInventoryRouter());
   router.use('/donaciones', adminDonationsRouter());
+  router.use('/socios', adminMembersRouter());
   router.use('/solicitudes', adminApplicationsRouter());
   router.use('/mensajes', adminMessagesRouter());
   router.use('/voluntariado', adminVolunteersRouter());

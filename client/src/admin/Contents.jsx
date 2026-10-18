@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2 } from 'lucide-react';
-import { FormError, TextArea, TextInput } from '../components/form.jsx';
+import { Checkbox, Choice, FormError, TextArea, TextInput } from '../components/form.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { Button, ErrorState, Spinner } from '../components/ui.jsx';
 import { api, ApiError } from '../lib/api.js';
 import { useDraftState } from '../lib/drafts.js';
+import { MEMBER_PERIODS } from '../lib/members.js';
 import { AdminPage, isAdmin, refreshAfterChange, useAdminApi, useAuth } from './common.jsx';
 
 /** Lista editable (pasos, requisitos, preguntas): añadir, quitar y reordenar. */
@@ -156,6 +157,56 @@ const SECTIONS = [
     title: 'Voluntariado',
     emoji: '🙋',
     render: (v, set) => <TextArea label="Texto de la sección de voluntariado" rows={4} value={v.intro} onChange={(x) => set({ ...v, intro: x })} />,
+  },
+  {
+    key: 'members',
+    title: 'Socios y socias',
+    emoji: '💛',
+    render: (v, set) => (
+      <>
+        <p className="text-sm text-cacao-suave">
+          Lo que se ve en «Hazte socio/a». Para pagar se usan el Bizum y el IBAN de «Donaciones»: mientras estén vacíos, a quien se
+          apunte le diremos que le escribiréis para contarle cómo pagar.
+        </p>
+        <TextArea label="Texto de la sección" rows={3} value={v.intro} onChange={(x) => set({ ...v, intro: x })} maxLength={1000} />
+        <div>
+          <p className="mb-2 font-bold">Cuotas que se ofrecen</p>
+          <ListEditor
+            items={v.fees}
+            onChange={(fees) => set({ ...v, fees })}
+            empty={{ amount: 10, period: 'anual' }}
+            addLabel="Añadir cuota"
+            render={(fee, update, i) => (
+              <>
+                <TextInput
+                  label={`Cuota ${i + 1} (€)`}
+                  inputMode="decimal"
+                  value={String(fee.amount).replace('.', ',')}
+                  onChange={(x) => update({ ...fee, amount: x.replace(',', '.') })}
+                />
+                <Choice
+                  label="Cada cuánto"
+                  options={Object.entries(MEMBER_PERIODS).map(([value, p]) => ({ value, label: p.label }))}
+                  value={fee.period}
+                  onChange={(x) => update({ ...fee, period: x })}
+                />
+              </>
+            )}
+          />
+        </div>
+        <Checkbox checked={v.allowCustom} onChange={(x) => set({ ...v, allowCustom: x })}>
+          <strong>Dejar elegir otra cantidad</strong> <span className="text-cacao-suave">Además de las cuotas de la lista (mínimo 1 €).</span>
+        </Checkbox>
+        <TextArea
+          label="Agradecimiento del recibo"
+          rows={2}
+          hint="Sale en cada recibo y en el correo con el que se manda."
+          value={v.thanks}
+          onChange={(x) => set({ ...v, thanks: x })}
+          maxLength={1000}
+        />
+      </>
+    ),
   },
   {
     key: 'donations',

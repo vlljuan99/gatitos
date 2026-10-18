@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Car, Check, Heart, PawPrint, Send } from 'lucide-react';
@@ -158,6 +158,16 @@ export default function Adopt() {
   const cats = useMemo(() => (data?.cats ?? []).filter((c) => c.status === 'disponible' || c.slug === values.catSlug), [data, values.catSlug]);
   const chosen = cats.find((c) => c.slug === values.catSlug) ?? null;
 
+  // Si se llega con un gatito concreto (desde el match o desde su ficha), no
+  // hace falta elegirlo otra vez: se empieza directamente por el formulario.
+  // Antes de pintar, para que no asome la cuadrícula de gatitos.
+  const autoSkip = useRef(Boolean(gatito));
+  useLayoutEffect(() => {
+    if (!autoSkip.current || !data) return;
+    autoSkip.current = false;
+    if (step === 0 && chosen?.slug === gatito) setStep(1);
+  }, [data, chosen, gatito, step, setStep]);
+
   function go(next) {
     setStep(next);
     setErrors({});
@@ -292,8 +302,8 @@ export default function Adopt() {
                 <p className="mt-1">
                   {OUTSIDE_EXTREMADURA}. Envía tu solicitud igualmente y te contamos si es posible.
                 </p>
-                <Link to="/transporte-solidario" className="mt-2 inline-block font-bold text-mantequilla-oscuro underline">
-                  ¿Viajas a menudo? Apúntate al transporte solidario
+                <Link to="/viajes-solidarios" className="mt-2 inline-block font-bold text-mantequilla-oscuro underline">
+                  ¿Viajas a menudo? Apúntate a los viajes solidarios
                 </Link>
               </Card>
             )}

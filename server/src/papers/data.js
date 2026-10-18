@@ -7,6 +7,7 @@ import { serializeLogEntry, serializeVisit } from '../routes/adminCatRecords.js'
 import { serializeFoster } from '../routes/adminFosters.js';
 import { listItems, INVENTORY_CATEGORIES } from '../routes/adminInventory.js';
 import { DONATION_METHODS, listDonations } from '../routes/adminDonations.js';
+import { eurosInWords, formatEuros, listMembers, loadMember, loadPayment, MEMBER_PERIODS } from '../members.js';
 import { today } from '../numbers.js';
 
 // Prepara los datos de cada papel a partir de la base de datos. Las
@@ -139,7 +140,7 @@ export function contractPaperData(applicationId) {
   };
 }
 
-/** Persona para el compromiso de confidencialidad: alguien del equipo, una casa de acogida, del voluntariado o del transporte solidario. */
+/** Persona para el compromiso de confidencialidad: alguien del equipo, una casa de acogida, del voluntariado o de los viajes solidarios. */
 export function personPaperData(kind, id) {
   const base = { place: 'Almendralejo', date: '' };
   if (kind === 'equipo') {
@@ -166,4 +167,41 @@ export const inventoryPaperData = (kind) => ({
 
 export function donationsPaperData(from, to) {
   return { ...listDonations(from, to), from, to, methods: DONATION_METHODS };
+}
+
+/** Recibo de una cuota de socio/a: el pago, la persona y el agradecimiento de «Textos de la web». */
+export function receiptPaperData(paymentId) {
+  const payment = loadPayment(paymentId);
+  if (!payment) return null;
+  const cents = Math.round(payment.amount * 100);
+  return {
+    payment: { ...payment, formatted: formatEuros(cents), words: eurosInWords(cents) },
+    member: loadMember(payment.memberId),
+    thanks: getContent('members').thanks,
+  };
+}
+
+export function memberSignupPaperData(memberId) {
+  const member = loadMember(memberId);
+  return member ? { member } : null;
+}
+
+export function membersPaperData() {
+  const now = today();
+  const year = now.slice(0, 4);
+  const members = listMembers().filter((m) => m.status !== 'pendiente');
+  const collected = db
+    .prepare("SELECT COALESCE(SUM(amount_cents), 0) AS cents FROM member_payments WHERE strftime('%Y', paid_on) = ?")
+    .get(year).cents;
+  return {
+    members,
+    today: now,
+    periods: MEMBER_PERIODS,
+    totals: {
+      active: members.filter((m) => m.state === 'al_dia' || m.state === 'renovar').length,
+      renew: members.filter((m) => m.state === 'renovar' || m.state === 'caducada').length,
+      collected: collected / 100,
+      year,
+    },
+  };
 }

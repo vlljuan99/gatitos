@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { NotebookPen, Pencil, Printer, Stethoscope, Trash2 } from 'lucide-react';
-import { FormError, TextArea, TextInput } from '../components/form.jsx';
+import { Eye, Pencil, Printer, Stethoscope, Trash2 } from 'lucide-react';
+import { Checkbox, FormError, TextArea, TextInput } from '../components/form.jsx';
 import { Sheet } from '../components/Sheet.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { Button, Card, Spinner, Tag } from '../components/ui.jsx';
 import { api, ApiError } from '../lib/api.js';
+import { gendered } from '../lib/cats.js';
 import { useDraftState } from '../lib/drafts.js';
 import { refreshAfterChange, shortDate, todayIso as today, useAdminApi, useAuth, useConfirm } from './common.jsx';
-import { PdfLink } from './Papers.jsx';
+import { PdfLink } from './paperLinks.jsx';
+import { PdfPreview } from './PdfPreview.jsx';
 
 // Historial de un gato en su ficha del panel: notas con fecha y visitas al
 // veterinario. Cada visita nace con su parte numerado (sin parte, la clínica
@@ -29,21 +31,42 @@ const EMPTY_VISIT = {
 
 const visitDone = (visit) => Boolean(visit.clinic || visit.diagnosis || visit.treatment || visit.tests);
 
-/** Nota con fecha (la de hoy por defecto). */
-function NoteSheet({ catId, open, onClose, onSaved }) {
-  const [form, setForm, draft] = useDraftState(`nota-gato-${catId}`, { date: '', body: '' }, { storage: 'local' });
+/**
+ * Atajos para lo que más se apunta. Con mark, al guardar se marca también en
+ * su ficha (vacunado, esterilizado…), que es lo que sale en la web.
+ */
+export const NOTE_PRESETS = [
+  { key: 'nota', emoji: '📝', label: 'Nota', text: '', placeholder: 'Ya come solo, se deja coger, toca segunda vacuna…' },
+  { key: 'vacuna', emoji: '💉', label: 'Vacuna', text: 'Vacuna: ', placeholder: 'Vacuna: trivalente, 1.ª dosis', mark: 'vaccinated', flag: 'vacunado' },
+  { key: 'desparasitacion', emoji: '🛡️', label: 'Desparasitación', text: 'Desparasitación: ', placeholder: 'Desparasitación: interna y externa', mark: 'dewormed', flag: 'desparasitado' },
+  { key: 'esterilizacion', emoji: '✂️', label: 'Esterilización', text: 'Esterilización', mark: 'sterilized', flag: 'esterilizado' },
+  { key: 'microchip', emoji: '🔖', label: 'Microchip', text: 'Microchip puesto', mark: 'microchipped', flag: 'con microchip' },
+  { key: 'peso', emoji: '⚖️', label: 'Peso', text: 'Peso: ', placeholder: 'Peso: 1,2 kg' },
+  { key: 'medicacion', emoji: '💊', label: 'Medicación', text: 'Medicación: ', placeholder: 'Medicación: antibiótico 5 días' },
+];
+
+/** Nota con fecha (la de hoy por defecto), con el texto del atajo ya escrito. */
+function NoteSheet({ cat, preset = NOTE_PRESETS[0], open, onClose, onSaved }) {
+  const [form, setForm, draft] = useDraftState(
+    `nota-gato-${cat.id}${preset.key === 'nota' ? '' : `-${preset.key}`}`,
+    { date: '', body: preset.text, mark: true },
+    { storage: 'local' },
+  );
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  // Solo se ofrece marcarlo si aún no lo está.
+  const canMark = Boolean(preset.mark) && !cat.health?.[preset.mark];
 
   async function save(event) {
     event.preventDefault();
     setSaving(true);
     setError('');
     try {
-      const result = await api(`/admin/gatitos/${catId}/historial`, { method: 'POST', body: { ...form, date: form.date || today() } });
+      const body = { date: form.date || today(), body: form.body, ...(canMark && form.mark ? { mark: preset.mark } : {}) };
+      const result = await api(`/admin/gatitos/${cat.id}/historial`, { method: 'POST', body });
       draft.discard();
-      setForm({ date: '', body: '' });
+      setForm({ date: '', body: preset.text, mark: true });
       onSaved(result);
     } catch (err) {
       if (err instanceof ApiError) setErrors(err.fields);
@@ -54,20 +77,27 @@ function NoteSheet({ catId, open, onClose, onSaved }) {
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title="Apuntar en su historial">
+    <Sheet open={open} onClose={onClose} title={preset.key === 'nota' ? 'Apuntar en su seguimiento' : `${preset.emoji} ${preset.label}`}>
       <form onSubmit={save} className="grid gap-4" noValidate>
         <TextArea
-          label="¿Qué ha pasado?"
-          rows={4}
-          placeholder="Ya come solo, se deja coger, toca segunda vacuna…"
+          label={preset.key === 'nota' ? '¿Qué ha pasado?' : 'Detalles'}
+          rows={3}
+          placeholder={preset.placeholder}
           value={form.body}
           onChange={(v) => setForm({ ...form, body: v })}
           error={errors.body}
+          autoFocus
+          onFocus={(event) => event.target.setSelectionRange(event.target.value.length, event.target.value.length)}
         />
         <TextInput label="Fecha" type="date" value={form.date || today()} onChange={(v) => setForm({ ...form, date: v })} error={errors.date} max={today()} />
+        {canMark && (
+          <Checkbox checked={form.mark} onChange={(v) => setForm({ ...form, mark: v })}>
+            Marcar a {cat.name} como <strong>{gendered(preset.flag, cat.sex)}</strong> en su ficha
+          </Checkbox>
+        )}
         <FormError>{error}</FormError>
         <Button type="submit" size="lg" block loading={saving}>
-          Guardar nota
+          Guardar
         </Button>
       </form>
     </Sheet>
@@ -218,13 +248,19 @@ function VisitSheet({ cat, visit, onClose, onSaved }) {
   );
 }
 
-export function CatHistory({ cat, reportOpen, onReportOpen, onReportClose, carrier }) {
+/**
+ * Seguimiento del gato: atajos para apuntar, la línea de tiempo con notas y
+ * visitas al veterinario, y la ficha de seguimiento para verla o imprimirla.
+ * El parte y las notas se pueden abrir también desde fuera (noting/reportOpen).
+ */
+export function CatHistory({ cat, reportOpen, onReportOpen, onReportClose, carrier, noting, onNote, onNoteClose, onMarked }) {
   const toast = useToast();
   const { user } = useAuth();
   const { data, error, loading, reload } = useAdminApi(`/gatitos/${cat.id}/historial`);
-  const [noting, setNoting] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [viewing, setViewing] = useState(false);
   const [ask, dialog] = useConfirm();
+  const preset = NOTE_PRESETS.find((p) => p.key === noting) ?? NOTE_PRESETS[0];
 
   const items = data
     ? [
@@ -261,19 +297,31 @@ export function CatHistory({ cat, reportOpen, onReportOpen, onReportClose, carri
     }
   }
 
+  const chip = 'inline-flex min-h-11 items-center gap-1.5 rounded-full bg-crema px-3.5 font-bold transition hover:bg-canela-claro';
+
   return (
     <Card className="grid gap-4">
-      <div>
-        <h2 className="font-display text-xl font-semibold">Historial y veterinario</h2>
-        <p className="text-sm text-cacao-suave">Solo lo ve el equipo. Sale en su ficha de seguimiento.</p>
+      <div className="flex flex-wrap items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <h2 className="font-display text-xl font-semibold">Seguimiento e historial</h2>
+          <p className="text-sm text-cacao-suave">Solo lo ve el equipo. Todo sale en su ficha de seguimiento.</p>
+        </div>
+        <Button size="sm" variant="secondary" onClick={() => setViewing(true)} aria-label="Ver la ficha de seguimiento">
+          <Eye className="size-4" /> Ver ficha
+        </Button>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <Button variant="soft" onClick={() => setNoting(true)}>
-          <NotebookPen className="size-5" /> Apuntar
-        </Button>
-        <Button variant="soft" onClick={onReportOpen}>
-          <Stethoscope className="size-5" /> Nuevo parte
-        </Button>
+      <div>
+        <p className="mb-2 text-sm font-bold text-cacao-suave">Apuntar con un toque</p>
+        <div className="flex flex-wrap gap-2">
+          {NOTE_PRESETS.map((p) => (
+            <button key={p.key} type="button" className={chip} onClick={() => onNote(p.key)}>
+              <span aria-hidden>{p.emoji}</span> {p.label}
+            </button>
+          ))}
+          <button type="button" className={chip} onClick={onReportOpen}>
+            <span aria-hidden>🩺</span> Nuevo parte
+          </button>
+        </div>
       </div>
       {loading && <Spinner />}
       {error && <p className="text-canela-oscuro">{error.message}</p>}
@@ -335,13 +383,16 @@ export function CatHistory({ cat, reportOpen, onReportOpen, onReportClose, carri
       )}
 
       <NoteSheet
-        catId={cat.id}
-        open={noting}
-        onClose={() => setNoting(false)}
-        onSaved={() => {
-          setNoting(false);
+        key={preset.key}
+        cat={cat}
+        preset={preset}
+        open={Boolean(noting)}
+        onClose={onNoteClose}
+        onSaved={(result) => {
+          onNoteClose();
           reload();
-          toast('Apuntado en su historial ✍️');
+          if (result.marked) onMarked?.(result.marked);
+          toast(result.marked ? `Apuntado y marcado en su ficha ✍️` : 'Apuntado en su seguimiento ✍️');
         }}
       />
       <NewReportSheet
@@ -360,6 +411,13 @@ export function CatHistory({ cat, reportOpen, onReportOpen, onReportClose, carri
           setEditing(null);
           reload();
         }}
+      />
+      <PdfPreview
+        path={`/gatito/${cat.id}/seguimiento`}
+        title="Ficha de seguimiento"
+        a5
+        open={viewing}
+        onClose={() => setViewing(false)}
       />
       {dialog}
     </Card>

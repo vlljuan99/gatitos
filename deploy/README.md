@@ -125,13 +125,21 @@ curl --fail https://bigotes.167-233-99-156.sslip.io/api/health
 3. Actualiza `APP_URL` en `.github/workflows/deploy.yml` y `monitor.yml` y
    vuelve a desplegar. Caddy saca el certificado solo.
 
-## Avisos por email
+## Avisos por email y recibos de socios
 
-Opcionales. Hetzner bloquea el SMTP saliente (puertos 25 y 465), así que se usa
-la API HTTPS de [Resend](https://resend.com): rellena `RESEND_API_KEY`,
-`MAIL_FROM` (un remitente de un dominio verificado en Resend) y `NOTIFY_EMAIL`
-en `app.env` y reinicia (`docker compose --env-file .deploy.env up -d app`).
-Sin ellos no se envía nada y todo queda igualmente en el panel.
+Hetzner bloquea el SMTP saliente (puertos 25 y 465), así que se usa la API HTTPS
+de [Resend](https://resend.com): rellena `RESEND_API_KEY`, `MAIL_FROM` (un
+remitente de un dominio verificado en Resend, p. ej. `Bigotes <hola@dominio>`)
+y `NOTIFY_EMAIL` en `app.env` y reinicia
+(`docker compose --env-file .deploy.env up -d app`).
+
+Con ellos salen los avisos al equipo, la confirmación a quien pide adoptar, la
+bienvenida a quien se hace socio/a (con cómo pagar) y el **recibo de cada
+cuota** con el PDF adjunto al apuntar el pago en el panel. Sin ellos no se
+envía nada: todo queda en el panel, que avisa en «Socios» de que el correo no
+está configurado, y los recibos se pueden abrir en PDF y mandar a mano. Para
+que el remitente sea de la asociación hace falta un dominio propio verificado
+en Resend (con el de sslip.io no se puede).
 
 ## Monitor
 

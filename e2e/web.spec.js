@@ -15,7 +15,9 @@ test('portada, catálogo, ficha y favoritos', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Me encanta Luna' }).click();
   await expect(page.getByRole('button', { name: 'Quitar a Luna de favoritos' })).toBeVisible();
-  await mainNav(page).getByRole('link', { name: /Favoritos/ }).click();
+  // Los favoritos están en la cabecera (en la barra inferior va «Colabora»).
+  await expect(mainNav(page).getByRole('link', { name: 'Colabora' })).toBeVisible();
+  await page.getByRole('link', { name: 'Favoritos (1)' }).click();
   await expect(page.getByRole('heading', { name: 'Luna', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Quiero conocerla' })).toBeVisible();
 });
@@ -92,25 +94,39 @@ test('modo match: me encanta, siguiente, deshacer y deslizar', async ({ page }) 
   await expect(page.getByText(/no me gusta/i)).toHaveCount(0);
 });
 
+test('del match a la solicitud, sin pasar por la lista de gatitos', async ({ page }) => {
+  await page.goto('/match');
+  const name = (await page.getByTestId('match-card').getByRole('heading').textContent()).trim();
+  await page.getByRole('button', { name: 'Me encanta', exact: true }).click();
+  await page.getByRole('dialog').getByRole('link', { name: /Quiero conocer/ }).click();
+  // Directamente al formulario, con su gatito ya elegido.
+  await expect(page.getByLabel('Nombre y apellidos')).toBeVisible();
+  await expect(page.getByText('Solicitud para')).toContainText(name);
+  await expect(page.getByText('¿A quién quieres conocer?')).toHaveCount(0);
+  // Si quiere cambiar de gatito, vuelve a la lista.
+  await page.getByRole('button', { name: 'Cambiar' }).click();
+  await expect(page.getByRole('radio', { name: new RegExp(name) })).toBeChecked();
+});
+
 test('solicitud de adopción por pasos', async ({ page }) => {
   const next = () => page.getByRole('button', { name: /Siguiente/ }).click();
   const group = (name) => page.getByRole('group', { name });
 
+  // Desde la ficha de un gatito se empieza ya por tus datos.
   await page.goto('/adoptar?gatito=luna');
-  await expect(page.getByRole('radio', { name: /Luna/ })).toBeChecked();
-  await next();
+  await expect(page.getByText('Solicitud para')).toContainText('Luna');
 
   await page.getByLabel('Nombre y apellidos').fill('Rosa Pérez');
   await page.getByLabel('Email').fill('rosa@ejemplo.es');
   await page.getByLabel('Teléfono').fill('611 222 333');
   await page.getByLabel('Municipio').fill('Almendralejo');
-  // Fuera de Extremadura se puede seguir: se cruza con el transporte solidario.
+  // Fuera de Extremadura se puede seguir: se cruza con los viajes solidarios.
   await page.getByText('Otra provincia').click();
   await page.getByLabel('¿Cuál?').selectOption('Madrid');
-  await expect(page.getByText(/transporte solidario viaja a tu zona/)).toBeVisible();
-  await expect(page.getByRole('link', { name: /Apúntate al transporte solidario/ })).toBeVisible();
+  await expect(page.getByText(/viajes solidarios va a tu zona/)).toBeVisible();
+  await expect(page.getByRole('link', { name: /Apúntate a los viajes solidarios/ })).toBeVisible();
   await group('Provincia').getByText('Badajoz', { exact: true }).click();
-  await expect(page.getByText(/transporte solidario viaja a tu zona/)).toHaveCount(0);
+  await expect(page.getByText(/viajes solidarios va a tu zona/)).toHaveCount(0);
   await next();
   await expect(page.getByText('Tienes que ser mayor de edad')).toBeVisible();
   await page.getByText('Soy mayor de edad').click();
@@ -168,10 +184,15 @@ test('vista previa al compartir un gatito', async ({ request }) => {
   expect(html).toMatch(/og:image" content="http:\/\/localhost:4173\/uploads\/gatitos\/[0-9a-f-]+-og\.jpg"/);
 });
 
-test('transporte solidario: alguien que viaja a menudo se apunta', async ({ page }) => {
-  await page.goto('/colabora');
-  await page.getByRole('link', { name: /Apuntarme 🚗/ }).click();
-  await expect(page.getByRole('heading', { name: /Transporte solidario/, level: 1 })).toBeVisible();
+test('viajes solidarios: alguien que viaja a menudo se apunta', async ({ page }) => {
+  // La dirección antigua sigue funcionando.
+  await page.goto('/transporte-solidario');
+  await expect(page).toHaveURL(/\/viajes-solidarios$/);
+  // Y se llega en dos toques desde cualquier página: «Colabora» en la barra inferior.
+  await page.goto('/');
+  await mainNav(page).getByRole('link', { name: 'Colabora' }).click();
+  await page.getByRole('navigation', { name: 'Formas de colaborar' }).getByRole('link', { name: /Viajes solidarios/ }).click();
+  await expect(page.getByRole('heading', { name: /Viajes solidarios/, level: 1 })).toBeVisible();
 
   await page.getByLabel('Nombre y apellidos').fill('Paco Ruta');
   await page.getByLabel('Email').fill('paco@ejemplo.es');
@@ -185,6 +206,26 @@ test('transporte solidario: alguien que viaja a menudo se apunta', async ({ page
   await page.getByText('Cada 15 días').click();
   await page.getByText('Soy mayor de edad').click();
   await page.getByText(/He leído la/).click();
-  await page.getByRole('button', { name: /Apuntarme al transporte solidario/ }).click();
+  await page.getByRole('button', { name: /Apuntarme a los viajes solidarios/ }).click();
   await expect(page.getByText('¡Gracias por apuntarte!')).toBeVisible();
+});
+
+test('hazte socio/a desde la web', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: /Quiero ser socio\/a/ }).click();
+  await expect(page.getByRole('heading', { name: /Hazte socio\/a/, level: 1 })).toBeVisible();
+
+  await page.getByRole('button', { name: /Hacerme socio\/a/ }).click();
+  await expect(page.getByText('Escribe tu nombre y apellidos')).toBeVisible();
+
+  await page.getByText('al mes').first().click();
+  await page.getByLabel('Nombre y apellidos').fill('Elena Socia');
+  await page.getByLabel('Email').fill('elena@ejemplo.es');
+  await page.getByLabel('Municipio').fill('Almendralejo');
+  await page.getByRole('group', { name: '¿Cómo prefieres pagar?' }).getByText('Bizum').click();
+  await page.getByText('Soy mayor de edad').click();
+  await page.getByText(/He leído la/).click();
+  await page.getByRole('button', { name: /Hacerme socio\/a/ }).click();
+  await expect(page.getByRole('heading', { name: '¡Ya casi eres de la familia!' })).toBeVisible();
+  await expect(page.getByText('elena@ejemplo.es')).toBeVisible();
 });

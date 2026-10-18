@@ -346,6 +346,58 @@ export const migrations = [
     '$.email', COALESCE(NULLIF(json_extract(value, '$.email'), ''), 'hola@bigotes.example'))
   WHERE key = 'legal' AND json_valid(value);
   `,
+
+  // v5 — socios y socias: se apuntan en la web (o los da de alta el equipo),
+  // pagan su cuota por Bizum, transferencia o en mano y, al registrar el pago
+  // en el panel, reciben su recibo por correo. Cada pago es un recibo con su
+  // número (R-2026-001) y el periodo que cubre. number es el n.º de socio/a:
+  // se asigna con el primer pago.
+  `
+  CREATE TABLE members (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    number INTEGER UNIQUE,
+    name TEXT NOT NULL,
+    dni TEXT NOT NULL DEFAULT '',
+    email TEXT NOT NULL DEFAULT '',
+    phone TEXT NOT NULL DEFAULT '',
+    address TEXT NOT NULL DEFAULT '',
+    municipality TEXT NOT NULL DEFAULT '',
+    fee_cents INTEGER NOT NULL CHECK (fee_cents > 0),
+    period TEXT NOT NULL CHECK (period IN ('mensual', 'trimestral', 'semestral', 'anual')),
+    method TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pendiente' CHECK (status IN ('pendiente', 'activo', 'baja')),
+    source TEXT NOT NULL DEFAULT 'web' CHECK (source IN ('web', 'panel')),
+    message TEXT NOT NULL DEFAULT '',
+    notes TEXT NOT NULL DEFAULT '',
+    joined_on TEXT,
+    left_on TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX idx_members_status ON members(status, name);
+
+  -- Los recibos no se borran al borrar a la persona: hay que guardarlos para
+  -- la contabilidad (por eso RESTRICT y no CASCADE).
+  CREATE TABLE member_payments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE RESTRICT,
+    receipt_number TEXT NOT NULL UNIQUE,
+    paid_on TEXT NOT NULL,
+    amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
+    period_from TEXT NOT NULL,
+    period_to TEXT NOT NULL,
+    method TEXT NOT NULL DEFAULT '',
+    notes TEXT NOT NULL DEFAULT '',
+    emailed_at TEXT,
+    emailed_to TEXT NOT NULL DEFAULT '',
+    email_error TEXT NOT NULL DEFAULT '',
+    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX idx_member_payments_member ON member_payments(member_id, period_to);
+  CREATE INDEX idx_member_payments_paid ON member_payments(paid_on);
+  `,
 ];
 
 /**

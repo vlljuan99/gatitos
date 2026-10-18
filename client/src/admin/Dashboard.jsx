@@ -15,9 +15,20 @@ function Tile({ to, icon: Icon, count, label, tone }) {
 }
 
 /** Avisos: medicación que caduca, cosas que se acaban y revisiones veterinarias cercanas. */
-function Alerts({ alerts }) {
+function Alerts({ alerts, members }) {
   const today = todayIso();
   const rows = [
+    // Socios: altas de la web que esperan su primer pago y cuotas por renovar.
+    members?.new > 0 && {
+      key: 'socios-nuevos',
+      to: '/admin/socios?ver=pendiente',
+      text: members.new === 1 ? '1 persona quiere hacerse socia: falta su primer pago' : `${members.new} personas quieren hacerse socias: falta su primer pago`,
+    },
+    members?.renew > 0 && {
+      key: 'socios-renovar',
+      to: '/admin/socios?ver=renovar',
+      text: members.renew === 1 ? '1 cuota de socio/a por renovar' : `${members.renew} cuotas de socios/as por renovar`,
+    },
     ...alerts.expiring.map((item) => ({
       key: `c${item.id}`,
       to: '/admin/inventario',
@@ -33,7 +44,7 @@ function Alerts({ alerts }) {
       to: `/admin/gatitos/${check.catId}`,
       text: `Revisión de ${check.catName} el ${shortDate(check.nextCheck)}`,
     })),
-  ];
+  ].filter(Boolean);
   if (rows.length === 0) return null;
   return (
     <Card className="mb-5 bg-mantequilla">
@@ -95,7 +106,7 @@ export default function Dashboard() {
       {error && <ErrorState error={error} onRetry={reload} />}
       {data && (
         <>
-          <Alerts alerts={data.alerts} />
+          <Alerts alerts={data.alerts} members={data.members} />
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <Tile to="/admin/solicitudes" icon={ClipboardList} count={data.applications.new} label="solicitudes nuevas" tone="bg-canela-claro text-canela-oscuro" />
             <Tile to="/admin/mensajes" icon={Inbox} count={data.messages.new} label="mensajes sin leer" tone="bg-cielo text-cielo-oscuro" />

@@ -243,7 +243,7 @@ const destinationText = (destinations) =>
 export function Transport() {
   return (
     <InboxPage
-      title="Transporte solidario 🚗"
+      title="Viajes solidarios 🚗"
       subtitle="Gente que viaja a menudo a otra ciudad y puede llevar a un gatito con su nueva familia."
       path="/transporte"
       emptyText="No hay nadie en esta lista."
@@ -254,8 +254,8 @@ export function Transport() {
       intro={
         <p className="mb-4 rounded-2xl bg-menta p-3 text-sm text-menta-oscuro">
           Las solicitudes de fuera de Extremadura muestran quién viaja a su provincia. Comparte el formulario:{' '}
-          <Link to="/transporte-solidario" target="_blank" className="font-bold underline">
-            /transporte-solidario
+          <Link to="/viajes-solidarios" target="_blank" className="font-bold underline">
+            /viajes-solidarios
           </Link>
         </p>
       }

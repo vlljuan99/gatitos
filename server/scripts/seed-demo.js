@@ -12,6 +12,7 @@ import { db, runMigrations } from '../src/db.js';
 import { createUser } from '../src/auth.js';
 import { uniqueSlug } from '../src/cats.js';
 import { nextFileNumber } from '../src/numbers.js';
+import { nextMemberNumber, nextReceiptNumber, periodEnd } from '../src/members.js';
 import { savePhoto } from '../src/images.js';
 import { catPortraitSvg } from './cat-art.js';
 
@@ -261,5 +262,26 @@ if (!IS_PROD && db.prepare('SELECT COUNT(*) AS n FROM fosters').get().n === 0) {
     .prepare("INSERT INTO fosters (name, phone, email, address) VALUES ('Lucía Fernández (demo)', '600 000 000', 'acogida@bigotes.local', 'Almendralejo')")
     .run();
   db.prepare("UPDATE cats SET foster_id = ?, foster_since = ? WHERE name = 'Luna'").run(foster.lastInsertRowid, daysAgo(20));
+}
+// Fuera de producción, dos socios de ejemplo: una al día y otro cuya cuota
+// anual vence en unos días, para ver los recibos y el aviso de renovar.
+if (!IS_PROD && db.prepare('SELECT COUNT(*) AS n FROM members').get().n === 0) {
+  const demo = [
+    { name: 'Carmen Ruiz (demo)', email: 'socia@bigotes.local', phone: '611 000 001', fee: 500, period: 'mensual', method: 'bizum', paid: 5 },
+    { name: 'Javier Ortega (demo)', email: 'socio@bigotes.local', phone: '611 000 002', fee: 5000, period: 'anual', method: 'transferencia', paid: 356 },
+  ];
+  for (const m of demo) {
+    const paidOn = daysAgo(m.paid);
+    const member = db
+      .prepare(
+        `INSERT INTO members (number, name, email, phone, municipality, fee_cents, period, method, status, source, joined_on)
+         VALUES (?, ?, ?, ?, 'Almendralejo', ?, ?, ?, 'activo', 'panel', ?)`,
+      )
+      .run(nextMemberNumber(), m.name, m.email, m.phone, m.fee, m.period, m.method, paidOn);
+    db.prepare(
+      `INSERT INTO member_payments (member_id, receipt_number, paid_on, amount_cents, period_from, period_to, method)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    ).run(member.lastInsertRowid, nextReceiptNumber(Number(paidOn.slice(0, 4))), paidOn, m.fee, paidOn, periodEnd(paidOn, m.period), m.method);
+  }
 }
 console.log('Gatitos de demostración creados.');

@@ -41,7 +41,7 @@ export function adoptionConditions(cat) {
 }
 
 /** Texto de protección de datos con los datos legales de la asociación. */
-export function privacyText(legal, purpose) {
+export function privacyText(legal, purpose, { example = 'por ejemplo, el registro del microchip' } = {}) {
   const blank = '______________';
   const who = [legal.holder, `CIF ${legal.cif || blank}`, legal.registry && `inscrita en el ${legal.registry}`, legal.address]
     .filter(Boolean)
@@ -49,7 +49,7 @@ export function privacyText(legal, purpose) {
   const contact = legal.email ? `escribiendo a ${legal.email}` : 'dirigiéndose a la asociación';
   return (
     `Responsable: ${who}. Los datos personales de este documento se tratan con la única finalidad de ${purpose} y cumplir con las obligaciones legales, ` +
-    'y no se ceden a terceros salvo obligación legal (por ejemplo, el registro del microchip). Se conservan mientras dure la relación con la asociación y, después, ' +
+    `y no se ceden a terceros salvo obligación legal${example ? ` (${example})` : ''}. Se conservan mientras dure la relación con la asociación y, después, ` +
     `el tiempo que exija la ley. Puede ejercer sus derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad ${contact}, ` +
     'y reclamar ante la Agencia Española de Protección de Datos (www.aepd.es).'
   );
