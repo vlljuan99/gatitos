@@ -20,7 +20,9 @@ se enamore de un gatito y lo adopte.
   por gatito (`@luna`, fotos y vídeos deslizables, doble toque para «Me
   encanta», compartir, preguntar por WhatsApp y «Quiero adoptarle», que abre
   la solicitud con ese gatito) e historias a pantalla completa de los que
-  tienen vídeo o acaban de llegar. La última diapositiva de cada publicación
+  tienen vídeo o acaban de llegar, con los gestos de Instagram (tocar a los
+  lados, mantener para pausar, deslizar de lado con giro de cubo y hacia abajo
+  para cerrar). Al bajar por el feed tocando una foto, la foto no se mueve. La última diapositiva de cada publicación
   es «Ver su perfil completo». Las fotos de la portada llevan a su
   publicación (`/miaustagram#gato-luna`). Sin comentarios. Se puede filtrar.
 - **Favoritos** sin registrarse (se guardan en el navegador), con su corazón
@@ -29,6 +31,9 @@ se enamore de un gatito y lo adopte.
   la gente que viaja a menudo a otra ciudad se apunta con sus destinos. Así se
   puede adoptar también fuera de Extremadura: cada solicitud de otra provincia
   muestra en el panel quién viaja allí.
+- **Avísanos por WhatsApp** al terminar la solicitud, el alta de socio/a o los
+  viajes solidarios: abre WhatsApp con el mensaje escrito al número de
+  «Contacto».
 - **Solicitud de adopción** por pasos. Si se entra sin gatito y sin ningún
   «Me encanta», se propone ir al Miaustagram o ver aquí el listado. Si vienes del Miaustagram o de la ficha de
   un gatito, empieza directamente por tus datos con el gatito ya elegido.

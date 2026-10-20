@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Car, HeartHandshake, MapPin, Plus, Trash2 } from 'lucide-react';
 import { Checkbox, Choice, Field, FormError, Honeypot, TextArea, TextInput } from '../components/form.jsx';
 import { Button, Card, PageHeader, cx } from '../components/ui.jsx';
+import { firstName, WhatsAppNotice } from '../components/WhatsAppNotice.jsx';
 import { PROVINCES, TRANSPORT_FREQUENCIES } from '../lib/forms.js';
 import { useForm } from '../lib/useForm.js';
 import { useTitle } from '../lib/useTitle.js';
@@ -95,6 +96,7 @@ function TransportForm() {
         </p>
         <h2 className="mt-2 font-display text-2xl font-semibold text-menta-oscuro">¡Gracias por apuntarte!</h2>
         <p className="mt-1">Cuando alguien de tus destinos quiera adoptar, te escribiremos para ver si te viene bien.</p>
+        <WhatsAppNotice className="mt-5" text={`¡Hola! Soy ${firstName(values.name)} y me acabo de apuntar a los viajes solidarios de Bigotes 🚗`} />
       </Card>
     );
   }

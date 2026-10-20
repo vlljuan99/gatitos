@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Heart, MapPin, MessageCircle, PawPrint, SlidersHorizontal, Volume2, VolumeX, X } from 'lucide-react';
+import { Heart, MapPin, MessageCircle, PawPrint, SlidersHorizontal } from 'lucide-react';
 import { CatPhoto } from '../components/CatPhoto.jsx';
 import { useSite } from '../components/Layout.jsx';
 import { whatsappUrl } from '../components/BrandIcons.jsx';
 import { ShareButton } from '../components/ShareButton.jsx';
 import { Sheet } from '../components/Sheet.jsx';
+import { SwipeCarousel } from '../components/SwipeCarousel.jsx';
 import { Button, ButtonLink, Chip, EmptyState, ErrorState, Spinner, cx } from '../components/ui.jsx';
 import { FiltersPanel } from './Cats.jsx';
+import { StoryViewer } from './StoryViewer.jsx';
 import { ageText, objectPronoun } from '../lib/cats.js';
 import { useFavorites } from '../lib/favorites.js';
 import { activeFilterCount, EMPTY_FILTERS, feedPosts, handle, hashtags, storyCats } from '../lib/miaustagram.js';
@@ -22,11 +23,41 @@ import { useTitle } from '../lib/useTitle.js';
 // a pantalla completa de los que tienen vídeo o acaban de llegar. Sin
 // comentarios: para preguntar, WhatsApp de la asociación.
 
-const STORY_PHOTO_MS = 5000;
+const SEEN_KEY = 'bigotes:historias-vistas';
 
-function Avatar({ cat, size = 'size-10', ring = false }) {
+/** Historias ya vistas (anillo gris, como en Instagram). Solo en este navegador. */
+function useSeenStories() {
+  const [seen, setSeen] = useState(() => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) ?? '[]'));
+    } catch {
+      return new Set();
+    }
+  });
+  const markSeen = useCallback((slug) => {
+    if (!slug) return;
+    setSeen((current) => {
+      if (current.has(slug)) return current;
+      const next = new Set(current).add(slug);
+      try {
+        localStorage.setItem(SEEN_KEY, JSON.stringify([...next].slice(-100)));
+      } catch {
+        // Sin almacenamiento: se recuerda solo mientras la página esté abierta.
+      }
+      return next;
+    });
+  }, []);
+  return [seen, markSeen];
+}
+
+function Avatar({ cat, size = 'size-10', ring = false, seen = false }) {
   return (
-    <span className={cx('shrink-0 rounded-full', ring ? 'bg-gradient-to-tr from-mantequilla-oscuro via-canela to-lavanda-oscuro p-[3px]' : '')}>
+    <span
+      className={cx(
+        'shrink-0 rounded-full',
+        ring && (seen ? 'bg-borde p-[2px]' : 'bg-gradient-to-tr from-mantequilla-oscuro via-canela to-lavanda-oscuro p-[3px]'),
+      )}
+    >
       <span className="block rounded-full bg-crema p-[2px]">
         <CatPhoto cat={cat} sizes="80px" className={cx(size, 'rounded-full')} alt="" />
       </span>
@@ -57,7 +88,6 @@ function PostMedia({ cat, eager, onDoubleTap }) {
   const [index, setIndex] = useState(0);
   const [burst, setBurst] = useState(0);
   const lastTap = useRef(0);
-  const scroller = useRef(null);
   const reduceMotion = useReducedMotion();
   const slides = [
     ...cat.photos.map((photo) => ({ key: `foto-${photo.id}`, photo })),
@@ -79,30 +109,18 @@ function PostMedia({ cat, eager, onDoubleTap }) {
     }
   }
 
-  function onScroll() {
-    const el = scroller.current;
-    if (!el?.clientWidth) return;
-    const next = Math.round(el.scrollLeft / el.clientWidth);
-    if (next !== index) {
-      setIndex(next);
-      el.querySelectorAll('video').forEach((video) => video.pause());
-    }
-  }
-
   return (
     <div className="relative select-none" onClick={onTap}>
-      <div
-        ref={scroller}
-        onScroll={onScroll}
-        className="no-scrollbar flex aspect-[4/5] snap-x snap-mandatory overflow-x-auto bg-cacao/5"
-        aria-roledescription="carrusel"
-        aria-label={`Fotos y vídeos de ${cat.name}`}
-      >
-        {slides.map(({ key, photo, video, profile }, i) => (
-          <div key={key} className="h-full w-full shrink-0 snap-center">
-            {profile ? (
-              <ProfileSlide cat={cat} />
-            ) : video ? (
+      <SwipeCarousel
+        count={slides.length}
+        label={`Fotos y vídeos de ${cat.name}`}
+        onIndexChange={setIndex}
+        className="aspect-[4/5] bg-cacao/5"
+        renderSlide={(i) => {
+          const { photo, video, profile } = slides[i];
+          if (profile) return <ProfileSlide cat={cat} />;
+          if (video) {
+            return (
               <video
                 src={video.url}
                 poster={video.poster}
@@ -112,19 +130,20 @@ function PostMedia({ cat, eager, onDoubleTap }) {
                 className="size-full bg-cacao object-contain"
                 aria-label={`Vídeo de ${cat.name}`}
               />
-            ) : (
-              <CatPhoto
-                cat={cat}
-                photo={photo ?? undefined}
-                eager={eager && i === 0}
-                sizes="(min-width: 768px) 470px, 100vw"
-                className="size-full"
-                alt={`${cat.name}, foto ${i + 1}`}
-              />
-            )}
-          </div>
-        ))}
-      </div>
+            );
+          }
+          return (
+            <CatPhoto
+              cat={cat}
+              photo={photo ?? undefined}
+              eager={eager && i === 0}
+              sizes="(min-width: 768px) 470px, 100vw"
+              className="pointer-events-none size-full"
+              alt={`${cat.name}, foto ${i + 1}`}
+            />
+          );
+        }}
+      />
       {slides.length > 1 && (
         <span className="absolute right-3 top-3 rounded-full bg-cacao/70 px-2.5 py-1 text-xs font-bold text-white" aria-hidden>
           {index + 1}/{slides.length}
@@ -228,136 +247,19 @@ function Post({ cat, whatsapp, eager }) {
   );
 }
 
-function StoriesBar({ cats, onOpen }) {
+function StoriesBar({ cats, seen, onOpen }) {
   if (cats.length === 0) return null;
   return (
     <ul className="no-scrollbar -mx-4 mb-2 flex gap-3 overflow-x-auto px-4 pb-2" aria-label="Historias">
       {cats.map((cat, i) => (
         <li key={cat.slug}>
           <button type="button" onClick={() => onOpen(i)} className="flex w-18 flex-col items-center gap-1" aria-label={`Ver la historia de ${cat.name}`}>
-            <Avatar cat={cat} size="size-16" ring />
+            <Avatar cat={cat} size="size-16" ring seen={seen.has(cat.slug)} />
             <span className="w-full truncate text-center text-xs font-semibold">{cat.name}</span>
           </button>
         </li>
       ))}
     </ul>
-  );
-}
-
-/** Historias a pantalla completa: vídeo (o foto 5 s), tocar a los lados para pasar. */
-function StoryViewer({ cats, start, onClose }) {
-  const [index, setIndex] = useState(start);
-  const [progress, setProgress] = useState(0);
-  const [muted, setMuted] = useState(true);
-  const video = useRef(null);
-  const cat = cats[index];
-  const clip = cat?.videos?.[0];
-
-  const next = useCallback(() => {
-    setProgress(0);
-    setIndex((i) => {
-      if (i + 1 >= cats.length) {
-        onClose();
-        return i;
-      }
-      return i + 1;
-    });
-  }, [cats.length, onClose]);
-  const prev = () => {
-    setProgress(0);
-    setIndex((i) => Math.max(0, i - 1));
-  };
-
-  // Las fotos duran 5 s; los vídeos, lo que duren.
-  useEffect(() => {
-    if (clip) return undefined;
-    const started = Date.now();
-    const timer = setInterval(() => {
-      const p = (Date.now() - started) / STORY_PHOTO_MS;
-      if (p >= 1) next();
-      else setProgress(p);
-    }, 50);
-    return () => clearInterval(timer);
-  }, [index, clip, next]);
-
-  useEffect(() => {
-    const onKey = (event) => {
-      if (event.key === 'Escape') onClose();
-      if (event.key === 'ArrowRight') next();
-      if (event.key === 'ArrowLeft') prev();
-    };
-    document.addEventListener('keydown', onKey);
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = overflow;
-    };
-  }, [next, onClose]);
-
-  if (!cat) return null;
-  return createPortal(
-    <div className="fixed inset-0 z-50 bg-cacao text-white" role="dialog" aria-modal="true" aria-label={`Historia de ${cat.name}`}>
-      <div className="relative mx-auto flex h-dvh max-w-md flex-col">
-        {/* Degradado para que se lean el nombre y el progreso sobre fotos claras. */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-28 bg-gradient-to-b from-cacao/70 to-transparent" aria-hidden />
-        <div className="absolute inset-x-0 top-0 z-10 flex gap-1 p-3" aria-hidden>
-          {cats.map((c, i) => (
-            <span key={c.slug} className="h-1 flex-1 overflow-hidden rounded-full bg-white/35">
-              <span className="block h-full bg-white" style={{ width: `${i < index ? 100 : i === index ? progress * 100 : 0}%` }} />
-            </span>
-          ))}
-        </div>
-        <div className="absolute inset-x-0 top-5 z-10 flex items-center gap-3 px-3 pt-2">
-          <Avatar cat={cat} size="size-9" />
-          <span className="flex-1 font-bold drop-shadow">{handle(cat)}</span>
-          {clip && (
-            <button type="button" onClick={() => setMuted((m) => !m)} className="grid size-11 place-items-center rounded-full" aria-label={muted ? 'Activar el sonido' : 'Quitar el sonido'}>
-              {muted ? <VolumeX className="size-6" /> : <Volume2 className="size-6" />}
-            </button>
-          )}
-          <button type="button" onClick={onClose} className="grid size-11 place-items-center rounded-full" aria-label="Cerrar">
-            <X className="size-7" />
-          </button>
-        </div>
-
-        <div className="relative flex-1">
-          {clip ? (
-            <video
-              key={clip.id}
-              ref={video}
-              src={clip.url}
-              poster={clip.poster}
-              autoPlay
-              muted={muted}
-              playsInline
-              onTimeUpdate={(event) => setProgress(event.currentTarget.currentTime / (event.currentTarget.duration || 1))}
-              onEnded={next}
-              className="size-full object-contain"
-              aria-label={`Vídeo de ${cat.name}`}
-            />
-          ) : (
-            <CatPhoto cat={cat} eager sizes="100vw" className="size-full object-cover" alt={cat.name} />
-          )}
-          {/* Tocar a la izquierda: anterior; a la derecha: siguiente. */}
-          <button type="button" onClick={prev} className="absolute inset-y-0 left-0 w-1/3" aria-label="Historia anterior" />
-          <button type="button" onClick={next} className="absolute inset-y-0 right-0 w-2/3" aria-label="Historia siguiente" />
-        </div>
-
-        <div className="grid gap-2 bg-gradient-to-t from-cacao via-cacao/90 to-transparent p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          {cat.summary && <p className="line-clamp-2 text-[15px] leading-snug">{cat.summary}</p>}
-          <div className="grid grid-cols-[1fr_auto] gap-2">
-            <ButtonLink to={`/adoptar?gatito=${cat.slug}`} block onClick={onClose}>
-              Quiero adoptar{objectPronoun(cat.sex)} 💕
-            </ButtonLink>
-            <ButtonLink to={`/gatitos/${cat.slug}`} variant="secondary" onClick={onClose}>
-              Perfil
-            </ButtonLink>
-          </div>
-        </div>
-      </div>
-    </div>,
-    document.body,
   );
 }
 
@@ -370,6 +272,7 @@ export default function Miaustagram() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [story, setStory] = useState(null);
   const closeStory = useCallback(() => setStory(null), []);
+  const [seen, markSeen] = useSeenStories();
   const { hash } = useLocation();
 
   const posts = feedPosts(data?.cats ?? [], { filters });
@@ -408,7 +311,7 @@ export default function Miaustagram() {
   } else {
     body = (
       <>
-        <StoriesBar cats={stories} onOpen={setStory} />
+        <StoriesBar cats={stories} seen={seen} onOpen={setStory} />
         <div className="-mx-4 grid gap-5 md:mx-0 md:gap-8">
           {posts.map((cat, i) => (
             <Post key={cat.slug} cat={cat} whatsapp={whatsapp} eager={i < 2} />
@@ -445,7 +348,7 @@ export default function Miaustagram() {
           Ver {posts.length === 1 ? '1 gatito' : `${posts.length} gatitos`}
         </Button>
       </Sheet>
-      {story !== null && <StoryViewer cats={stories} start={story} onClose={closeStory} />}
+      {story !== null && <StoryViewer cats={stories} start={story} onClose={closeStory} onSeen={markSeen} />}
     </div>
   );
 }

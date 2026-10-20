@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Check, HeartHandshake, Mail, Receipt, Stethoscope, Utensils } from 'lucide-react';
 import { useSite } from '../components/Layout.jsx';
 import { CopyValue } from '../components/CopyValue.jsx';
+import { firstName, WhatsAppNotice } from '../components/WhatsAppNotice.jsx';
 import { Checkbox, Choice, Field, FormError, Honeypot, TextArea, TextInput } from '../components/form.jsx';
 import { Button, ButtonLink, Card, ErrorState, PageHeader, Spinner, cx } from '../components/ui.jsx';
 import { euros, feeText, MEMBER_PERIODS, SIGNUP_METHODS } from '../lib/members.js';
@@ -135,6 +136,7 @@ function SignupForm({ settings, donations }) {
         <div className="mt-5">
           <HowToPay payment={done} method={values.method} email={values.email} />
         </div>
+        <WhatsAppNotice className="mt-6" text={`¡Hola! Soy ${firstName(values.name)} y acabo de hacerme socio/a de Bigotes con una cuota de ${done.fee} 💛`} />
         <ButtonLink to="/gatitos" variant="secondary" className="mt-6">
           Ver a los gatitos
         </ButtonLink>

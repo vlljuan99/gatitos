@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Car, Check, Heart, PawPrint, Send } from 'lucide-react';
 import { CatPhoto } from '../components/CatPhoto.jsx';
+import { firstName, WhatsAppNotice } from '../components/WhatsAppNotice.jsx';
 import { Checkbox, Choice, Field, FormError, Honeypot, TextArea, TextInput } from '../components/form.jsx';
 import { Button, ButtonLink, Card, cx, Spinner } from '../components/ui.jsx';
 import {
@@ -136,7 +137,7 @@ function NoFavoritesYet({ onShowList }) {
   );
 }
 
-function Success({ cat }) {
+function Success({ cat, name }) {
   return (
     <div className="mx-auto max-w-md px-4 py-10 text-center">
       <motion.div
@@ -153,11 +154,15 @@ function Success({ cat }) {
         Gracias por querer darle un hogar {cat ? `a ${cat.name}` : 'a uno de nuestros gatitos'}. La leeremos con mucho cariño y
         te escribiremos en unos días para contarte los siguientes pasos.
       </p>
-      <div className="mt-8 grid gap-3">
-        <ButtonLink to="/gatitos" size="lg">
+      <WhatsAppNotice
+        className="mt-8"
+        text={`¡Hola! Soy ${firstName(name)} y acabo de enviar la solicitud para adoptar ${cat ? `a ${cat.name}` : 'a uno de vuestros gatitos'} 🐾`}
+      />
+      <div className="mt-6 grid gap-3">
+        <ButtonLink to="/gatitos" size="lg" variant="secondary">
           Seguir viendo gatitos
         </ButtonLink>
-        <ButtonLink to="/como-trabajamos" variant="secondary">
+        <ButtonLink to="/como-trabajamos" variant="soft">
           Cómo es el proceso
         </ButtonLink>
       </div>
@@ -239,7 +244,7 @@ export default function Adopt() {
     if (target < step) setStep(target);
   }, [errors, step]);
 
-  if (done) return <Success cat={chosen} />;
+  if (done) return <Success cat={chosen} name={values.name} />;
   if (loading) return <Spinner />;
 
   const key = STEPS[step].key;
