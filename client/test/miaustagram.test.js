@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { activeFilterCount, EMPTY_FILTERS, feedPosts, handle, hashtags, matchesFilters, storyCats } from '../src/lib/miaugram.js';
+import { activeFilterCount, EMPTY_FILTERS, feedPosts, handle, hashtags, matchesFilters, storyCats } from '../src/lib/miaustagram.js';
 
 const now = new Date('2026-09-15');
 const cat = (slug, extra = {}) => ({

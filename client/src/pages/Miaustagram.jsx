@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Heart, MapPin, MessageCircle, PawPrint, SlidersHorizontal, Volume2, VolumeX, X } from 'lucide-react';
 import { CatPhoto } from '../components/CatPhoto.jsx';
@@ -12,11 +12,11 @@ import { Button, ButtonLink, Chip, EmptyState, ErrorState, Spinner, cx } from '.
 import { FiltersPanel } from './Cats.jsx';
 import { ageText, objectPronoun } from '../lib/cats.js';
 import { useFavorites } from '../lib/favorites.js';
-import { activeFilterCount, EMPTY_FILTERS, feedPosts, handle, hashtags, storyCats } from '../lib/miaugram.js';
+import { activeFilterCount, EMPTY_FILTERS, feedPosts, handle, hashtags, storyCats } from '../lib/miaustagram.js';
 import { useApi } from '../lib/useApi.js';
 import { useTitle } from '../lib/useTitle.js';
 
-// Miaugram: los gatitos como si fuera una red social. Un feed vertical con
+// Miaustagram: los gatitos como si fuera una red social. Un feed vertical con
 // una publicación por gatito disponible (fotos y vídeos deslizables, doble
 // toque = «Me encanta», «Quiero adoptarle» y compartir) y, arriba, historias
 // a pantalla completa de los que tienen vídeo o acaban de llegar. Sin
@@ -34,6 +34,24 @@ function Avatar({ cat, size = 'size-10', ring = false }) {
   );
 }
 
+/** Última diapositiva: en vez de otra foto, la invitación a su perfil. */
+function ProfileSlide({ cat }) {
+  const facts = [cat.sex === 'hembra' ? 'Hembra' : cat.sex === 'macho' ? 'Macho' : null, ageText(cat.birthDate)].filter(Boolean);
+  return (
+    <div className="grid size-full place-items-center bg-gradient-to-br from-canela-claro via-crema to-lavanda p-6 text-center">
+      <div className="grid justify-items-center gap-3">
+        <Avatar cat={cat} size="size-32" ring />
+        <p className="font-display text-3xl font-semibold">{cat.name}</p>
+        {facts.length > 0 && <p className="font-semibold text-cacao-suave">{facts.join(' · ')}</p>}
+        <p className="max-w-64 text-cacao-suave">Su historia, su carácter, su salud y con quién se lleva bien.</p>
+        <ButtonLink to={`/gatitos/${cat.slug}`} size="lg">
+          Ver su perfil completo
+        </ButtonLink>
+      </div>
+    </div>
+  );
+}
+
 /** Fotos y vídeos de una publicación, deslizables. Doble toque: «Me encanta». */
 function PostMedia({ cat, eager, onDoubleTap }) {
   const [index, setIndex] = useState(0);
@@ -46,9 +64,11 @@ function PostMedia({ cat, eager, onDoubleTap }) {
     ...(cat.videos ?? []).map((video) => ({ key: `video-${video.id}`, video })),
   ];
   if (slides.length === 0) slides.push({ key: 'ilustracion', photo: null });
+  // La última «foto» es una invitación a ver su perfil completo.
+  slides.push({ key: 'perfil', profile: true });
 
   function onTap(event) {
-    if (event.target.closest('video')) return;
+    if (event.target.closest('video, a')) return;
     const now = Date.now();
     if (now - lastTap.current < 320) {
       lastTap.current = 0;
@@ -78,9 +98,11 @@ function PostMedia({ cat, eager, onDoubleTap }) {
         aria-roledescription="carrusel"
         aria-label={`Fotos y vídeos de ${cat.name}`}
       >
-        {slides.map(({ key, photo, video }, i) => (
+        {slides.map(({ key, photo, video, profile }, i) => (
           <div key={key} className="h-full w-full shrink-0 snap-center">
-            {video ? (
+            {profile ? (
+              <ProfileSlide cat={cat} />
+            ) : video ? (
               <video
                 src={video.url}
                 poster={video.poster}
@@ -141,7 +163,7 @@ function Post({ cat, whatsapp, eager }) {
   const facts = [cat.sex === 'hembra' ? 'Hembra' : cat.sex === 'macho' ? 'Macho' : null, ageText(cat.birthDate)].filter(Boolean);
   const tags = hashtags(cat);
   return (
-    <article className="border-b border-borde pb-5 md:rounded-[2rem] md:border md:bg-nata md:shadow-suave" aria-label={`Publicación de ${cat.name}`} data-testid="post">
+    <article id={`gato-${cat.slug}`} className="scroll-mt-20 border-b border-borde pb-5 md:rounded-[2rem] md:border md:bg-nata md:shadow-suave" aria-label={`Publicación de ${cat.name}`} data-testid="post">
       <header className="flex items-center gap-3 px-4 py-3">
         <Link to={`/gatitos/${cat.slug}`} className="flex min-w-0 flex-1 items-center gap-3">
           <Avatar cat={cat} />
@@ -184,7 +206,7 @@ function Post({ cat, whatsapp, eager }) {
         )}
         <ShareButton
           title={cat.name}
-          text={`¡Mira a ${cat.name} en el Miaugram de Bigotes! 🐾`}
+          text={`¡Mira a ${cat.name} en el Miaustagram de Bigotes! 🐾`}
           path={`/gatitos/${cat.slug}`}
           label={`Compartir a ${cat.name}`}
           className="grid size-12 place-items-center rounded-full text-cacao"
@@ -201,9 +223,6 @@ function Post({ cat, whatsapp, eager }) {
           {cat.summary || facts.join(' · ')}
         </p>
         {tags.length > 0 && <p className="font-semibold text-canela-oscuro">{tags.join(' ')}</p>}
-        <Link to={`/gatitos/${cat.slug}`} className="text-sm font-semibold text-cacao-suave">
-          Ver su perfil completo
-        </Link>
       </div>
     </article>
   );
@@ -342,8 +361,8 @@ function StoryViewer({ cats, start, onClose }) {
   );
 }
 
-export default function Miaugram() {
-  useTitle('Miaugram');
+export default function Miaustagram() {
+  useTitle('Miaustagram');
   const { data, error, loading, reload } = useApi('/gatitos');
   const site = useSite();
   const whatsapp = site.data?.content?.contact?.whatsapp;
@@ -351,13 +370,21 @@ export default function Miaugram() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [story, setStory] = useState(null);
   const closeStory = useCallback(() => setStory(null), []);
+  const { hash } = useLocation();
 
   const posts = feedPosts(data?.cats ?? [], { filters });
   const stories = storyCats(posts);
   const filterCount = activeFilterCount(filters);
 
+  // Desde la portada se llega con #gato-luna: se baja hasta su publicación.
+  const loaded = Boolean(data);
+  useEffect(() => {
+    if (!loaded || !hash) return;
+    requestAnimationFrame(() => document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView({ block: 'start' }));
+  }, [loaded, hash]);
+
   let body;
-  if (loading) body = <Spinner label="Cargando el Miaugram…" />;
+  if (loading) body = <Spinner label="Cargando el Miaustagram…" />;
   else if (error) body = <ErrorState error={error} onRetry={reload} />;
   else if (posts.length === 0) {
     body =
@@ -402,7 +429,7 @@ export default function Miaugram() {
       <div className="mx-auto max-w-[470px]">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
-            <h1 className="font-display text-3xl font-semibold leading-tight">Miaugram</h1>
+            <h1 className="font-display text-3xl font-semibold leading-tight">Miaustagram</h1>
             <p className="text-sm text-cacao-suave">Doble toque en la foto: «Me encanta» 💕</p>
           </div>
           <Chip selected={filterCount > 0} onClick={() => setFiltersOpen(true)} aria-haspopup="dialog">

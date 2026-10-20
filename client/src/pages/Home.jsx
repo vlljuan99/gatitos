@@ -10,8 +10,11 @@ import { euros, MEMBER_PERIODS } from '../lib/members.js';
 import { useApi } from '../lib/useApi.js';
 import { useTitle } from '../lib/useTitle.js';
 
+// Las fotos de la portada llevan a su publicación del Miaustagram.
+const MotionLink = motion.create(Link);
+
 const STEPS = [
-  { emoji: '😻', title: 'Enamórate', text: 'Cotillea el Miaugram o las fichas hasta encontrar al tuyo.' },
+  { emoji: '😻', title: 'Enamórate', text: 'Cotillea el Miaustagram o las fichas hasta encontrar al tuyo.' },
   { emoji: '📝', title: 'Envía tu solicitud', text: 'Un formulario cortito para conocerte un poco.' },
   { emoji: '☕', title: 'Nos conocemos', text: 'Hablamos contigo, resolvemos dudas y hacemos una visita.' },
   { emoji: '🏡', title: '¡A casa!', text: 'Firmamos la adopción y empieza vuestra vida juntos.' },
@@ -25,18 +28,20 @@ function Polaroids({ cats }) {
     return <CatIllustration tone="canela" seed={0} className="mx-auto size-56 rounded-[3rem] shadow-suave" />;
   }
   return (
-    <div className="relative mx-auto h-72 w-full max-w-xs md:h-96 md:max-w-sm" aria-hidden>
+    <div className="relative mx-auto h-72 w-full max-w-xs md:h-96 md:max-w-sm">
       {picks.map((cat, i) => (
-        <motion.div
+        <MotionLink
+          to={`/miaustagram#gato-${cat.slug}`}
+          aria-label={`Ver a ${cat.name} en el Miaustagram`}
           key={cat.id}
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 * i, type: 'spring', stiffness: 200, damping: 20 }}
-          className={cx('absolute w-36 rounded-2xl bg-nata p-2 pb-7 shadow-flotante md:w-48', tilts[i], positions[i])}
+          className={cx('absolute block w-36 rounded-2xl bg-nata p-2 pb-7 shadow-flotante transition-transform active:scale-95 md:w-48', tilts[i], positions[i])}
         >
           <CatPhoto cat={cat} sizes="200px" eager className="aspect-square w-full rounded-xl" alt="" />
           <span className="absolute inset-x-0 bottom-1.5 text-center font-display font-semibold">{cat.name}</span>
-        </motion.div>
+        </MotionLink>
       ))}
     </div>
   );
@@ -126,8 +131,8 @@ export default function Home() {
           </h1>
           <p className="mt-4 text-lg text-cacao-suave md:text-xl">{home?.heroText}</p>
           <div className="mt-6 grid gap-3 sm:flex">
-            <ButtonLink to="/miaugram" size="lg">
-              <PawPrint className="size-5" /> Entra en el Miaugram
+            <ButtonLink to="/miaustagram" size="lg">
+              <PawPrint className="size-5" /> Entra en el Miaustagram
             </ButtonLink>
             <ButtonLink to="/gatitos" size="lg" variant="secondary">
               Ver todos los gatitos

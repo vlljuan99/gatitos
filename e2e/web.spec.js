@@ -32,8 +32,8 @@ test('con la raya de inicio del iPhone, nada queda tapado por la barra inferior'
   const [ctaBox, bubbleBox] = [await cta.boundingBox(), await bubble.boundingBox()];
   expect(ctaBox.y + ctaBox.height).toBeLessThanOrEqual(bubbleBox.y);
 
-  // Al final del Miaugram, lo último se puede leer por encima de la barra.
-  await page.goto('/miaugram');
+  // Al final del Miaustagram, lo último se puede leer por encima de la barra.
+  await page.goto('/miaustagram');
   await page.addStyleTag({ content: ':root { --zona-segura: 34px !important; }' });
   const end = page.getByText(/Ya los has visto a todos/);
   await end.scrollIntoViewIfNeeded();
@@ -50,12 +50,12 @@ test('filtros del catálogo', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Tofu' })).toHaveCount(0);
 });
 
-test('Miaugram: feed, doble toque para «Me encanta» e historias', async ({ page }) => {
-  // Las direcciones anteriores (match y libro de gatos) llevan al Miaugram.
+test('Miaustagram: feed, doble toque para «Me encanta» e historias', async ({ page }) => {
+  // Las direcciones anteriores (match y libro de gatos) llevan al Miaustagram.
   await page.goto('/match');
-  await expect(page).toHaveURL(/\/miaugram$/);
+  await expect(page).toHaveURL(/\/miaustagram$/);
   await page.goto('/libro-de-gatos');
-  await expect(page).toHaveURL(/\/miaugram$/);
+  await expect(page).toHaveURL(/\/miaustagram$/);
 
   const posts = page.getByTestId('post');
   await expect(posts.first()).toBeVisible();
@@ -85,8 +85,8 @@ test('Miaugram: feed, doble toque para «Me encanta» e historias', async ({ pag
   await expect(page.getByText(/no me gusta|comentar/i)).toHaveCount(0);
 });
 
-test('del Miaugram a la solicitud, sin pasar por la lista de gatitos', async ({ page }) => {
-  await page.goto('/miaugram');
+test('del Miaustagram a la solicitud, sin pasar por la lista de gatitos', async ({ page }) => {
+  await page.goto('/miaustagram');
   const first = page.getByTestId('post').first();
   const catName = await first.getAttribute('aria-label');
   await first.getByRole('link', { name: /Quiero adoptar/ }).click();
@@ -98,6 +98,42 @@ test('del Miaugram a la solicitud, sin pasar por la lista de gatitos', async ({ 
   // Si quiere cambiar de gatito, vuelve a la lista.
   await page.getByRole('button', { name: 'Cambiar' }).click();
   await expect(page.getByRole('radio', { name: new RegExp(chosen) })).toBeChecked();
+});
+
+test('portada: las fotos llevan a su publicación del Miaustagram, que acaba con su perfil', async ({ page }) => {
+  await page.goto('/');
+  const photo = page.getByRole('link', { name: /^Ver a .* en el Miaustagram$/ }).first();
+  const name = (await photo.getAttribute('aria-label')).replace('Ver a ', '').replace(' en el Miaustagram', '');
+  await photo.click();
+  await expect(page).toHaveURL(/\/miaustagram#gato-/);
+  const post = page.getByRole('article', { name: `Publicación de ${name}` });
+  await expect(post).toBeInViewport();
+  // La última diapositiva no es una foto: es «Ver su perfil completo».
+  const slides = post.locator('[aria-roledescription="carrusel"]');
+  await slides.evaluate((el) => el.scrollTo({ left: el.scrollWidth, behavior: 'instant' }));
+  await post.getByRole('link', { name: 'Ver su perfil completo' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(name);
+});
+
+test('quiero adoptar sin ningún «Me encanta»: al Miaustagram o al listado', async ({ page }) => {
+  await page.goto('/adoptar');
+  await expect(page.getByRole('heading', { name: /robado el corazón/ })).toBeVisible();
+  await expect(page.getByRole('radio')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Ver el listado de gatitos' }).click();
+  await expect(page.getByRole('radio').first()).toBeVisible();
+
+  // Con un favorito ya no se pregunta y sale el primero de la lista.
+  await page.goto('/gatitos/luna');
+  await page.getByRole('button', { name: 'Me encanta Luna' }).click();
+  await page.goto('/adoptar');
+  await expect(page.getByRole('heading', { name: /robado el corazón/ })).toHaveCount(0);
+  await expect(page.getByRole('radio').nth(1)).toHaveAccessibleName(/Luna/);
+
+  // «Ir al Miaustagram» lleva al feed.
+  await page.evaluate(() => localStorage.clear());
+  await page.goto('/adoptar');
+  await page.getByRole('link', { name: 'Ir al Miaustagram' }).click();
+  await expect(page).toHaveURL(/\/miaustagram$/);
 });
 
 test('solicitud de adopción por pasos', async ({ page }) => {

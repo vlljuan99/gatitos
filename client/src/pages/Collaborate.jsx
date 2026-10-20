@@ -261,7 +261,7 @@ export default function Collaborate() {
             <div>
               <h3 className="font-display text-lg font-semibold">Habla de nosotros</h3>
               <p className="text-cacao-suave">
-                Si conoces a alguien que busca gatito, mándale a <Link to="/miaugram" className="font-bold underline">nuestro Miaugram</Link>.
+                Si conoces a alguien que busca gatito, mándale a <Link to="/miaustagram" className="font-bold underline">nuestro Miaustagram</Link>.
               </p>
             </div>
           </Card>

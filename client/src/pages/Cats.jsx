@@ -4,7 +4,7 @@ import { CatGrid } from '../components/CatCard.jsx';
 import { Sheet } from '../components/Sheet.jsx';
 import { Button, ButtonLink, Chip, EmptyState, ErrorState, PageHeader, Spinner } from '../components/ui.jsx';
 import { AGE_GROUPS } from '../lib/cats.js';
-import { activeFilterCount, EMPTY_FILTERS, matchesFilters } from '../lib/miaugram.js';
+import { activeFilterCount, EMPTY_FILTERS, matchesFilters } from '../lib/miaustagram.js';
 import { useApi } from '../lib/useApi.js';
 import { useTitle } from '../lib/useTitle.js';
 
@@ -124,8 +124,8 @@ export default function Cats() {
       {data && cats.length > 0 && (
         <div className="px-4 pt-8 text-center">
           <p className="text-cacao-suave">¿No sabes por dónde empezar?</p>
-          <ButtonLink to="/miaugram" variant="soft" className="mt-2">
-            Cotillea el Miaugram 🐾
+          <ButtonLink to="/miaustagram" variant="soft" className="mt-2">
+            Cotillea el Miaustagram 🐾
           </ButtonLink>
         </div>
       )}

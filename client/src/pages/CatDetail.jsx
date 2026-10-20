@@ -311,8 +311,8 @@ export default function CatDetail() {
             ))}
           </ul>
           <div className="mt-6 text-center">
-            <ButtonLink to="/miaugram" variant="soft">
-              <PawPrint className="size-5" /> Cotillea el Miaugram
+            <ButtonLink to="/miaustagram" variant="soft">
+              <PawPrint className="size-5" /> Cotillea el Miaustagram
             </ButtonLink>
           </div>
         </section>

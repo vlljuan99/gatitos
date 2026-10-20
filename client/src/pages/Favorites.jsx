@@ -27,8 +27,8 @@ export default function Favorites() {
           <EmptyState
             title="Todavía no hay ninguno"
             action={
-              <ButtonLink to="/miaugram">
-                <PawPrint className="size-5" /> Cotillear el Miaugram
+              <ButtonLink to="/miaustagram">
+                <PawPrint className="size-5" /> Cotillear el Miaustagram
               </ButtonLink>
             }
           >

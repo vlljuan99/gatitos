@@ -107,6 +107,35 @@ function CatPicker({ cats, value, onChange, favoriteSlugs, error }) {
   );
 }
 
+/**
+ * Sin ningún «Me encanta» todavía: se le propone darse una vuelta por el
+ * Miaustagram o, si prefiere, ver aquí mismo el listado de gatitos.
+ */
+function NoFavoritesYet({ onShowList }) {
+  return (
+    <Card className="grid gap-4 text-center">
+      <p className="text-5xl" aria-hidden>
+        😻
+      </p>
+      <div>
+        <h2 className="font-display text-2xl font-semibold">¿Aún no te ha robado el corazón ningún gatito?</h2>
+        <p className="mt-2 text-cacao-suave">
+          Todavía no le has dado «Me encanta» a ninguno. Pásate por el Miaustagram, dale ❤️ a los que más te gusten y vuelve: aquí te
+          saldrán los primeros.
+        </p>
+      </div>
+      <div className="grid gap-3">
+        <ButtonLink to="/miaustagram" size="lg" block>
+          <PawPrint className="size-5" /> Ir al Miaustagram
+        </ButtonLink>
+        <Button variant="secondary" size="lg" block onClick={onShowList}>
+          Ver el listado de gatitos
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
 function Success({ cat }) {
   return (
     <div className="mx-auto max-w-md px-4 py-10 text-center">
@@ -154,11 +183,12 @@ export default function Adopt() {
 
   const [step, setStep, stepDraft] = useDraftState('solicitud:paso', 0);
   const [done, setDone] = useState(false);
+  const [showList, setShowList] = useState(false);
 
   const cats = useMemo(() => (data?.cats ?? []).filter((c) => c.status === 'disponible' || c.slug === values.catSlug), [data, values.catSlug]);
   const chosen = cats.find((c) => c.slug === values.catSlug) ?? null;
 
-  // Si se llega con un gatito concreto (desde el Miaugram o desde su ficha), no
+  // Si se llega con un gatito concreto (desde el Miaustagram o desde su ficha), no
   // hace falta elegirlo otra vez: se empieza directamente por el formulario.
   // Antes de pintar, para que no asome la cuadrícula de gatitos.
   const autoSkip = useRef(Boolean(gatito));
@@ -213,6 +243,8 @@ export default function Adopt() {
   if (loading) return <Spinner />;
 
   const key = STEPS[step].key;
+  // Llega sin gatito elegido y sin favoritos: primero, el aviso.
+  const nudge = key === 'gatito' && !showList && !values.catSlug && !cats.some((cat) => favoriteSlugs.includes(cat.slug));
   // «otra» mientras se elige en la lista; luego, el nombre de la provincia.
   const otherProvince = Boolean(values.province) && !EXTREMADURA.includes(values.province);
   const outside = otherProvince && values.province !== 'otra';
@@ -240,7 +272,9 @@ export default function Adopt() {
       <form onSubmit={send} noValidate className="mt-6 grid gap-6 px-4">
         <Honeypot value={values.website} onChange={(v) => set('website', v)} />
 
-        {key === 'gatito' && (
+        {nudge && <NoFavoritesYet onShowList={() => setShowList(true)} />}
+
+        {key === 'gatito' && !nudge && (
           <CatPicker
             cats={cats}
             value={values.catSlug}
@@ -390,7 +424,7 @@ export default function Adopt() {
 
         <FormError>{formError}</FormError>
 
-        <div className="flex gap-3">
+        <div className={cx('flex gap-3', nudge && 'hidden')}>
           {step > 0 && (
             <Button variant="secondary" size="lg" onClick={() => go(step - 1)} aria-label="Paso anterior">
               <ArrowLeft className="size-5" />

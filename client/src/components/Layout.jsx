@@ -13,7 +13,7 @@ export const useSite = () => useApi('/sitio');
 
 const MAIN_LINKS = [
   { to: '/gatitos', label: 'Gatitos' },
-  { to: '/miaugram', label: 'Miaugram' },
+  { to: '/miaustagram', label: 'Miaustagram' },
   { to: '/como-trabajamos', label: 'Cómo trabajamos' },
   { to: '/finales-felices', label: 'Finales felices' },
   { to: '/colabora', label: 'Colabora' },
@@ -119,7 +119,7 @@ function BottomNav({ onMore }) {
         <NavLink to="/gatitos" className={item}>
           <Cat className="size-6" /> Gatitos
         </NavLink>
-        <NavLink to="/miaugram" className={({ isActive }) => cx(item({ isActive }), '-mt-5')}>
+        <NavLink to="/miaustagram" className={({ isActive }) => cx(item({ isActive }), '-mt-5')}>
           {({ isActive }) => (
             <>
               <motion.span

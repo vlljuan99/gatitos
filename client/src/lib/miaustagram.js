@@ -1,6 +1,6 @@
 import { ageGroup, gendered } from './cats.js';
 
-// Lógica de Miaugram (el feed de gatitos tipo red social), separada de la
+// Lógica de Miaustagram (el feed de gatitos tipo red social), separada de la
 // interfaz para poder probarla.
 
 export const EMPTY_FILTERS = { ages: [], sex: 'todos', kids: false, cats: false, dogs: false };

@@ -59,13 +59,13 @@ test('rutas conocidas, panel y 404', async () => {
   assert.match(home.html, /og-bigotes\.jpg/);
   assert.equal(home.headers.get('cache-control'), 'no-cache');
 
-  const feed = await page('/miaugram');
-  assert.match(feed.html, /Miaugram · Bigotes/);
+  const feed = await page('/miaustagram');
+  assert.match(feed.html, /Miaustagram · Bigotes/);
   // Las direcciones antiguas siguen teniendo vista previa (la SPA redirige).
-  for (const old of ['/match', '/libro-de-gatos']) {
+  for (const old of ['/match', '/libro-de-gatos', '/miaugram']) {
     const res = await page(old);
     assert.equal(res.status, 200);
-    assert.match(res.html, /Miaugram · Bigotes/);
+    assert.match(res.html, /Miaustagram · Bigotes/);
   }
 
   const panel = await page('/admin/gatitos/3');
@@ -89,7 +89,7 @@ test('los assets con hash se cachean para siempre', async () => {
 test('sitemap y robots', async () => {
   const sitemap = await page('/sitemap.xml');
   assert.match(sitemap.html, /<loc>https:\/\/bigotes\.test\/gatitos\/luna-script<\/loc>/);
-  assert.doesNotMatch(sitemap.html, /\/match<|\/libro-de-gatos<|\/transporte-solidario</);
+  assert.doesNotMatch(sitemap.html, /\/match<|\/libro-de-gatos<|\/miaugram<|\/transporte-solidario</);
   assert.doesNotMatch(sitemap.html, /borrador/);
   const robots = await page('/robots.txt');
   assert.match(robots.html, /Disallow: \/admin/);

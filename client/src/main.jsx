@@ -10,7 +10,7 @@ import { purgeOldDrafts } from './lib/drafts.js';
 import Home from './pages/Home.jsx';
 import Cats from './pages/Cats.jsx';
 import CatDetail from './pages/CatDetail.jsx';
-import Miaugram from './pages/Miaugram.jsx';
+import Miaustagram from './pages/Miaustagram.jsx';
 
 function RouteError() {
   const error = useRouteError();
@@ -58,10 +58,11 @@ const router = createBrowserRouter([
           { index: true, element: <Home /> },
           { path: 'gatitos', element: <Cats /> },
           { path: 'gatitos/:slug', element: <CatDetail /> },
-          { path: 'miaugram', element: <Miaugram /> },
+          { path: 'miaustagram', element: <Miaustagram /> },
           // Nombres anteriores de esta sección.
-          { path: 'libro-de-gatos', loader: () => redirect('/miaugram') },
-          { path: 'match', loader: () => redirect('/miaugram') },
+          { path: 'miaugram', loader: () => redirect('/miaustagram') },
+          { path: 'libro-de-gatos', loader: () => redirect('/miaustagram') },
+          { path: 'match', loader: () => redirect('/miaustagram') },
           { path: 'favoritos', lazy: page(() => import('./pages/Favorites.jsx')) },
           { path: 'como-trabajamos', lazy: page(() => import('./pages/HowWeWork.jsx')) },
           { path: 'adoptar', lazy: page(() => import('./pages/Adopt.jsx')) },
