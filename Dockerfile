@@ -1,0 +1,47 @@
+# syntax=docker/dockerfile:1.7
+
+# 1. Build del cliente (Vite)
+FROM node:22-alpine AS client-build
+WORKDIR /app/client
+COPY client/package.json client/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY client/ ./
+RUN npm run build
+
+# 2. Dependencias del servidor (better-sqlite3 puede necesitar compilar en alpine)
+FROM node:22-alpine AS server-deps
+WORKDIR /app/server
+RUN apk add --no-cache python3 make g++
+COPY server/package.json server/package-lock.json ./
+RUN npm ci --omit=dev --no-audit --no-fund
+
+# 3. Runtime: un solo contenedor sirviendo API, fotos y el build del cliente
+FROM node:22-alpine AS runner
+# ffmpeg prepara los vídeos de los gatitos (MP4 H.264 sin metadatos).
+RUN apk add --no-cache tzdata ffmpeg
+ARG APP_VERSION=0.1.0-dev
+ARG GIT_SHA=desconocido
+ARG BUILD_TIME=1970-01-01T00:00:00Z
+ENV NODE_ENV=production
+ENV TZ=Europe/Madrid
+ENV APP_VERSION=${APP_VERSION}
+ENV GIT_SHA=${GIT_SHA}
+ENV BUILD_TIME=${BUILD_TIME}
+LABEL org.opencontainers.image.title="Bigotes" \
+      org.opencontainers.image.version=${APP_VERSION} \
+      org.opencontainers.image.revision=${GIT_SHA} \
+      org.opencontainers.image.created=${BUILD_TIME}
+WORKDIR /app
+COPY --from=server-deps /app/server/node_modules ./server/node_modules
+COPY server/ ./server/
+COPY --from=client-build /app/client/dist ./client/dist
+
+# Sin privilegios: el volumen de datos debe pertenecer al usuario node (uid 1000);
+# deploy/build-on-server.sh se encarga de ello en el servidor.
+RUN mkdir -p /app/server/data/uploads && chown -R node:node /app/server/data
+USER node
+VOLUME ["/app/server/data"]
+
+WORKDIR /app/server
+EXPOSE 4000
+CMD ["node", "src/index.js"]

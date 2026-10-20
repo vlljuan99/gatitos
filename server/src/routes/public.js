@@ -1,0 +1,157 @@
+import { Router } from 'express';
+import { db } from '../db.js';
+import { getAllContent, getContent } from '../content.js';
+import { publicStats, PUBLIC_STATUSES_SQL, serializeCats } from '../cats.js';
+import { applicationSchema, memberSignupSchema, messageSchema, transportSchema, volunteerSchema } from '../forms.js';
+import { paymentInstructions } from '../members.js';
+import { notifyNewApplication, notifyNewMember, notifyNewMessage, notifyNewTransport, notifyNewVolunteer } from '../notify.js';
+import { isBot, rateLimit } from '../security.js';
+import { parseBody } from '../validation.js';
+
+// API pública: lo que ve cualquiera que visite la web.
+export function publicRouter() {
+  const router = Router();
+  // Un límite por formulario: en una jornada de adopción mucha gente puede
+  // rellenar solicitudes desde la misma wifi (misma IP), así que no es muy bajo.
+  const formLimit = () => rateLimit({ windowMs: 60 * 60 * 1000, max: 20 });
+  const likeLimit = rateLimit({ windowMs: 60 * 1000, max: 60 });
+
+  // Textos de la web y contadores de portada en una sola petición.
+  router.get('/sitio', (req, res) => {
+    const content = getAllContent();
+    res.json({ content, stats: publicStats(content.home.rescuedBase) });
+  });
+
+  // Gatitos que buscan hogar (disponibles y reservados). Son pocas decenas:
+  // se envían todos y el filtrado se hace en el móvil, sin recargar.
+  router.get('/gatitos', (req, res) => {
+    const rows = db
+      .prepare(
+        `SELECT * FROM cats WHERE status IN ('disponible', 'reservado')
+         ORDER BY status = 'reservado', featured DESC, created_at DESC`,
+      )
+      .all();
+    res.json({ cats: serializeCats(rows) });
+  });
+
+  router.get('/gatitos/:slug', (req, res) => {
+    const row = db.prepare(`SELECT * FROM cats WHERE slug = ? AND status IN (${PUBLIC_STATUSES_SQL})`).get(req.params.slug);
+    if (!row) return res.status(404).json({ error: 'No encontramos a este gatito' });
+    res.json({ cat: serializeCats([row])[0] });
+  });
+
+  router.post('/gatitos/:slug/me-encanta', likeLimit, (req, res) => {
+    const info = db
+      .prepare("UPDATE cats SET likes = likes + 1 WHERE slug = ? AND status IN ('disponible', 'reservado')")
+      .run(req.params.slug);
+    if (info.changes === 0) return res.status(404).json({ error: 'No encontramos a este gatito' });
+    res.json({ ok: true });
+  });
+
+  router.get('/finales-felices', (req, res) => {
+    const rows = db
+      .prepare("SELECT * FROM cats WHERE status = 'adoptado' ORDER BY adopted_at DESC, updated_at DESC LIMIT 60")
+      .all();
+    res.json({ cats: serializeCats(rows) });
+  });
+
+  router.post('/solicitudes', formLimit(), (req, res) => {
+    if (isBot(req.body)) return res.status(201).json({ ok: true });
+    const data = parseBody(applicationSchema, req, res);
+    if (!data) return;
+
+    let cat = null;
+    if (data.catSlug) {
+      cat = db
+        .prepare("SELECT id, name FROM cats WHERE slug = ? AND status IN ('disponible', 'reservado')")
+        .get(data.catSlug);
+      if (!cat) {
+        return res.status(400).json({
+          error: 'Este gatito ya no está disponible',
+          fields: { catSlug: 'Este gatito ya no está disponible. Elige otro o deja que te aconsejemos.' },
+        });
+      }
+    }
+
+    const { catSlug, name, email, phone, municipality, province, privacy, ...answers } = data;
+    const info = db
+      .prepare(
+        `INSERT INTO applications (cat_id, cat_name, name, email, phone, municipality, province, answers)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(cat?.id ?? null, cat?.name ?? '', name, email, phone, municipality, province, JSON.stringify(answers));
+
+    notifyNewApplication({ id: info.lastInsertRowid, name, email, phone, municipality, catName: cat?.name ?? '' });
+    res.status(201).json({ ok: true });
+  });
+
+  router.post('/mensajes', formLimit(), (req, res) => {
+    if (isBot(req.body)) return res.status(201).json({ ok: true });
+    const data = parseBody(messageSchema, req, res);
+    if (!data) return;
+    db.prepare('INSERT INTO messages (name, email, phone, subject, body) VALUES (?, ?, ?, ?, ?)').run(
+      data.name,
+      data.email,
+      data.phone,
+      data.subject,
+      data.body,
+    );
+    notifyNewMessage(data);
+    res.status(201).json({ ok: true });
+  });
+
+  router.post('/voluntariado', formLimit(), (req, res) => {
+    if (isBot(req.body)) return res.status(201).json({ ok: true });
+    const data = parseBody(volunteerSchema, req, res);
+    if (!data) return;
+    db.prepare(
+      `INSERT INTO volunteers (name, email, phone, municipality, areas, availability, message)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      data.name,
+      data.email,
+      data.phone,
+      data.municipality,
+      JSON.stringify(data.areas),
+      data.availability,
+      data.message,
+    );
+    notifyNewVolunteer(data);
+    res.status(201).json({ ok: true });
+  });
+
+  router.post('/transporte', formLimit(), (req, res) => {
+    if (isBot(req.body)) return res.status(201).json({ ok: true });
+    const data = parseBody(transportSchema, req, res);
+    if (!data) return;
+    db.prepare(
+      `INSERT INTO transport_volunteers (name, email, phone, origin, destinations, frequency, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    ).run(data.name, data.email, data.phone, data.origin, JSON.stringify(data.destinations), data.frequency, data.notes);
+    notifyNewTransport(data);
+    res.status(201).json({ ok: true });
+  });
+
+  // Hazte socio/a: queda pendiente hasta que el equipo apunte el primer pago
+  // en el panel, que es cuando le llega su recibo.
+  router.post('/socios', formLimit(), (req, res) => {
+    if (isBot(req.body)) return res.status(201).json({ ok: true });
+    const data = parseBody(memberSignupSchema, req, res);
+    if (!data) return;
+    const settings = getContent('members');
+    const offered = settings.fees.some((fee) => fee.period === data.period && Math.round(fee.amount * 100) === Math.round(data.amount * 100));
+    if (!offered && !settings.allowCustom) {
+      return res.status(400).json({ error: 'Revisa los campos marcados', fields: { amount: 'Elige una de las cuotas' } });
+    }
+    db.prepare(
+      `INSERT INTO members (name, email, phone, municipality, fee_cents, period, method, message, source)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'web')`,
+    ).run(data.name, data.email, data.phone, data.municipality, Math.round(data.amount * 100), data.period, data.method, data.message);
+    const payment = paymentInstructions(data);
+    const contact = getContent('contact').email;
+    notifyNewMember(data, { ...payment, replyTo: contact });
+    res.status(201).json({ ok: true, payment: { concept: payment.concept, fee: payment.fee, bizum: payment.bizum, iban: payment.iban } });
+  });
+
+  return router;
+}

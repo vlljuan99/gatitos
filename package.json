@@ -1,0 +1,19 @@
+{
+  "name": "bigotes",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Web de Bigotes, asociación de rescate y adopción de gatitos en Almendralejo",
+  "scripts": {
+    "dev": "concurrently -n servidor,cliente -c yellow,magenta \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client",
+    "test": "npm test --prefix server && npm test --prefix client",
+    "build": "npm run build --prefix client",
+    "test:e2e": "playwright test",
+    "seed:demo": "npm run seed:demo --prefix server",
+    "create-user": "npm run create-user --prefix server --"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "concurrently": "^10.0.5"
+  }
+}
