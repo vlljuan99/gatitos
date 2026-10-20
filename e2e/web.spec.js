@@ -70,6 +70,13 @@ test('filtros del catálogo', async ({ page }) => {
 });
 
 test('Miaustagram: feed, doble toque para «Me encanta» e historias', async ({ page }) => {
+  // Chromium de pruebas no reproduce H.264: sin vídeos, las historias son de fotos (5 s cada una).
+  await page.route('**/api/gatitos', async (route) => {
+    const response = await route.fetch();
+    const json = await response.json();
+    json.cats.forEach((cat) => (cat.videos = []));
+    await route.fulfill({ response, json });
+  });
   // Las direcciones anteriores (match y libro de gatos) llevan al Miaustagram.
   await page.goto('/match');
   await expect(page).toHaveURL(/\/miaustagram$/);
@@ -110,6 +117,13 @@ test('Miaustagram: feed, doble toque para «Me encanta» e historias', async ({ 
   const where = dialog.locator('[aria-live="polite"]');
   const before = await where.textContent();
   const box = await dialog.boundingBox();
+  // Tocar a la izquierda en el primer trocito de todos lo vuelve a empezar.
+  const bar = dialog.locator('span.origin-left').first();
+  const barScale = () => bar.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
+  await expect.poll(barScale).toBeGreaterThan(0.25);
+  await page.mouse.click(box.x + box.width * 0.1, box.y + box.height / 2);
+  await expect.poll(barScale).toBeLessThan(0.2);
+  await expect(where).toHaveText(before);
   await page.mouse.click(box.x + box.width * 0.8, box.y + box.height / 2);
   await expect(where).not.toHaveText(before);
   await expect(dialog.getByRole('link', { name: /Quiero adoptar/ })).toBeVisible();

@@ -194,6 +194,13 @@ export function StoryViewer({ cats, start, onClose, onSeen }) {
   const moveTo = useCallback(
     (target, dir) => {
       if (!target) return close();
+      // Hacia atrás desde el primer trocito de todos: el mismo vuelve a empezar.
+      if (target.cat === pos.cat && target.seg === pos.seg) {
+        elapsed.current = 0;
+        progress.set(0);
+        if (videoRef.current) videoRef.current.currentTime = 0;
+        return undefined;
+      }
       if (target.cat === pos.cat || reduceMotion || !W) return setPos(target);
       busy.current = true;
       animate(dragX, -dir * W, { duration: 0.4, ease: EASE }).then(() => {
@@ -201,7 +208,7 @@ export function StoryViewer({ cats, start, onClose, onSeen }) {
         setPos(target);
       });
     },
-    [W, close, dragX, pos.cat, reduceMotion],
+    [W, close, dragX, pos.cat, pos.seg, progress, reduceMotion],
   );
   const step = useCallback(
     (dir) => {
