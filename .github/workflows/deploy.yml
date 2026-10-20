@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  APP_URL: https://bigotes.167-233-99-156.sslip.io
+  APP_URL: https://bigotesasociacion.com
   SERVER: root@167.233.99.156
 
 jobs:
@@ -61,7 +61,10 @@ jobs:
             exit 1
           }
           if ssh "$SERVER" 'test -f /opt/bigotes/app.env'; then
-            echo "/opt/bigotes/app.env ya existe: no se modifica."
+            # Solo se mantiene al día la dirección pública (enlaces de correos,
+            # vista previa al compartir); el resto no se toca.
+            ssh "$SERVER" "sed -i 's#^PUBLIC_URL=.*#PUBLIC_URL=${APP_URL}#' /opt/bigotes/app.env"
+            echo "/opt/bigotes/app.env ya existe: PUBLIC_URL=${APP_URL}; el resto no se modifica."
             exit 0
           fi
           if [[ -z "$ADMIN_EMAIL" || ${#ADMIN_PASSWORD} -lt 8 ]]; then
@@ -164,13 +167,13 @@ jobs:
 
       # Comprueba la web, SQLite, la revisión desplegada, la vista previa al
       # compartir y que ffmpeg está en la imagen (vídeos). Reintenta durante
-      # 60 s mientras arranca (y Caddy saca el certificado).
+      # 2 min mientras arranca (y Caddy saca el certificado del dominio).
       - name: Smoke test versionado
         run: |
-          for i in $(seq 1 6); do
+          for i in $(seq 1 12); do
             HOME_STATUS=$(curl -sS -o /dev/null -w "%{http_code}" "$APP_URL/" || true)
             HEALTH_BODY=$(curl -fsS "$APP_URL/api/health" || true)
-            OG=$(curl -fsS "$APP_URL/match" | grep -c 'og:image' || true)
+            OG=$(curl -fsS "$APP_URL/libro-de-gatos" | grep -c 'og:image' || true)
             COMMIT=$(jq -r '.commit // empty' <<<"$HEALTH_BODY" 2>/dev/null || true)
             DB_OK=$(jq -r '.database.ok // false' <<<"$HEALTH_BODY" 2>/dev/null || true)
             VIDEOS=$(jq -r '.videos // false' <<<"$HEALTH_BODY" 2>/dev/null || true)

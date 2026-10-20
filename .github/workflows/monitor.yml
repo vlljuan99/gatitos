@@ -31,7 +31,7 @@ jobs:
       - name: Comprobar web y base de datos
         if: steps.deployed.outputs.yes == 'true'
         env:
-          APP_URL: https://bigotes.167-233-99-156.sslip.io
+          APP_URL: https://bigotesasociacion.com
         run: |
           HOME_STATUS=$(curl --retry 2 --retry-delay 3 -sS -o /dev/null -w "%{http_code}" "$APP_URL/")
           HEALTH_BODY=$(curl --retry 2 --retry-delay 3 -fsS "$APP_URL/api/health")

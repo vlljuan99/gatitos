@@ -2,7 +2,7 @@
 
 Web de la asociación **Bigotes** (rescate y adopción de gatitos en Almendralejo, Badajoz): web pública para que la gente se enamore de un gatito y lo adopte, más un panel para que el equipo la mantenga desde el móvil. Ver [README.md](README.md) para las funciones.
 
-**Desplegado en el VPS Hetzner compartido** (mismo host que tilestudio/tri-dnd/teacherflow/friendlyflights, detrás del Caddy de `/opt/tilestudio`) en `https://bigotes.167-233-99-156.sslip.io`, sin dominio propio todavía. El redeploy se lanza a mano desde GitHub Actions (`Deploy to Hetzner`, `workflow_dispatch`): prueba, audita, hace backup, publica `bigotes:<commit-sha>` y vuelve a la imagen anterior si falla. El primer despliegue crea `/opt/bigotes/app.env` a partir de los secretos `BIGOTES_ADMIN_*`; necesita también `HETZNER_SSH_KEY`. Ver [deploy/README.md](deploy/README.md).
+**Desplegado en el VPS Hetzner compartido** (mismo host que tilestudio/tri-dnd/teacherflow/friendlyflights, detrás del Caddy de `/opt/tilestudio`) en `https://bigotesasociacion.com` (dominio en IONOS; `www` y la antigua `bigotes.167-233-99-156.sslip.io` redirigen). El redeploy se lanza a mano desde GitHub Actions (`Deploy to Hetzner`, `workflow_dispatch`): prueba, audita, hace backup, publica `bigotes:<commit-sha>` y vuelve a la imagen anterior si falla. El primer despliegue crea `/opt/bigotes/app.env` a partir de los secretos `BIGOTES_ADMIN_*`; necesita también `HETZNER_SSH_KEY`. Ver [deploy/README.md](deploy/README.md).
 
 ## Decisiones de producto ya confirmadas (no volver a preguntar)
 
@@ -33,7 +33,7 @@ Web de la asociación **Bigotes** (rescate y adopción de gatitos en Almendralej
 - **Favoritos sin cuenta** (localStorage). El «Me encanta» suma un contador anónimo por gatito que solo ve el equipo.
 - **Privacidad**: sin cookies de terceros ni analítica (por eso no hay banner). Las fotos pierden el EXIF (ubicación GPS) al subirse. Solicitudes descartadas y mensajes archivados se borran solos a los 12 meses (`RETENTION_MONTHS`).
 - **Textos por defecto** (cómo trabajamos, requisitos, FAQ, legales) son un punto de partida: la asociación debe revisarlos. Los datos legales que falten salen como «[pendiente]».
-- **Fase 1 entregada.** Pendiente para fases siguientes (no implementar sin confirmarlo): pasarela de pago para las cuotas (Stripe, Redsys…), «¿Has encontrado un gato?», campañas urgentes con barra de progreso, noticias/eventos, avisos por email de gatitos nuevos, estadísticas, dominio propio.
+- **Fase 1 entregada.** Pendiente para fases siguientes (no implementar sin confirmarlo): pasarela de pago para las cuotas (Stripe, Redsys…), «¿Has encontrado un gato?», campañas urgentes con barra de progreso, noticias/eventos, avisos por email de gatitos nuevos, estadísticas.
 
 ## Stack
 

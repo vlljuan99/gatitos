@@ -1,8 +1,9 @@
 # Operación de producción de Bigotes
 
 Bigotes vive en el VPS Hetzner compartido (el mismo que tilestudio, tri-dnd,
-teacherflow y friendlyflights), detrás del Caddy de `/opt/tilestudio`, en
-`https://bigotes.167-233-99-156.sslip.io`.
+teacherflow y friendlyflights), detrás del Caddy de `/opt/tilestudio`, en `https://bigotesasociacion.com`
+(dominio en IONOS con registros A de `@` y `www` a `167.233.99.156`; `www` y la
+dirección provisional `bigotes.167-233-99-156.sslip.io` redirigen al dominio).
 
 Cada despliegue construye una imagen Docker inmutable `bigotes:<commit-sha>`.
 El fichero `/opt/bigotes/.deploy.env` registra qué imagen ejecuta Compose y
@@ -113,17 +114,19 @@ if [[ -d "backups/$BACKUP_ID/uploads" ]]; then
 fi
 chown -R 1000:1000 data
 docker compose --env-file .deploy.env up -d app
-curl --fail https://bigotes.167-233-99-156.sslip.io/api/health
+curl --fail https://bigotesasociacion.com/api/health
 ```
 
-## Dominio propio (cuando lo haya)
+## Dominio
 
-1. Apunta el dominio (registro A) a `167.233.99.156`.
-2. Cambia la primera línea de `deploy/bigotes.caddy` por el dominio (se pueden
-   dejar los dos separados por comas mientras tanto) y `PUBLIC_URL` en
-   `/opt/bigotes/app.env`.
-3. Actualiza `APP_URL` en `.github/workflows/deploy.yml` y `monitor.yml` y
-   vuelve a desplegar. Caddy saca el certificado solo.
+`bigotesasociacion.com` está en IONOS. En su DNS hay registros **A** de `@` y
+`www` a `167.233.99.156` (sin AAAA) y, aparte, los del correo de IONOS (MX,
+SPF, DKIM, `_dmarc`), que no hay que tocar.
+
+Para cambiarlo: registros A del nuevo dominio, primera línea de
+`deploy/bigotes.caddy` (y la de redirecciones) y `APP_URL` en
+`.github/workflows/deploy.yml` y `monitor.yml`. Al desplegar se actualiza
+`PUBLIC_URL` en `/opt/bigotes/app.env` y Caddy saca el certificado solo.
 
 ## Avisos por email y recibos de socios
 
@@ -139,7 +142,9 @@ cuota** con el PDF adjunto al apuntar el pago en el panel. Sin ellos no se
 envía nada: todo queda en el panel, que avisa en «Socios» de que el correo no
 está configurado, y los recibos se pueden abrir en PDF y mandar a mano. Para
 que el remitente sea de la asociación hace falta un dominio propio verificado
-en Resend (con el de sslip.io no se puede).
+en Resend: añade `bigotesasociacion.com` en Resend y copia sus registros
+(`send` y `resend._domainkey`) en IONOS. No crees otro `_dmarc`: ya existe
+el de IONOS.
 
 
 ## Avisos por WhatsApp (opcional)

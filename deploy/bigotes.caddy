@@ -1,4 +1,4 @@
-bigotes.167-233-99-156.sslip.io {
+bigotesasociacion.com {
 	encode zstd gzip
 	reverse_proxy bigotes-app:4000
 	# El panel reduce las fotos en el móvil y las sube de una en una. Los
@@ -11,4 +11,9 @@ bigotes.167-233-99-156.sslip.io {
 	request_body @resto {
 		max_size 25MB
 	}
+}
+
+# Con www y la dirección provisional de antes, al dominio (conservando la ruta).
+www.bigotesasociacion.com, bigotes.167-233-99-156.sslip.io {
+	redir https://bigotesasociacion.com{uri} permanent
 }
