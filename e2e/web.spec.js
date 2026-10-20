@@ -312,7 +312,14 @@ test('hazte socio/a desde la web', async ({ page }) => {
   await page.getByRole('button', { name: /Hacerme socio\/a/ }).click();
   await expect(page.getByText('Escribe tu nombre y apellidos')).toBeVisible();
 
-  await page.getByText('al mes').first().click();
+  // Cuotas de 2, 5 o 10 € al mes; 1 € al mes se aporta con Teaming.
+  await expect(page.getByRole('radio', { name: '2 € al mes' })).toBeAttached();
+  await expect(page.getByRole('radio', { name: '10 € al mes' })).toBeAttached();
+  await expect(page.getByText(/aportar 1 € al mes/)).toBeVisible();
+  await page.getByRole('group', { name: 'Elige tu cuota' }).getByText('Otra cantidad').click();
+  await expect(page.getByLabel('¿Cuánto al mes?')).toBeVisible();
+  await expect(page.getByRole('group', { name: '¿Cada cuánto?' })).toHaveCount(0);
+  await page.getByRole('radio', { name: '5 € al mes' }).check({ force: true });
   await page.getByLabel('Nombre y apellidos').fill('Elena Socia');
   await page.getByLabel('Email').fill('elena@ejemplo.es');
   await page.getByLabel('Municipio').fill('Almendralejo');

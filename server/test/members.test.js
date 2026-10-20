@@ -57,8 +57,8 @@ const signup = (overrides = {}) => ({
   email: 'Marta@Ejemplo.es',
   phone: '611 222 333',
   municipality: 'Almendralejo',
-  amount: 50,
-  period: 'anual',
+  amount: 10,
+  period: 'mensual',
   method: 'bizum',
   message: '',
   adult: true,
@@ -141,13 +141,13 @@ describe('alta desde la web', () => {
     const res = await anon.post('/api/socios', signup());
     assert.equal(res.status, 201, JSON.stringify(res.data));
     assert.equal(res.data.payment.bizum, '01234');
-    assert.equal(res.data.payment.fee, '50,00 € al año');
+    assert.equal(res.data.payment.fee, '10,00 € al mes');
     assert.match(res.data.payment.concept, /^Cuota socio\/a Marta/);
     assert.ok(res.data.payment.concept.length <= 35);
     const row = db.prepare("SELECT * FROM members WHERE name = 'Marta Socia Gatuna'").get();
     assert.equal(row.status, 'pendiente');
     assert.equal(row.email, 'marta@ejemplo.es');
-    assert.equal(row.fee_cents, 5000);
+    assert.equal(row.fee_cents, 1000);
     assert.equal(row.number, null);
     assert.equal(row.source, 'web');
   });
@@ -157,8 +157,19 @@ describe('alta desde la web', () => {
     assert.equal(res.status, 400);
     assert.equal(res.data.fields.amount, 'Elige tu cuota');
     assert.ok(res.data.fields.privacy);
-    res = await anon.post('/api/socios', signup({ amount: '0,50' }));
-    assert.equal(res.data.fields.amount, 'La cuota tiene que ser de al menos 1 €');
+    // Lo mínimo son 2 € al mes: 1 € se aporta con Teaming.
+    res = await anon.post('/api/socios', signup({ amount: '1' }));
+    assert.equal(res.data.fields.amount, 'La cuota mínima es de 2 € al mes (1 € se aporta con Teaming)');
+    // Las cuotas que se ofrecen: 2, 5 y 10 € al mes.
+    assert.deepEqual(getContent('members').fees, [
+      { amount: 2, period: 'mensual' },
+      { amount: 5, period: 'mensual' },
+      { amount: 10, period: 'mensual' },
+    ]);
+    // Otra cantidad, siempre al mes.
+    res = await anon.post('/api/socios', signup({ name: 'Cuota anual libre', amount: 60, period: 'anual' }));
+    assert.equal(res.status, 400);
+    assert.equal(res.data.fields.amount, 'Las otras cantidades son al mes');
     // Otra cantidad: se admite mientras «Textos de la web» lo permita.
     res = await anon.post('/api/socios', signup({ name: 'Cuota libre', amount: '7,5', period: 'mensual' }));
     assert.equal(res.status, 201);
@@ -166,7 +177,7 @@ describe('alta desde la web', () => {
     res = await anon.post('/api/socios', signup({ name: 'Otra cuota', amount: 8, period: 'mensual' }));
     assert.equal(res.status, 400);
     assert.equal(res.data.fields.amount, 'Elige una de las cuotas');
-    res = await anon.post('/api/socios', signup({ name: 'Cuota de la lista', amount: 15, period: 'trimestral' }));
+    res = await anon.post('/api/socios', signup({ name: 'Cuota de la lista', amount: 5, period: 'mensual' }));
     assert.equal(res.status, 201);
     saveContent('members', { ...getContent('members'), allowCustom: true });
     // El campo trampa: responde bien pero no guarda nada.
@@ -450,5 +461,34 @@ describe('privacidad', () => {
     const removed = purgeOldData(12);
     assert.equal(removed.members, 1);
     assert.equal(db.prepare("SELECT COUNT(*) AS n FROM members WHERE name LIKE 'Vieja%'").get().n, 1);
+  });
+});
+
+describe('cuotas de ejemplo antiguas', () => {
+  test('la migración 7 cambia las de ejemplo por 2, 5 y 10 € al mes, y respeta las cambiadas', async () => {
+    const { default: Database } = await import('better-sqlite3');
+    const { migrations, runMigrations } = await import('../src/db.js');
+    const build = (fees) => {
+      const old = new Database(':memory:');
+      for (const [i, entry] of migrations.slice(0, 6).entries()) {
+        old.exec(typeof entry === 'string' ? entry : entry.sql);
+        old.pragma(`user_version = ${i + 1}`);
+      }
+      const intro =
+        'Con una cuota fija nos ayudas a planificar: pienso, vacunas, esterilizaciones y urgencias durante todo el año. Tú eliges cuánto y cada cuánto, y puedes darte de baja cuando quieras.';
+      old.prepare("INSERT INTO settings (key, value) VALUES ('members', ?)").run(JSON.stringify({ intro, fees, allowCustom: true, thanks: 'Gracias' }));
+      runMigrations(old);
+      return JSON.parse(old.prepare("SELECT value FROM settings WHERE key = 'members'").get().value);
+    };
+    const example = build([
+      { amount: 5, period: 'mensual' },
+      { amount: 15, period: 'trimestral' },
+      { amount: 50, period: 'anual' },
+    ]);
+    assert.deepEqual(example.fees.map((f) => `${f.amount} ${f.period}`), ['2 mensual', '5 mensual', '10 mensual']);
+    assert.match(example.intro, /2, 5 o 10 € al mes/);
+    assert.equal(example.thanks, 'Gracias');
+    const own = build([{ amount: 12, period: 'anual' }]);
+    assert.deepEqual(own.fees, [{ amount: 12, period: 'anual' }]);
   });
 });

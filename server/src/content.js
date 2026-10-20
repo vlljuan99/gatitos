@@ -198,7 +198,7 @@ export const CONTENT = {
       fees: z
         .array(
           z.object({
-            amount: z.coerce.number('Escribe el importe').min(1, 'La cuota mínima es 1 €').max(10000),
+            amount: z.coerce.number('Escribe el importe').min(2, 'La cuota mínima es de 2 € (1 € se aporta con Teaming)').max(10000),
             period: z.enum(['mensual', 'trimestral', 'semestral', 'anual'], 'Elige cada cuánto'),
           }),
         )
@@ -209,11 +209,11 @@ export const CONTENT = {
     }),
     defaults: {
       intro:
-        'Con una cuota fija nos ayudas a planificar: pienso, vacunas, esterilizaciones y urgencias durante todo el año. Tú eliges cuánto y cada cuánto, y puedes darte de baja cuando quieras.',
+        'Con una cuota fija nos ayudas a planificar: pienso, vacunas, esterilizaciones y urgencias durante todo el año. Elige 2, 5 o 10 € al mes (u otra cantidad) y date de baja cuando quieras.',
       fees: [
+        { amount: 2, period: 'mensual' },
         { amount: 5, period: 'mensual' },
-        { amount: 15, period: 'trimestral' },
-        { amount: 50, period: 'anual' },
+        { amount: 10, period: 'mensual' },
       ],
       allowCustom: true,
       thanks: 'Gracias por formar parte de Bigotes: tu cuota se convierte en cuidados para los gatos de Almendralejo.',

@@ -195,7 +195,7 @@ const SECTIONS = [
           />
         </div>
         <Checkbox checked={v.allowCustom} onChange={(x) => set({ ...v, allowCustom: x })}>
-          <strong>Dejar elegir otra cantidad</strong> <span className="text-cacao-suave">Además de las cuotas de la lista (mínimo 1 €).</span>
+          <strong>Dejar elegir otra cantidad</strong> <span className="text-cacao-suave">Además de las cuotas de la lista, siempre al mes (mínimo 2 €; 1 € va por Teaming).</span>
         </Checkbox>
         <TextArea
           label="Agradecimiento del recibo"

@@ -143,6 +143,10 @@ export function publicRouter() {
     if (!offered && !settings.allowCustom) {
       return res.status(400).json({ error: 'Revisa los campos marcados', fields: { amount: 'Elige una de las cuotas' } });
     }
+    // Las otras cantidades son siempre al mes.
+    if (!offered && data.period !== 'mensual') {
+      return res.status(400).json({ error: 'Revisa los campos marcados', fields: { amount: 'Las otras cantidades son al mes' } });
+    }
     db.prepare(
       `INSERT INTO members (name, email, phone, municipality, fee_cents, period, method, message, source)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'web')`,
