@@ -48,3 +48,19 @@ test('los filtros exigen un «sí» claro en convivencia', () => {
   assert.equal(matchesFilters(luna, { ...EMPTY_FILTERS, sex: 'macho' }, now), false);
   assert.equal(activeFilterCount({ ...EMPTY_FILTERS, ages: ['gatito', 'joven'], kids: true }), 3);
 });
+
+test('historias: trocitos por gatito y cómo se avanza', async () => {
+  const { storySegments, stepStory, jumpStory } = await import('../src/lib/miaustagram.js');
+  const luna = cat('luna', { photos: [{ id: 1 }, { id: 2 }], videos: [{ id: 9 }] });
+  assert.deepEqual(storySegments(luna).map((s) => s.key), ['video-9', 'foto-1', 'foto-2']);
+  assert.deepEqual(storySegments(cat('nube', { photos: [] })).map((s) => s.key), ['ilustracion']);
+
+  const counts = [3, 1];
+  assert.deepEqual(stepStory({ cat: 0, seg: 0 }, 1, counts), { cat: 0, seg: 1 });
+  assert.deepEqual(stepStory({ cat: 0, seg: 2 }, 1, counts), { cat: 1, seg: 0 });
+  assert.equal(stepStory({ cat: 1, seg: 0 }, 1, counts), null, 'tras el último, se cierra');
+  assert.deepEqual(stepStory({ cat: 1, seg: 0 }, -1, counts), { cat: 0, seg: 0 });
+  assert.deepEqual(stepStory({ cat: 0, seg: 0 }, -1, counts), { cat: 0, seg: 0 }, 'el primero vuelve a empezar');
+  assert.deepEqual(jumpStory({ cat: 0, seg: 2 }, 1, counts), { cat: 1, seg: 0 });
+  assert.equal(jumpStory({ cat: 0, seg: 0 }, -1, counts), null);
+});

@@ -2,6 +2,25 @@ import { expect, test } from '@playwright/test';
 
 const mainNav = (page) => page.getByRole('navigation', { name: 'Navegación principal' });
 
+/** Desliza el dedo (eventos táctiles reales) desde el centro de un elemento. */
+async function swipe(page, locator, dx, dy, steps = 12) {
+  const touch = await page.context().newCDPSession(page);
+  const box = await locator.boundingBox();
+  let x = box.x + box.width / 2;
+  let y = box.y + box.height / 2;
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+  for (let i = 0; i < steps; i += 1) {
+    x += dx / steps;
+    y += dy / steps;
+    await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y }] });
+  }
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await touch.detach();
+}
+
+/** Posición horizontal de la tira de fotos de un carrusel. */
+const trackX = (carousel) => carousel.locator('> div').first().evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m41);
+
 test('portada, catálogo, ficha y favoritos', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('hogar');
@@ -72,13 +91,34 @@ test('Miaustagram: feed, doble toque para «Me encanta» e historias', async ({ 
   await first.getByRole('button', { name: /^Quitar a .* de favoritos$/ }).click();
   await expect(page.getByRole('link', { name: 'Favoritos (1)' })).toHaveCount(0);
 
-  // Historias a pantalla completa: se pasan tocando y se cierran.
+  // Como en Instagram: bajar por el feed tocando una foto no la mueve de lado…
+  const carousel = first.locator('[aria-roledescription="carrusel"]');
+  await swipe(page, carousel, 40, -300);
+  await page.waitForTimeout(300);
+  expect(Math.abs(await trackX(carousel))).toBeLessThan(1);
+  // …y deslizar de lado pasa a la foto siguiente.
+  await first.scrollIntoViewIfNeeded();
+  await swipe(page, carousel, -200, 10);
+  await expect(first.getByText(/^2\/\d+$/)).toBeVisible();
+
+  // Historias a pantalla completa: tocar a la derecha pasa, se cierra con la X.
   const stories = page.getByRole('list', { name: 'Historias' });
+  await page.evaluate(() => window.scrollTo(0, 0));
   await stories.getByRole('button').first().click();
   const dialog = page.getByRole('dialog', { name: /^Historia de / });
   await expect(dialog).toBeVisible();
+  const where = dialog.locator('[aria-live="polite"]');
+  const before = await where.textContent();
+  const box = await dialog.boundingBox();
+  await page.mouse.click(box.x + box.width * 0.8, box.y + box.height / 2);
+  await expect(where).not.toHaveText(before);
   await expect(dialog.getByRole('link', { name: /Quiero adoptar/ })).toBeVisible();
   await dialog.getByRole('button', { name: 'Cerrar' }).click();
+  await expect(dialog).toHaveCount(0);
+  // Deslizar hacia abajo también cierra.
+  await stories.getByRole('button').first().click();
+  await expect(dialog).toBeVisible();
+  await swipe(page, dialog, 0, 300, 8);
   await expect(dialog).toHaveCount(0);
 
   // Nada de «no me gusta» ni comentarios.
@@ -110,7 +150,8 @@ test('portada: las fotos llevan a su publicación del Miaustagram, que acaba con
   await expect(post).toBeInViewport();
   // La última diapositiva no es una foto: es «Ver su perfil completo».
   const slides = post.locator('[aria-roledescription="carrusel"]');
-  await slides.evaluate((el) => el.scrollTo({ left: el.scrollWidth, behavior: 'instant' }));
+  const total = Number((await post.getByText(/^1\/\d+$/).textContent()).split('/')[1]);
+  for (let i = 1; i < total; i += 1) await swipe(page, slides, -220, 0);
   await post.getByRole('link', { name: 'Ver su perfil completo' }).click();
   await expect(page.getByRole('heading', { level: 1 })).toContainText(name);
 });
@@ -137,6 +178,13 @@ test('quiero adoptar sin ningún «Me encanta»: al Miaustagram o al listado', a
 });
 
 test('solicitud de adopción por pasos', async ({ page }) => {
+  // Con el WhatsApp de la asociación en «Contacto», al terminar se puede avisar por ahí.
+  await page.route('**/api/sitio', async (route) => {
+    const response = await route.fetch();
+    const json = await response.json();
+    json.content.contact.whatsapp = '643 867 516';
+    await route.fulfill({ response, json });
+  });
   const next = () => page.getByRole('button', { name: /Siguiente/ }).click();
   const group = (name) => page.getByRole('group', { name });
 
@@ -187,6 +235,10 @@ test('solicitud de adopción por pasos', async ({ page }) => {
   await page.getByText(/He leído la/).click();
   await page.getByRole('button', { name: /Enviar solicitud/ }).click();
   await expect(page.getByRole('heading', { name: '¡Solicitud enviada!' })).toBeVisible();
+  const notice = page.getByRole('link', { name: /Avísanos por WhatsApp/ });
+  const href = new URL(await notice.getAttribute('href'));
+  expect(href.searchParams.get('phone')).toBe('34643867516');
+  expect(href.searchParams.get('text')).toBe('¡Hola! Soy Rosa y acabo de enviar la solicitud para adoptar a Luna 🐾');
 });
 
 test('contacto', async ({ page }) => {
