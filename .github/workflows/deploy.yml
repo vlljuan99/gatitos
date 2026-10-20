@@ -173,7 +173,7 @@ jobs:
           for i in $(seq 1 12); do
             HOME_STATUS=$(curl -sS -o /dev/null -w "%{http_code}" "$APP_URL/" || true)
             HEALTH_BODY=$(curl -fsS "$APP_URL/api/health" || true)
-            OG=$(curl -fsS "$APP_URL/libro-de-gatos" | grep -c 'og:image' || true)
+            OG=$(curl -fsS "$APP_URL/miaugram" | grep -c 'og:image' || true)
             COMMIT=$(jq -r '.commit // empty' <<<"$HEALTH_BODY" 2>/dev/null || true)
             DB_OK=$(jq -r '.database.ok // false' <<<"$HEALTH_BODY" 2>/dev/null || true)
             VIDEOS=$(jq -r '.videos // false' <<<"$HEALTH_BODY" 2>/dev/null || true)

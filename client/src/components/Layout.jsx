@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router-dom';
+import { Link, NavLink, Outlet, ScrollRestoration } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BookHeart, Cat, ChevronRight, HandHeart, Heart, House, Menu } from 'lucide-react';
+import { Cat, ChevronRight, HandHeart, Heart, House, Menu, PawPrint } from 'lucide-react';
 import { Logo, LogoFull, LogoMark } from './Logo.jsx';
 import { Sheet } from './Sheet.jsx';
 import { buttonClass, cx } from './ui.jsx';
@@ -13,7 +13,7 @@ export const useSite = () => useApi('/sitio');
 
 const MAIN_LINKS = [
   { to: '/gatitos', label: 'Gatitos' },
-  { to: '/libro-de-gatos', label: 'Libro de gatos' },
+  { to: '/miaugram', label: 'Miaugram' },
   { to: '/como-trabajamos', label: 'Cómo trabajamos' },
   { to: '/finales-felices', label: 'Finales felices' },
   { to: '/colabora', label: 'Colabora' },
@@ -119,7 +119,7 @@ function BottomNav({ onMore }) {
         <NavLink to="/gatitos" className={item}>
           <Cat className="size-6" /> Gatitos
         </NavLink>
-        <NavLink to="/libro-de-gatos" className={({ isActive }) => cx(item({ isActive }), '-mt-5')}>
+        <NavLink to="/miaugram" className={({ isActive }) => cx(item({ isActive }), '-mt-5')}>
           {({ isActive }) => (
             <>
               <motion.span
@@ -129,9 +129,9 @@ function BottomNav({ onMore }) {
                   isActive ? 'bg-canela-oscuro' : 'bg-canela',
                 )}
               >
-                <BookHeart className="size-6" />
+                <PawPrint className="size-6" />
               </motion.span>
-              Libro
+              Miau
             </>
           )}
         </NavLink>
@@ -273,8 +273,6 @@ function Footer() {
 
 export function PublicLayout() {
   const [moreOpen, setMoreOpen] = useState(false);
-  const location = useLocation();
-  const immersive = location.pathname === '/libro-de-gatos';
   return (
     <>
       <a href="#contenido" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-nata focus:px-4 focus:py-2">
@@ -284,8 +282,7 @@ export function PublicLayout() {
       <main id="contenido" className="mx-auto max-w-6xl">
         <Outlet />
       </main>
-      {!immersive && <Footer />}
-      {immersive && <div className="h-28 md:hidden" aria-hidden />}
+      <Footer />
       <BottomNav onMore={() => setMoreOpen(true)} />
       <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} />
       {/* Por ruta: al entrar desde fuera (o recargar) en otra página no se hereda el desplazamiento de la anterior. */}

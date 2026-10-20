@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, BookHeart } from 'lucide-react';
+import { ArrowRight, PawPrint } from 'lucide-react';
 import { HELP_LINKS, useSite } from '../components/Layout.jsx';
 import { CatCard } from '../components/CatCard.jsx';
 import { CatPhoto } from '../components/CatPhoto.jsx';
@@ -11,7 +11,7 @@ import { useApi } from '../lib/useApi.js';
 import { useTitle } from '../lib/useTitle.js';
 
 const STEPS = [
-  { emoji: '😻', title: 'Enamórate', text: 'Cotillea las fichas o hojea el libro de gatos hasta encontrar al tuyo.' },
+  { emoji: '😻', title: 'Enamórate', text: 'Cotillea el Miaugram o las fichas hasta encontrar al tuyo.' },
   { emoji: '📝', title: 'Envía tu solicitud', text: 'Un formulario cortito para conocerte un poco.' },
   { emoji: '☕', title: 'Nos conocemos', text: 'Hablamos contigo, resolvemos dudas y hacemos una visita.' },
   { emoji: '🏡', title: '¡A casa!', text: 'Firmamos la adopción y empieza vuestra vida juntos.' },
@@ -126,8 +126,8 @@ export default function Home() {
           </h1>
           <p className="mt-4 text-lg text-cacao-suave md:text-xl">{home?.heroText}</p>
           <div className="mt-6 grid gap-3 sm:flex">
-            <ButtonLink to="/libro-de-gatos" size="lg">
-              <BookHeart className="size-5" /> Hojea el libro de gatos
+            <ButtonLink to="/miaugram" size="lg">
+              <PawPrint className="size-5" /> Entra en el Miaugram
             </ButtonLink>
             <ButtonLink to="/gatitos" size="lg" variant="secondary">
               Ver todos los gatitos

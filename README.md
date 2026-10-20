@@ -15,18 +15,19 @@ se enamore de un gatito y lo adopte.
   salud, necesidades especiales, su historia y botón para compartir por
   WhatsApp. Cada ficha tiene
   su propia vista previa (foto y nombre) al compartir el enlace.
-- **Libro de gatos** (`/libro-de-gatos`; `/match` redirige): un carrusel con
-  una página por gatito disponible que se pasa con el dedo o con las flechas.
-  Cada página tiene su foto, lo esencial, el corazón de favoritos y «Quiero
-  adoptarle», que abre la solicitud con ese gatito. Se puede filtrar y, al
-  volver de la ficha, se abre por la misma página.
+- **Miaugram** (`/miaugram`; `/match` y `/libro-de-gatos` redirigen): los
+  gatitos disponibles como una red social. Feed vertical con una publicación
+  por gatito (`@luna`, fotos y vídeos deslizables, doble toque para «Me
+  encanta», compartir, preguntar por WhatsApp y «Quiero adoptarle», que abre
+  la solicitud con ese gatito) e historias a pantalla completa de los que
+  tienen vídeo o acaban de llegar. Sin comentarios. Se puede filtrar.
 - **Favoritos** sin registrarse (se guardan en el navegador), con su corazón
   en la cabecera.
 - **Viajes solidarios** (antes «transporte solidario», `/viajes-solidarios`):
   la gente que viaja a menudo a otra ciudad se apunta con sus destinos. Así se
   puede adoptar también fuera de Extremadura: cada solicitud de otra provincia
   muestra en el panel quién viaja allí.
-- **Solicitud de adopción** por pasos. Si vienes del libro de gatos o de la ficha de
+- **Solicitud de adopción** por pasos. Si vienes del Miaugram o de la ficha de
   un gatito, empieza directamente por tus datos con el gatito ya elegido.
   Desde Extremadura o, con los viajes solidarios, desde cualquier provincia.
 - **Cómo trabajamos**, requisitos, cuota y preguntas frecuentes.
@@ -152,10 +153,10 @@ npm run test:e2e      # pruebas de extremo a extremo en un móvil (Playwright)
 
 ```
 client/src/
-  pages/        Páginas públicas (portada, catálogo, ficha, libro de gatos, adoptar…)
+  pages/        Páginas públicas (portada, catálogo, ficha, Miaugram, adoptar…)
   admin/        Panel del equipo (se descarga aparte)
   components/   Piezas de la interfaz (tarjetas, hojas, formularios…)
-  lib/          Lógica sin interfaz: API, favoritos, edad, páginas del libro de gatos…
+  lib/          Lógica sin interfaz: API, favoritos, edad, feed e historias del Miaugram…
 server/src/
   app.js        Express: seguridad, API, fotos y la SPA con su Open Graph
   db.js         SQLite y migraciones (fuente de verdad del modelo de datos)

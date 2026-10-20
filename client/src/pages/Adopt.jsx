@@ -158,7 +158,7 @@ export default function Adopt() {
   const cats = useMemo(() => (data?.cats ?? []).filter((c) => c.status === 'disponible' || c.slug === values.catSlug), [data, values.catSlug]);
   const chosen = cats.find((c) => c.slug === values.catSlug) ?? null;
 
-  // Si se llega con un gatito concreto (desde el libro de gatos o desde su ficha), no
+  // Si se llega con un gatito concreto (desde el Miaugram o desde su ficha), no
   // hace falta elegirlo otra vez: se empieza directamente por el formulario.
   // Antes de pintar, para que no asome la cuadrícula de gatitos.
   const autoSkip = useRef(Boolean(gatito));

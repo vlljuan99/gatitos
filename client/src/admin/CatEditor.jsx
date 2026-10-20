@@ -181,7 +181,7 @@ function PersonalityFields({ form }) {
     <>
       <fieldset>
         <legend className="mb-1 font-bold">¿Cómo es?</legend>
-        <p className="mb-2 text-sm text-cacao-suave">Toca las que encajen (hasta 8). Las tres primeras salen en el libro de gatos.</p>
+        <p className="mb-2 text-sm text-cacao-suave">Toca las que encajen (hasta 8). Las tres primeras salen en el Miaugram.</p>
         <div className="flex flex-wrap gap-2">
           {[...PERSONALITY_TAGS, ...extra].map((tag) => (
             <Chip key={tag} selected={values.personality.includes(tag)} onClick={() => toggle(tag)}>
@@ -212,7 +212,7 @@ function PersonalityFields({ form }) {
       </fieldset>
       <TextInput
         label="Frase corta"
-        hint={`Sale en su tarjeta y en el libro de gatos (${values.summary.length}/220).`}
+        hint={`Sale en su tarjeta y en el Miaugram (${values.summary.length}/220).`}
         placeholder="Una bolita de mimos que ronronea en cuanto la coges."
         maxLength={220}
         value={values.summary}

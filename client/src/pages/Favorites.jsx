@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BookHeart, HeartOff } from 'lucide-react';
+import { HeartOff, PawPrint } from 'lucide-react';
 import { CatPhoto } from '../components/CatPhoto.jsx';
 import { ButtonLink, EmptyState, ErrorState, PageHeader, Spinner, Tag } from '../components/ui.jsx';
 import { ageText, objectPronoun, statusLabel } from '../lib/cats.js';
@@ -27,8 +27,8 @@ export default function Favorites() {
           <EmptyState
             title="Todavía no hay ninguno"
             action={
-              <ButtonLink to="/libro-de-gatos">
-                <BookHeart className="size-5" /> Hojear el libro de gatos
+              <ButtonLink to="/miaugram">
+                <PawPrint className="size-5" /> Cotillear el Miaugram
               </ButtonLink>
             }
           >
