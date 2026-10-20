@@ -108,12 +108,15 @@ export const volunteerSchema = z.object({
 export const MEMBER_PERIOD_KEYS = ['mensual', 'trimestral', 'semestral', 'anual'];
 export const MEMBER_SIGNUP_METHODS = ['bizum', 'transferencia', 'efectivo'];
 
+export const MEMBER_MIN_AMOUNT = 2;
+
 export const memberSignupSchema = z.object({
   name: requiredText(100, 'Escribe tu nombre y apellidos'),
   email: email(),
   phone: z.union([z.literal(''), phone()]).default(''),
   municipality: requiredText(100, 'Escribe tu municipio'),
-  amount: requiredDecimal({ min: 1, max: 10000, message: 'La cuota tiene que ser de al menos 1 €', required: 'Elige tu cuota' }),
+  // Lo mínimo para ser socio/a son 2 € al mes; 1 € al mes se aporta con Teaming.
+  amount: requiredDecimal({ min: MEMBER_MIN_AMOUNT, max: 10000, message: 'La cuota mínima es de 2 € al mes (1 € se aporta con Teaming)', required: 'Elige tu cuota' }),
   period: z.enum(MEMBER_PERIOD_KEYS, 'Elige cada cuánto'),
   method: z.enum(MEMBER_SIGNUP_METHODS, 'Elige cómo prefieres pagar'),
   message: text(1000).default(''),

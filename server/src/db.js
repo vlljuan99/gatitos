@@ -405,6 +405,19 @@ export const migrations = [
   `
   UPDATE applications SET status = 'aprobada', updated_at = datetime('now') WHERE status = 'visita';
   `,
+  // 7. Cuotas de socios: 2, 5 o 10 € al mes (y otra cantidad desde 2 €; 1 € va
+  // por Teaming). Solo si seguían las de ejemplo (5 €/mes, 15 €/trimestre y
+  // 50 €/año); si la asociación ya las había cambiado, no se tocan.
+  `
+  UPDATE settings
+  SET value = json_set(
+        CASE WHEN json_extract(value, '$.intro') = 'Con una cuota fija nos ayudas a planificar: pienso, vacunas, esterilizaciones y urgencias durante todo el año. Tú eliges cuánto y cada cuánto, y puedes darte de baja cuando quieras.'
+             THEN json_set(value, '$.intro', 'Con una cuota fija nos ayudas a planificar: pienso, vacunas, esterilizaciones y urgencias durante todo el año. Elige 2, 5 o 10 € al mes (u otra cantidad) y date de baja cuando quieras.') ELSE value END,
+        '$.fees', json('[{"amount":2,"period":"mensual"},{"amount":5,"period":"mensual"},{"amount":10,"period":"mensual"}]')),
+      updated_at = datetime('now')
+  WHERE key = 'members'
+    AND json_extract(value, '$.fees') = '[{"amount":5,"period":"mensual"},{"amount":15,"period":"trimestral"},{"amount":50,"period":"anual"}]';
+  `,
 ];
 
 /**

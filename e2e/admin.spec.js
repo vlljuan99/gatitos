@@ -364,7 +364,7 @@ test('socios: se apunta un pago y queda su recibo', async ({ page, request }) =>
       phone: '666 777 888',
       municipality: 'Almendralejo',
       amount: 15,
-      period: 'trimestral',
+      period: 'mensual',
       method: 'transferencia',
       adult: true,
       privacy: true,

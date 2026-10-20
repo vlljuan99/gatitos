@@ -45,8 +45,9 @@ se enamore de un gatito y lo adopte.
   cada gatito. Reúne hazte socio/a, donaciones (Bizum, transferencia, Teaming,
   PayPal y material; cada método sale como «Muy pronto» hasta que se rellenen
   sus datos), voluntariado y viajes solidarios.
-- **Hazte socio/a** (`/hazte-socio`): se elige una cuota (las de «Textos de la
-  web → Socios» u otra cantidad) y cómo pagar. Aún sin pasarela de pago: al
+- **Hazte socio/a** (`/hazte-socio`): 2, 5 o 10 € al mes u otra cantidad al
+  mes desde 2 € (1 € al mes se aporta con Teaming, y la web lo indica), y cómo
+  pagar. Aún sin pasarela de pago: al
   terminar se enseña cómo pagar (Bizum o IBAN) y, cuando el equipo apunta el
   pago en el panel, le llega su recibo por correo.
 - **Contacto**, aviso legal, privacidad y cookies (sin banner: la web no usa

@@ -31,8 +31,6 @@ const INITIAL = {
   website: '',
 };
 
-const PERIOD_CHOICES = Object.entries(MEMBER_PERIODS).map(([value, p]) => ({ value, label: p.label }));
-
 const GOOD_FOR = [
   { Icon: Utensils, title: 'Pienso y arena', text: 'Todo el año, también para las colonias.', tone: 'bg-mantequilla text-mantequilla-oscuro' },
   { Icon: Stethoscope, title: 'Veterinario', text: 'Vacunas, esterilizaciones y urgencias.', tone: 'bg-menta text-menta-oscuro' },
@@ -119,10 +117,33 @@ function HowToPay({ payment, method, email }) {
   );
 }
 
+/** 1 € al mes no es cuota de socio/a: se aporta con Teaming. */
+function TeamingNote({ url }) {
+  return (
+    <p className="flex gap-2 rounded-2xl bg-lavanda/70 p-3 text-sm">
+      <HeartHandshake className="size-5 shrink-0 text-lavanda-oscuro" aria-hidden />
+      <span>
+        ¿Prefieres aportar <strong>1 € al mes</strong>? Hazlo con{' '}
+        {url ? (
+          <a href={url} target="_blank" rel="noreferrer" className="font-bold underline">
+            nuestro Teaming
+          </a>
+        ) : (
+          <Link to="/colabora#donar" className="font-bold underline">
+            nuestro Teaming
+          </Link>
+        )}
+        .
+      </span>
+    </p>
+  );
+}
+
 function SignupForm({ settings, donations }) {
   const { values, set, field, errors, formError, sending, submit } = useForm(INITIAL, { draft: 'socio', omit: ['privacy', 'website'] });
   const [done, setDone] = useState(null);
   const chosen = values.fee === 'otra' ? null : settings.fees[Number(values.fee)];
+  const teaming = donations.teaming;
   const methods = SIGNUP_METHODS.filter((m) => m.value === 'efectivo' || (m.value === 'bizum' ? donations.bizum : donations.iban) || (!donations.bizum && !donations.iban));
 
   if (done) {
@@ -149,7 +170,8 @@ function SignupForm({ settings, donations }) {
     const body = {
       ...values,
       amount: chosen ? chosen.amount : values.amount,
-      period: chosen ? chosen.period : values.period,
+      // Las otras cantidades son siempre al mes.
+      period: chosen ? chosen.period : 'mensual',
     };
     if (!values.fee) body.amount = '';
     const result = await submit('/socios', body);
@@ -171,10 +193,10 @@ function SignupForm({ settings, donations }) {
       />
       {values.fee === 'otra' && (
         <div className="grid gap-4 rounded-3xl bg-canela-claro/60 p-4">
-          <TextInput label="¿Cuánto?" inputMode="decimal" placeholder="10" hint="En euros. Lo mínimo es 1 €." {...field('amount')} />
-          <Choice label="¿Cada cuánto?" options={PERIOD_CHOICES} {...field('period')} />
+          <TextInput label="¿Cuánto al mes?" inputMode="decimal" placeholder="15" hint="En euros al mes. Lo mínimo son 2 €." {...field('amount')} />
         </div>
       )}
+      <TeamingNote url={teaming} />
       <TextInput label="Nombre y apellidos" autoComplete="name" {...field('name')} />
       <TextInput label="Email" type="email" inputMode="email" autoComplete="email" hint="Aquí te llegarán tus recibos." {...field('email')} />
       <div className="grid gap-6 sm:grid-cols-2">
