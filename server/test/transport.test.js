@@ -61,6 +61,14 @@ describe('transporte solidario', () => {
     assert.equal(counts.nuevo, 1);
     assert.deepEqual(items[0].destinations, [{ city: 'Madrid', province: 'Madrid' }]);
     assert.equal((await helper.get('/api/admin/resumen')).data.transport.new, 1);
+
+    // Al abrirlo en el panel deja de contar como aviso, pero sigue en «Nuevos».
+    const seen = await helper.post(`/api/admin/transporte/${items[0].id}/visto`);
+    assert.equal(seen.status, 200);
+    assert.ok(seen.data.item.seenAt);
+    assert.equal(seen.data.item.status, 'nuevo');
+    assert.equal((await helper.get('/api/admin/resumen')).data.transport.new, 0);
+    assert.equal((await helper.get('/api/admin/transporte')).data.counts.nuevo, 1);
   });
 
   test('cada solicitud de fuera de Extremadura muestra quién viaja a su provincia', async () => {

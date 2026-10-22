@@ -86,12 +86,22 @@ test('el alta de un gatito y los cambios sin guardar sobreviven a recargar', asy
   // En la ficha de un gatito, los cambios sin guardar también se recuperan.
   await page.goto('/admin/gatitos');
   await page.getByRole('link', { name: /Tofu/ }).first().click();
-  await page.getByRole('tab', { name: /En la web/ }).click();
-  await page.getByLabel('Frase corta').fill('Un torbellino con patitas enormes.');
+  // Desde «Día a día» se llega a sus fotos y vídeos para añadir o cambiar.
+  await page.getByRole('button', { name: /Añadir o cambiar fotos y vídeos/ }).click();
+  await expect(page.getByRole('tab', { name: /En la web/ })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('heading', { name: 'Fotos', exact: true })).toBeInViewport();
+  await page.locator('input[type=file][accept="image/*"]').setInputFiles({ name: 'otra.png', mimeType: 'image/png', buffer: PHOTO });
+  await expect(page.getByText('Foto subida 📸')).toBeVisible();
+  // La frase corta admite varias líneas (Intro hace salto de línea).
+  const phrase = page.getByLabel('Frase corta');
+  await phrase.fill('Un torbellino');
+  await phrase.press('Enter');
+  await phrase.pressSequentially('con patitas enormes.');
+  await expect(phrase).toHaveValue('Un torbellino\ncon patitas enormes.');
   await expect(page.getByText('Cambios sin guardar')).toBeVisible();
   await page.reload();
   await expect(page.getByText('Hemos recuperado los cambios que no habías guardado')).toBeVisible();
-  await expect(page.getByLabel('Frase corta')).toHaveValue('Un torbellino con patitas enormes.');
+  await expect(page.getByLabel('Frase corta')).toHaveValue('Un torbellino\ncon patitas enormes.');
   await page.getByRole('button', { name: 'Guardar' }).click();
   await expect(page.getByText('Cambios guardados ✨')).toBeVisible();
   await page.reload();
@@ -301,7 +311,14 @@ test('una solicitud de Madrid muestra quién de los viajes solidarios va allí',
   // En la bandeja de viajes solidarios se confirma y se busca por ciudad.
   await page.goto('/admin/transporte');
   await page.getByPlaceholder('Buscar ciudad o provincia').fill('alcala');
-  await page.getByRole('button', { name: /Inés Carretera/ }).click();
+  const ines = page.getByRole('button', { name: /Inés Carretera/ });
+  await expect(ines.getByText('Nuevo', { exact: true })).toBeVisible();
+  await ines.click();
+  // Abierta una vez, deja de salir como nueva (y de contar en el menú), aunque siga en «Nuevos».
+  await expect(ines.getByText('Nuevo', { exact: true })).toHaveCount(0);
+  await expect
+    .poll(async () => (await (await page.request.get('/api/admin/resumen')).json()).transport.new)
+    .toBe(0);
   await page.getByRole('button', { name: 'Confirmar' }).click();
   await page.getByRole('tab', { name: /Confirmados/ }).click();
   await expect(page.getByText('Inés Carretera')).toBeVisible();
@@ -390,6 +407,11 @@ test('socios: se apunta un pago y queda su recibo', async ({ page, request }) =>
   await expect(page.getByText(/Recibo R-\d{4}-\d{3} guardado/)).toBeVisible();
   await expect(page.getByText('Al día', { exact: true })).toBeVisible();
   await expect(page.getByText(/Socio\/a n\.º \d+/)).toBeVisible();
+  await expect(page.getByText('Pendiente del primer pago')).toHaveCount(0);
+  // El recibo se descarga como archivo, sin salir del panel.
+  const download = page.getByRole('link', { name: /^Descargar Recibo R-/ });
+  await expect(download).toHaveAttribute('href', /\/api\/papeles\/recibo\/\d+\?descargar=1&t=/);
+  await expect(download).toHaveAttribute('download', '');
   await page.getByRole('button', { name: /^Ver Recibo R-/ }).click();
   const preview = page.getByRole('dialog', { name: /^Recibo R-/ });
   await expect(preview.locator('canvas')).toBeVisible({ timeout: 20_000 });

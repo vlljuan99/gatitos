@@ -388,6 +388,11 @@ describe('papeles en PDF', () => {
     const { token, expiresAt } = (await helper.post('/api/admin/papeles/permiso')).data;
     assert.ok(Date.parse(expiresAt) > Date.now() + 25 * 60 * 1000);
     assertPdf(await anon.get(`/api/papeles/gatito/${cat.id}/ficha?t=${token}`), A4);
+    // Se abre en el visor; con ?descargar se guarda como archivo.
+    const inline = await anon.get(`/api/papeles/gatito/${cat.id}/ficha?t=${token}`);
+    assert.match(inline.headers.get('content-disposition'), /^inline; filename=".+\.pdf"$/);
+    const download = await anon.get(`/api/papeles/gatito/${cat.id}/ficha?t=${token}&descargar=1`);
+    assert.match(download.headers.get('content-disposition'), /^attachment; filename=".+\.pdf"$/);
     assert.equal((await anon.get(`/api/papeles/gatito/${cat.id}/ficha?t=${token}x`)).status, 401);
     // El permiso no sirve para el resto del panel.
     assert.equal((await anon.get(`/api/admin/gatitos?t=${token}`)).status, 401);

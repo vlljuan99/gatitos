@@ -417,6 +417,13 @@ export const migrations = [
       updated_at = datetime('now')
   WHERE key = 'members'
     AND json_extract(value, '$.fees') = '[{"amount":5,"period":"mensual"},{"amount":15,"period":"trimestral"},{"amount":50,"period":"anual"}]';
+  `,  // 8. «Visto»: voluntariado, viajes solidarios y altas de socios dejan de
+  // contar como aviso en el panel en cuanto alguien del equipo los abre (el
+  // estado —nuevo, confirmado, pendiente del primer pago— no cambia).
+  `
+  ALTER TABLE volunteers ADD COLUMN seen_at TEXT;
+  ALTER TABLE transport_volunteers ADD COLUMN seen_at TEXT;
+  ALTER TABLE members ADD COLUMN seen_at TEXT;
   `,
 ];
 

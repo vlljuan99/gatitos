@@ -143,6 +143,8 @@ export function adminMembersRouter() {
   router.get('/:id', (req, res) => {
     const id = parseId(req.params.id, res);
     if (id === null) return;
+    // Al abrirla deja de contar como aviso de «nueva» en el panel.
+    db.prepare("UPDATE members SET seen_at = datetime('now') WHERE id = ? AND seen_at IS NULL").run(id);
     const member = loadMember(id);
     if (!member) return res.status(404).json({ error: NOT_FOUND });
     res.json({ member, payments: memberPayments(id), mailEnabled: mailEnabled() });

@@ -158,6 +158,7 @@ export function serializeMember(row, now = today()) {
     lastPaidOn: row.last_paid_on ?? null,
     paymentsCount: row.payments_count ?? 0,
     state: memberState({ status: row.status, paidUntil }, now),
+    seenAt: row.seen_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -205,11 +206,14 @@ export function loadPayment(id) {
   return row ? serializePayment(row) : null;
 }
 
-/** Recuentos para el resumen del panel: altas de la web sin confirmar y cuotas por renovar. */
+/**
+ * Recuentos para el resumen del panel. new: altas pendientes del primer pago
+ * que nadie del equipo ha abierto todavía; renew: cuotas por renovar.
+ */
 export function memberAlerts(now = today()) {
   const members = listMembers().filter((m) => m.status !== 'baja');
   return {
-    new: members.filter((m) => m.state === 'pendiente').length,
+    new: members.filter((m) => m.state === 'pendiente' && !m.seenAt).length,
     renew: members.filter((m) => m.state === 'renovar' || m.state === 'caducada').length,
     active: members.filter((m) => m.state === 'al_dia' || m.state === 'renovar').length,
   };

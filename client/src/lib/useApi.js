@@ -28,9 +28,22 @@ export function useApi(path, { maxAge = 60_000 } = {}) {
     const set = listeners.get(path) ?? new Set();
     set.add(rerender);
     listeners.set(path, set);
-    const entry = cache.get(path);
-    if (!entry || entry.error || Date.now() - entry.time > maxAge) load(path);
-    return () => set.delete(rerender);
+    const refreshIfOld = () => {
+      const entry = cache.get(path);
+      if (!entry || entry.error || Date.now() - entry.time > maxAge) load(path);
+    };
+    refreshIfOld();
+    // Al volver a la página (tras abrir un PDF, WhatsApp u otra app, o con
+    // la página recuperada de la caché del navegador), lo viejo se refresca.
+    const onVisible = () => document.visibilityState === 'visible' && refreshIfOld();
+    const onPageShow = (event) => event.persisted && refreshIfOld();
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('pageshow', onPageShow);
+    return () => {
+      set.delete(rerender);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('pageshow', onPageShow);
+    };
   }, [path, maxAge]);
 
   const entry = path ? cache.get(path) : undefined;

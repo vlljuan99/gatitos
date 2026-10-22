@@ -75,7 +75,9 @@ async function send(req, res, type, data, name) {
   const twoUp = req.query.hoja === 'a4' && PAPERS[type].size.startsWith('A5');
   const { pdf, file } = await renderPaper(type, data, name, { twoUp });
   res.set('Content-Type', 'application/pdf');
-  res.set('Content-Disposition', `inline; filename="${file}"`);
+  // ?descargar: se guarda como archivo en vez de abrirse en el visor.
+  const disposition = req.query.descargar !== undefined ? 'attachment' : 'inline';
+  res.set('Content-Disposition', `${disposition}; filename="${file}"`);
   res.send(pdf);
 }
 

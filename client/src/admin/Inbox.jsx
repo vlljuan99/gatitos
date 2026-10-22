@@ -32,7 +32,7 @@ const normalize = (text) =>
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
 
-function InboxPage({ title, subtitle, path, statuses, renderItem, emptyText, openStatus, search, intro }) {
+function InboxPage({ title, subtitle, path, statuses, renderItem, emptyText, openStatus, markSeen, search, intro }) {
   const toast = useToast();
   const { user } = useAuth();
   const { data, error, loading, reload } = useAdminApi(path);
@@ -46,6 +46,16 @@ function InboxPage({ title, subtitle, path, statuses, renderItem, emptyText, ope
       refreshAfterChange();
     } catch (err) {
       toast(err.message, { tone: 'error' });
+    }
+  }
+
+  // Al abrirlo, deja de contar como aviso (sin cambiar su estado).
+  async function seen(item) {
+    try {
+      await api(`/admin${path}/${item.id}/visto`, { method: 'POST' });
+      refreshAfterChange();
+    } catch {
+      // Si falla, seguirá saliendo como nuevo: no pasa nada.
     }
   }
 
@@ -103,12 +113,13 @@ function InboxPage({ title, subtitle, path, statuses, renderItem, emptyText, ope
                   onClick={() => {
                     setOpen(expanded ? null : item.id);
                     if (!expanded && item.status === 'nuevo' && openStatus) setStatus(item, openStatus);
+                    if (!expanded && markSeen && !item.seenAt) seen(item);
                   }}
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate font-display text-lg font-semibold">{item.name}</span>
-                      {item.status === 'nuevo' && <StatusPill status="nuevo">Nuevo</StatusPill>}
+                      {item.status === 'nuevo' && !(markSeen && item.seenAt) && <StatusPill status="nuevo">Nuevo</StatusPill>}
                     </div>
                     <p className={cx('text-sm text-cacao-suave', !expanded && 'line-clamp-2')}>{renderItem.preview(item)}</p>
                   </div>
@@ -191,6 +202,7 @@ export function Volunteers() {
       title="Voluntariado"
       subtitle="Personas que se ofrecen a echar una pata."
       path="/voluntariado"
+      markSeen
       emptyText="No hay nadie en esta lista."
       statuses={[
         { value: 'nuevo', label: 'Nuevos', action: 'Marcar como nuevo', icon: Mail },
@@ -246,6 +258,7 @@ export function Transport() {
       title="Viajes solidarios 🚗"
       subtitle="Gente que viaja a menudo a otra ciudad y puede llevar a un gatito con su nueva familia."
       path="/transporte"
+      markSeen
       emptyText="No hay nadie en esta lista."
       search={{
         placeholder: 'Buscar ciudad o provincia',
