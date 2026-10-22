@@ -39,8 +39,9 @@ export function adminRouter() {
         open: count("SELECT COUNT(*) AS n FROM applications WHERE status IN ('nueva', 'entrevista', 'aprobada')"),
       },
       messages: { new: count("SELECT COUNT(*) AS n FROM messages WHERE status = 'nuevo'") },
-      volunteers: { new: count("SELECT COUNT(*) AS n FROM volunteers WHERE status = 'nuevo'") },
-      transport: { new: count("SELECT COUNT(*) AS n FROM transport_volunteers WHERE status = 'nuevo'") },
+      // Nuevos que nadie del equipo ha abierto todavía.
+      volunteers: { new: count("SELECT COUNT(*) AS n FROM volunteers WHERE status = 'nuevo' AND seen_at IS NULL") },
+      transport: { new: count("SELECT COUNT(*) AS n FROM transport_volunteers WHERE status = 'nuevo' AND seen_at IS NULL") },
       // Socios: altas de la web pendientes del primer pago y cuotas por renovar.
       members: memberAlerts(),
       cats: {

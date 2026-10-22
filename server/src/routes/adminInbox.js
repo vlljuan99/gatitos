@@ -240,8 +240,20 @@ export function adminApplicationsRouter() {
  * Bandejas sencillas (mensajes de contacto y ofertas de voluntariado): listar,
  * cambiar el estado y borrar. Comparten forma, cambia la tabla y los campos.
  */
-function inboxRouter({ table, statuses, serialize }) {
+function inboxRouter({ table, statuses, serialize, seen = false }) {
   const router = Router();
+
+  // Abrirlo en el panel: deja de contar como aviso (el estado no cambia).
+  if (seen) {
+    router.post('/:id/visto', (req, res) => {
+      const id = parseId(req.params.id, res);
+      if (id === null) return;
+      db.prepare(`UPDATE ${table} SET seen_at = datetime('now') WHERE id = ? AND seen_at IS NULL`).run(id);
+      const row = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(id);
+      if (!row) return res.status(404).json({ error: 'No encontrado' });
+      res.json({ item: serialize(row) });
+    });
+  }
 
   router.get('/', (req, res) => {
     const rows = db.prepare(`SELECT * FROM ${table} ORDER BY created_at DESC, id DESC`).all();
@@ -284,6 +296,7 @@ export function serializeTransport(row) {
     frequency: row.frequency,
     notes: row.notes,
     status: row.status,
+    seenAt: row.seen_at ?? null,
     createdAt: row.created_at,
   };
 }
@@ -344,12 +357,14 @@ export const adminVolunteersRouter = () =>
       availability: row.availability,
       message: row.message,
       status: row.status,
+      seenAt: row.seen_at ?? null,
       createdAt: row.created_at,
     }),
+    seen: true,
   });
 
 export const adminTransportRouter = () =>
-  inboxRouter({ table: 'transport_volunteers', statuses: TRANSPORT_STATUSES, serialize: serializeTransport });
+  inboxRouter({ table: 'transport_volunteers', statuses: TRANSPORT_STATUSES, serialize: serializeTransport, seen: true });
 
 /**
  * Gatitos adoptados con quien los adoptó: la solicitud «adoptado» de ese

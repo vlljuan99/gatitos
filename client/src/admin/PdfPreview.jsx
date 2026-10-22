@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Printer } from 'lucide-react';
+import { Download, Printer } from 'lucide-react';
 import { Sheet } from '../components/Sheet.jsx';
 import { Spinner } from '../components/ui.jsx';
 import { paperUrl, PdfLink, usePaperToken } from './paperLinks.jsx';
@@ -95,8 +95,11 @@ function Preview({ path, title, a5 }) {
     <>
       {token ? <Pages url={paperUrl(path, token)} /> : <Spinner />}
       <div className="sticky bottom-0 -mx-5 mt-4 flex flex-wrap gap-2 bg-crema/95 px-5 pt-3 pb-1 backdrop-blur">
-        <PdfLink path={path} variant="primary" size="md" className="flex-1" label={`Abrir ${title} para imprimir o guardar`}>
-          <Printer className="size-5" /> Imprimir o guardar
+        <PdfLink path={path} variant="primary" size="md" className="flex-1" label={`Abrir ${title} para imprimir`}>
+          <Printer className="size-5" /> Imprimir
+        </PdfLink>
+        <PdfLink path={path} download size="md" label={`Descargar ${title}`}>
+          <Download className="size-5" /> Descargar
         </PdfLink>
         {a5 && (
           <PdfLink path={path} twoUp size="md" label={`${title}: dos por folio A4`}>

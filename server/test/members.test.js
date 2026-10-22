@@ -152,6 +152,17 @@ describe('alta desde la web', () => {
     assert.equal(row.source, 'web');
   });
 
+  test('al abrir su ficha deja de contar como aviso, aunque siga pendiente del primer pago', async () => {
+    const res = await anon.post('/api/socios', signup({ name: 'Vista Nueva', email: 'vista@ejemplo.es' }));
+    assert.equal(res.status, 201);
+    const row = db.prepare("SELECT id FROM members WHERE name = 'Vista Nueva'").get();
+    const before = (await helper.get('/api/admin/resumen')).data.members.new;
+    const detail = await helper.get(`/api/admin/socios/${row.id}`);
+    assert.equal(detail.data.member.state, 'pendiente');
+    assert.ok(detail.data.member.seenAt);
+    assert.equal((await helper.get('/api/admin/resumen')).data.members.new, before - 1);
+  });
+
   test('valida la cuota y los permisos', async () => {
     let res = await anon.post('/api/socios', signup({ amount: '', privacy: false }));
     assert.equal(res.status, 400);

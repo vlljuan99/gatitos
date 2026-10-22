@@ -3,6 +3,7 @@ import { Link, useBlocker, useNavigate, useParams, useSearchParams } from 'react
 import {
   ArrowLeft,
   ArrowRight,
+  Camera,
   Check,
   ChevronDown,
   ChevronLeft,
@@ -124,9 +125,9 @@ const FIV_OPTIONS = [
   { value: 'pendiente', label: 'Pendiente' },
 ];
 
-function Section({ title, hint, children }) {
+function Section({ title, hint, id, children }) {
   return (
-    <Card className="grid gap-5">
+    <Card id={id} className="grid scroll-mt-20 gap-5">
       <div>
         <h2 className="font-display text-xl font-semibold">{title}</h2>
         {hint && <p className="text-sm text-cacao-suave">{hint}</p>}
@@ -210,9 +211,10 @@ function PersonalityFields({ form }) {
         </div>
         {errors.personality && <p className="mt-2 text-sm font-semibold text-canela-oscuro">{errors.personality}</p>}
       </fieldset>
-      <TextInput
+      <TextArea
         label="Frase corta"
-        hint={`Sale en su tarjeta y en el Miaustagram (${values.summary.length}/220).`}
+        rows={2}
+        hint={`Sale en su tarjeta y en el Miaustagram (${values.summary.length}/220). Puede tener varias líneas.`}
         placeholder="Una bolita de mimos que ronronea en cuanto la coges."
         maxLength={220}
         value={values.summary}
@@ -953,7 +955,7 @@ function EditPhotos({ cat, onChange }) {
   }
 
   return (
-    <Section title="Fotos" hint={PHOTO_TIP}>
+    <Section id="fotos" title="Fotos" hint={PHOTO_TIP}>
       {cat.photos.length > 0 && (
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {cat.photos.map((photo, i) => (
@@ -1057,6 +1059,37 @@ const EDIT_TABS = [
 ];
 
 /** Resumen de su ficha interna arriba del día a día: casa, tratamiento y pendientes. */
+/** En «Día a día»: sus fotos y vídeos a la vista, con acceso a cambiarlos. */
+function MediaShortcut({ cat, onOpen }) {
+  const thumbs = [
+    ...cat.photos.map((photo) => ({ key: `f${photo.id}`, src: photo.sm })),
+    ...cat.videos.filter((video) => video.poster).map((video) => ({ key: `v${video.id}`, src: video.poster, video: true })),
+  ];
+  return (
+    <Card className="grid gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-display text-xl font-semibold">Fotos y vídeos</h2>
+        <span className="text-sm text-cacao-suave">
+          {cat.photos.length}/{MAX_PHOTOS} fotos · {cat.videos.length}/{MAX_VIDEOS} vídeos
+        </span>
+      </div>
+      {thumbs.length > 0 && (
+        <ul className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1">
+          {thumbs.map((thumb) => (
+            <li key={thumb.key} className="relative shrink-0">
+              <img src={thumb.src} alt="" className="size-20 rounded-2xl object-cover" />
+              {thumb.video && <span className="absolute bottom-1 right-1 rounded-full bg-cacao/80 px-1.5 text-xs text-white">▶</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+      <Button variant="secondary" onClick={onOpen}>
+        <Camera className="size-5" /> Añadir o cambiar fotos y vídeos
+      </Button>
+    </Card>
+  );
+}
+
 function DaySummary({ cat, foster, onEdit }) {
   const r = cat.record ?? {};
   const facts = [
@@ -1191,6 +1224,13 @@ function EditCat({ initial }) {
         {tab === 'dia' && (
           <>
             <DaySummary cat={cat} foster={foster} onEdit={() => changeTab('interna')} />
+            <MediaShortcut
+              cat={cat}
+              onOpen={() => {
+                changeTab('web');
+                requestAnimationFrame(() => document.getElementById('fotos')?.scrollIntoView({ behavior: 'smooth' }));
+              }}
+            />
             <CatHistory
               cat={cat}
               reportOpen={reporting}
@@ -1219,11 +1259,11 @@ function EditCat({ initial }) {
                 Crear imagen
               </Button>
             </Card>
+            <EditPhotos cat={cat} onChange={setCat} />
+            <EditVideos cat={cat} onChange={setCat} />
             <Section title="Estado y portada">
               <PublishFields form={form} />
             </Section>
-            <EditPhotos cat={cat} onChange={setCat} />
-            <EditVideos cat={cat} onChange={setCat} />
             <Section title="Lo básico">
               <BasicsFields form={form} />
             </Section>

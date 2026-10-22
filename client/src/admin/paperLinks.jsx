@@ -50,20 +50,25 @@ export function usePaperToken() {
   return token;
 }
 
-export function paperUrl(path, token, { twoUp = false } = {}) {
+export function paperUrl(path, token, { twoUp = false, download = false } = {}) {
   const params = new URLSearchParams();
   if (twoUp) params.set('hoja', 'a4');
+  if (download) params.set('descargar', '1');
   if (token) params.set('t', token);
   return `/api/papeles${path}?${params}`;
 }
 
-/** Botón que abre un PDF. twoUp: dos medias hojas A5 en un folio. */
-export function PdfLink({ path, twoUp, children, variant = 'secondary', size = 'sm', block, className, label }) {
+/**
+ * Botón que abre un PDF. twoUp: dos medias hojas A5 en un folio. download: lo
+ * guarda como archivo (en el móvil va a «Descargas») sin salir del panel.
+ */
+export function PdfLink({ path, twoUp, download, children, variant = 'secondary', size = 'sm', block, className, label }) {
   const token = usePaperToken();
   return (
     <a
-      href={token ? paperUrl(path, token, { twoUp }) : undefined}
-      target="_blank"
+      href={token ? paperUrl(path, token, { twoUp, download }) : undefined}
+      target={download ? undefined : '_blank'}
+      download={download ? '' : undefined}
       rel="noopener"
       aria-disabled={!token}
       aria-label={label}

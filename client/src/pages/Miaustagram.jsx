@@ -235,7 +235,7 @@ function Post({ cat, whatsapp, eager }) {
         </ButtonLink>
       </div>
       <div className="grid gap-1 px-4 pt-1">
-        <p className="leading-snug">
+        <p className="whitespace-pre-line leading-snug">
           <Link to={`/gatitos/${cat.slug}`} className="font-bold">
             {cat.name}
           </Link>{' '}

@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Eye, Mail, Phone, Plus, Printer, Receipt, RotateCcw, Search, Send, Trash2, TriangleAlert, UserPlus } from 'lucide-react';
+import { Download, Eye, Mail, Phone, Plus, Printer, Receipt, RotateCcw, Search, Send, Trash2, TriangleAlert, UserPlus } from 'lucide-react';
 import { WhatsAppIcon, whatsappUrl } from '../components/BrandIcons.jsx';
 import { Checkbox, Choice, Field, FormError, TextArea, TextInput } from '../components/form.jsx';
 import { Sheet } from '../components/Sheet.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { Button, Card, EmptyState, ErrorState, Spinner, cx } from '../components/ui.jsx';
 import { api, ApiError } from '../lib/api.js';
+import { invalidate } from '../lib/useApi.js';
 import { useDraftState } from '../lib/drafts.js';
 import { euros, feeText, MEMBER_METHODS, MEMBER_PERIODS, MEMBER_STATES, suggestPeriod } from '../lib/members.js';
 import { AdminPage, isAdmin, refreshAfterChange, shortDate, Tabs, todayIso, useAdminApi, useAuth, useConfirm } from './common.jsx';
@@ -370,8 +371,11 @@ function PaymentItem({ member, payment, canDelete, onResend, onDelete, mailEnabl
         <Button size="sm" variant="soft" onClick={() => setViewing(true)} aria-label={`Ver ${title}`}>
           <Eye className="size-4" /> Ver
         </Button>
+        <PdfLink path={`/recibo/${payment.id}`} download label={`Descargar ${title}`}>
+          <Download className="size-4" /> Descargar
+        </PdfLink>
         <PdfLink path={`/recibo/${payment.id}`} label={`${title} en PDF`}>
-          <Printer className="size-4" /> PDF
+          <Printer className="size-4" /> Imprimir
         </PdfLink>
         {member.email && mailEnabled && (
           <Button
@@ -416,6 +420,11 @@ export function MemberDetail() {
   const toast = useToast();
   const { user } = useAuth();
   const { data, error, loading, reload } = useAdminApi(`/socios/${id}`);
+  // Abrir su ficha la quita de los avisos de «nuevas» (lo marca el servidor).
+  const loaded = Boolean(data);
+  useEffect(() => {
+    if (loaded) invalidate('/admin/resumen');
+  }, [id, loaded]);
   const [paying, setPaying] = useState(false);
   const [ask, dialog] = useConfirm();
 

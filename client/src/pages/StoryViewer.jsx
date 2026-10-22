@@ -113,7 +113,7 @@ function Face({ cat, segments, seg, active, progress, paused, hidden, muted, set
           ui,
         )}
       >
-        {cat.summary && <p className="line-clamp-2 text-[15px] leading-snug drop-shadow">{cat.summary}</p>}
+        {cat.summary && <p className="line-clamp-3 whitespace-pre-line text-[15px] leading-snug drop-shadow">{cat.summary}</p>}
         {active && (
           <div className="grid grid-cols-[1fr_auto] gap-2">
             <ButtonLink to={`/adoptar?gatito=${cat.slug}`} block onClick={onClose}>

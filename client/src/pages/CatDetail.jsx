@@ -206,7 +206,7 @@ export default function CatDetail() {
             )}
           </div>
 
-          {cat.summary && <p className="mt-4 text-xl leading-snug">{cat.summary}</p>}
+          {cat.summary && <p className="mt-4 whitespace-pre-line text-xl leading-snug">{cat.summary}</p>}
 
           {cat.personality.length > 0 && (
             <ul className="mt-4 flex flex-wrap gap-2" aria-label="Personalidad">
