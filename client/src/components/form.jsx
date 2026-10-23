@@ -10,7 +10,7 @@ export function Field({ label, hint, error, optional, children, id: givenId, as 
   const Wrapper = as;
   const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(' ') || undefined;
   return (
-    <Wrapper className="grid gap-1.5">
+    <Wrapper className="grid min-w-0 gap-1.5">
       {as === 'fieldset' ? (
         <legend className="mb-1.5 font-bold">
           {label} {optional && <span className="font-normal text-cacao-suave">(opcional)</span>}
@@ -37,7 +37,7 @@ export function Field({ label, hint, error, optional, children, id: givenId, as 
 
 const inputClass = (invalid) =>
   cx(
-    'w-full rounded-2xl border-2 bg-nata px-4 py-3 text-base text-cacao placeholder:text-cacao-suave/70 transition',
+    'w-full min-w-0 rounded-2xl border-2 bg-nata px-4 py-3 text-base text-cacao placeholder:text-cacao-suave/70 transition',
     'focus:border-canela focus:outline-none',
     invalid ? 'border-canela-oscuro' : 'border-borde',
   );
