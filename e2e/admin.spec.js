@@ -9,6 +9,22 @@ const PHOTO = Buffer.from(
   'base64',
 );
 
+/** Desliza el dedo (eventos táctiles reales) desde el centro de un elemento. */
+async function swipe(page, locator, dx, dy, steps = 10) {
+  const touch = await page.context().newCDPSession(page);
+  const box = await locator.boundingBox();
+  let x = box.x + box.width / 2;
+  let y = box.y + box.height / 2;
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+  for (let i = 0; i < steps; i += 1) {
+    x += dx / steps;
+    y += dy / steps;
+    await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y }] });
+  }
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await touch.detach();
+}
+
 async function login(page, email) {
   await page.goto('/admin');
   await page.getByLabel('Email').fill(email);
@@ -397,6 +413,17 @@ test('socios: se apunta un pago y queda su recibo', async ({ page, request }) =>
 
   await page.getByRole('button', { name: 'Apuntar pago' }).click();
   const sheet = page.getByRole('dialog', { name: 'Apuntar un pago' });
+  // En el móvil se baja con el dedo dentro de la hoja hasta el botón del final
+  // (antes el arrastre para cerrarla se comía el gesto).
+  await page.waitForTimeout(400);
+  const before = await sheet.evaluate((el) => el.scrollTop);
+  await swipe(page, sheet.getByLabel('Importe (€)'), 0, -350);
+  await expect.poll(() => sheet.evaluate((el) => el.scrollTop)).toBeGreaterThan(before + 50);
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByRole('button', { name: /Apuntar pago y crear recibo/ })).toBeInViewport();
+  // El campo de fecha no se sale de la hoja.
+  const [dateBox, sheetBox] = [await sheet.getByLabel('Día del pago').boundingBox(), await sheet.boundingBox()];
+  expect(dateBox.x + dateBox.width).toBeLessThanOrEqual(sheetBox.x + sheetBox.width);
   await expect(sheet.getByLabel('Importe (€)')).toHaveValue('15');
   await sheet.getByRole('button', { name: 'Una cuota más' }).click();
   await expect(sheet.getByLabel('Importe (€)')).toHaveValue('30');
