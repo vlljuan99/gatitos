@@ -268,17 +268,26 @@ export function adminRafflesRouter() {
     const raffle = req.raffle;
     const closed = isClosed(raffle.id);
     const hasTickets = Boolean(db.prepare('SELECT 1 FROM raffle_tickets WHERE raffle_id = ? LIMIT 1').get(raffle.id));
-    // Con papeletas dadas, lo que cambia los números o el precio no se toca
-    // (para que todas las papeletas valgan lo mismo); el resto sí.
+    // Con papeletas dadas, el precio y los números por participación no se
+    // tocan (todas las papeletas valen lo mismo). Cuántos números hay sí, hasta
+    // el sorteo: se puede ampliar o bajar mientras no deje fuera uno ya dado.
     if (hasTickets || closed) {
-      const changed =
-        Math.round(data.price * 100) !== raffle.price_cents ||
-        data.numbersPerEntry !== raffle.numbers_per_entry ||
-        data.totalNumbers !== raffle.total_numbers;
+      const changed = Math.round(data.price * 100) !== raffle.price_cents || data.numbersPerEntry !== raffle.numbers_per_entry;
       if (changed) {
         return res.status(409).json({
-          error: 'Ya hay papeletas dadas: el precio y los números ya no se pueden cambiar.',
-          fields: { price: 'Ya no se puede cambiar', numbersPerEntry: 'Ya no se puede cambiar', totalNumbers: 'Ya no se puede cambiar' },
+          error: 'Ya hay papeletas dadas: el precio y los números por participación ya no se pueden cambiar.',
+          fields: { price: 'Ya no se puede cambiar', numbersPerEntry: 'Ya no se puede cambiar' },
+        });
+      }
+    }
+    if (data.totalNumbers !== raffle.total_numbers) {
+      if (closed) return res.status(409).json({ error: 'El sorteo ya se ha celebrado: no se puede cambiar cuántos números hay.' });
+      const highest = db.prepare('SELECT MAX(number) FROM raffle_numbers WHERE raffle_id = ?').pluck().get(raffle.id);
+      if (highest !== null && data.totalNumbers <= highest) {
+        const fmt = (n) => String(n).padStart(numberDigits(raffle.total_numbers), '0');
+        return res.status(409).json({
+          error: `Ya se ha dado el ${fmt(highest)}: no puede haber menos de ${highest + 1} números.`,
+          fields: { totalNumbers: `Como poco ${highest + 1} números (ya se ha dado el ${fmt(highest)})` },
         });
       }
     }

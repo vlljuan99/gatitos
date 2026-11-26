@@ -450,7 +450,8 @@ test('sorteo de la cesta: papeleta con números al azar y ganador entre los dado
   await page.getByRole('button', { name: /Nuevo sorteo/ }).click();
   const create = page.getByRole('dialog', { name: /Nuevo sorteo/ });
   await expect(create.getByLabel('Nombre del sorteo')).toHaveValue('Sorteo de la cesta');
-  await expect(create.getByText(/Van del 000 al 999: da para 200 participaciones/)).toBeVisible();
+  await expect(create.getByLabel(/¿Cuántas participaciones se venden\?/)).toHaveValue('200');
+  await expect(create.getByText('1000 números, del 000 al 999: 600 € si se venden todas.')).toBeVisible();
   await create.getByLabel(/¿Cuándo y cómo se sortea\?/).fill('en directo en Instagram el 20 de diciembre');
   await create.getByRole('button', { name: 'Crear sorteo' }).click();
 
@@ -470,9 +471,18 @@ test('sorteo de la cesta: papeleta con números al azar y ganador entre los dado
   await page.screenshot({ path: 'test-results/sorteo-papeleta.png' });
   await ticket.getByRole('button', { name: 'Cerrar' }).click();
 
+  // A mitad de venta se amplía a 300 participaciones (1500 números).
+  await page.getByRole('button', { name: 'Ajustes del sorteo' }).click();
+  const settings = page.getByRole('dialog', { name: 'Ajustes del sorteo' });
+  await expect(settings.getByLabel('Precio (€)')).toBeDisabled();
+  await settings.getByLabel(/¿Cuántas participaciones se venden\?/).fill('300');
+  await expect(settings.getByText('1500 números, del 0000 al 1499: 900 € si se venden todas.')).toBeVisible();
+  await settings.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(page.getByText(/del 0000 al 1499/)).toBeVisible();
+
   // Se encuentra quién tiene un número.
-  await page.getByLabel(/Número \(3 cifras\)/).fill('412');
-  await expect(page.getByRole('button', { name: /El 412 lo tiene María · papeleta n\.º 1/ })).toBeVisible();
+  await page.getByLabel(/Número \(4 cifras\)/).fill('0412');
+  await expect(page.getByRole('button', { name: /El 0412 lo tiene María · papeleta n\.º 1/ })).toBeVisible();
 
   // El ganador sale entre los números dados.
   await page.getByRole('button', { name: /Sacar el número ganador/ }).click();
@@ -482,6 +492,6 @@ test('sorteo de la cesta: papeleta con números al azar y ganador entre los dado
   await expect(reveal.getByText('Sacado entre 15 números pagados.')).toBeVisible();
   await page.screenshot({ path: 'test-results/sorteo-ganador.png' });
   await reveal.getByRole('button', { name: '¡Hecho!' }).click();
-  await expect(page.getByText(/🏆 Ganador: \d{3} · María/)).toBeVisible();
+  await expect(page.getByText(/🏆 Ganador: \d{4} · María/)).toBeVisible();
   await expect(page.getByRole('button', { name: /Dar papeleta/ })).toHaveCount(0);
 });

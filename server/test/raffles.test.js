@@ -111,11 +111,12 @@ describe('papeletas', () => {
     assert.match(full.data.error, /todos los números/);
   });
 
-  test('con papeletas dadas no cambian el precio ni los números', async () => {
+  test('con papeletas dadas no cambian el precio ni los números por participación', async () => {
     const raffle = await newRaffle();
     await helper.post(`/api/admin/sorteos/${raffle.id}/papeletas`, { name: 'Ana', entries: 1 });
     const res = await helper.put(`/api/admin/sorteos/${raffle.id}`, cesta({ price: '2' }));
     assert.equal(res.status, 409);
+    assert.equal((await helper.put(`/api/admin/sorteos/${raffle.id}`, cesta({ numbersPerEntry: 4 }))).status, 409);
     const ok = await helper.put(`/api/admin/sorteos/${raffle.id}`, cesta({ drawInfo: 'el 21 de diciembre' }));
     assert.equal(ok.status, 200);
     assert.equal(ok.data.raffle.drawInfo, 'el 21 de diciembre');
@@ -129,6 +130,19 @@ describe('papeletas', () => {
     const res = await admin.delete(url);
     assert.equal(res.status, 200);
     assert.equal(res.data.raffle.stats.sold, 0);
+  });
+
+  test('se pueden ampliar las participaciones a la venta, pero no dejar fuera un número dado', async () => {
+    const raffle = await newRaffle({ totalNumbers: 20 });
+    await helper.post(`/api/admin/sorteos/${raffle.id}/papeletas`, { name: 'Ana', entries: 1, wanted: [17] });
+    const bigger = await helper.put(`/api/admin/sorteos/${raffle.id}`, cesta({ totalNumbers: 1500 }));
+    assert.equal(bigger.status, 200);
+    assert.equal(bigger.data.raffle.totalNumbers, 1500);
+    assert.equal(bigger.data.raffle.digits, 4);
+    const smaller = await helper.put(`/api/admin/sorteos/${raffle.id}`, cesta({ totalNumbers: 15 }));
+    assert.equal(smaller.status, 409);
+    assert.match(smaller.data.fields.totalNumbers, /18/);
+    assert.equal((await helper.put(`/api/admin/sorteos/${raffle.id}`, cesta({ totalNumbers: 18 }))).status, 200);
   });
 });
 

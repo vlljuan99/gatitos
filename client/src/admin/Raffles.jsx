@@ -22,7 +22,7 @@ const EMPTY_RAFFLE = {
   prize: '',
   price: '3',
   numbersPerEntry: '5',
-  totalNumbers: '1000',
+  entries: '200',
   drawInfo: '',
   design: 'cesta',
 };
@@ -38,14 +38,17 @@ function rangeLabel(total, digits) {
 
 function RaffleSheet({ raffle, open, onClose, onSaved, onDelete, canDelete }) {
   const isNew = !raffle;
+  // Con papeletas dadas, el precio y los números por participación ya no
+  // cambian; las participaciones a la venta se pueden ampliar hasta el sorteo.
   const locked = Boolean(raffle && (raffle.stats.tickets > 0 || raffle.closed));
+  const closed = Boolean(raffle?.closed);
   const pristine = raffle
     ? {
         title: raffle.title,
         prize: raffle.prize,
         price: String(raffle.price).replace('.', ','),
         numbersPerEntry: String(raffle.numbersPerEntry),
-        totalNumbers: String(raffle.totalNumbers),
+        entries: String(Math.floor(raffle.totalNumbers / raffle.numbersPerEntry)),
         drawInfo: raffle.drawInfo,
         design: raffle.design,
       }
@@ -55,9 +58,11 @@ function RaffleSheet({ raffle, open, onClose, onSaved, onDelete, canDelete }) {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const set = (key) => (value) => setForm({ ...form, [key]: value });
-  const total = Number(form.totalNumbers) || 0;
   const per = Number(form.numbersPerEntry) || 0;
+  const entries = Number(form.entries) || 0;
+  const total = per * entries;
   const digits = String(Math.max(1, total - 1)).length;
+  const soldEntries = raffle ? Math.ceil(raffle.stats.sold / raffle.numbersPerEntry) : 0;
 
   async function save(event) {
     event.preventDefault();
@@ -65,12 +70,12 @@ function RaffleSheet({ raffle, open, onClose, onSaved, onDelete, canDelete }) {
     setError('');
     setErrors({});
     try {
-      const result = await api(isNew ? '/admin/sorteos' : `/admin/sorteos/${raffle.id}`, { method: isNew ? 'POST' : 'PUT', body: form });
+      const result = await api(isNew ? '/admin/sorteos' : `/admin/sorteos/${raffle.id}`, { method: isNew ? 'POST' : 'PUT', body: { ...form, totalNumbers: total } });
       draft.discard();
       refreshAfterChange();
       onSaved(result.raffle, isNew);
     } catch (err) {
-      if (err instanceof ApiError) setErrors(err.fields);
+      if (err instanceof ApiError) setErrors({ ...err.fields, entries: err.fields?.entries ?? err.fields?.totalNumbers });
       setError(err.message);
     } finally {
       setSaving(false);
@@ -111,15 +116,24 @@ function RaffleSheet({ raffle, open, onClose, onSaved, onDelete, canDelete }) {
           />
         </div>
         <TextInput
-          label="¿Cuántos números hay?"
+          label="¿Cuántas participaciones se venden?"
           inputMode="numeric"
-          hint={total >= 10 ? `Van ${rangeLabel(total, digits)}${per ? `: da para ${Math.floor(total / per)} participaciones` : ''}.` : 'Por ejemplo, 1000.'}
-          value={form.totalNumbers}
-          onChange={set('totalNumbers')}
-          error={errors.totalNumbers}
-          disabled={locked}
+          hint={
+            total >= 10
+              ? `${total} números, ${rangeLabel(total, digits)}${Number(String(form.price).replace(',', '.')) ? `: ${raffleEuros(entries * Number(String(form.price).replace(',', '.')))} si se venden todas` : ''}.`
+              : 'Por ejemplo, 200, 300 o 1000.'
+          }
+          value={form.entries}
+          onChange={set('entries')}
+          error={errors.entries}
+          disabled={closed}
         />
-        {locked && <p className="-mt-2 text-sm text-cacao-suave">Ya hay papeletas dadas: el precio y los números no se pueden cambiar.</p>}
+        {locked && !closed && (
+          <p className="-mt-2 text-sm text-cacao-suave">
+            Ya hay papeletas dadas: el precio y los números por participación no cambian, pero puedes ampliar las participaciones
+            {soldEntries ? ` (o bajarlas hasta las que ya se han dado)` : ''}.
+          </p>
+        )}
         <TextInput
           label="¿Cuándo y cómo se sortea?"
           optional
