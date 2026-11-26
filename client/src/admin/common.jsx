@@ -20,7 +20,7 @@ export const ROLE_INFO = {
   cuidabigotes: {
     label: 'Cuidabigotes',
     emoji: '🐾',
-    can: 'Lleva el día a día: gatitos y sus papeles, solicitudes, mensajes, voluntariado, acogidas, inventario, donaciones y textos de la web.',
+    can: 'Lleva el día a día: gatitos y sus papeles, solicitudes, mensajes, voluntariado, acogidas, inventario, donaciones, sorteos y textos de la web.',
   },
 };
 

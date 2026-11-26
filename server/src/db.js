@@ -425,6 +425,71 @@ export const migrations = [
   ALTER TABLE transport_volunteers ADD COLUMN seen_at TEXT;
   ALTER TABLE members ADD COLUMN seen_at TEXT;
   `,
+  // 9. Sorteos benéficos (la cesta de Navidad…): cada papeleta se lleva sus
+  // números al azar, sin repetir (la clave de raffle_numbers lo garantiza), y
+  // el ganador se saca en el panel entre los números dados. Cada extracción
+  // queda apuntada: la 1 es el premio y las siguientes, suplentes.
+  `
+  CREATE TABLE raffles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    prize TEXT NOT NULL DEFAULT '',
+    price_cents INTEGER NOT NULL CHECK (price_cents > 0),
+    numbers_per_entry INTEGER NOT NULL CHECK (numbers_per_entry BETWEEN 1 AND 50),
+    total_numbers INTEGER NOT NULL CHECK (total_numbers BETWEEN 10 AND 10000),
+    draw_info TEXT NOT NULL DEFAULT '',
+    design TEXT NOT NULL DEFAULT 'sencillo' CHECK (design IN ('cesta', 'sencillo')),
+    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE raffle_tickets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    raffle_id INTEGER NOT NULL REFERENCES raffles(id) ON DELETE CASCADE,
+    ticket_number INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL DEFAULT '',
+    entries INTEGER NOT NULL CHECK (entries > 0),
+    amount_cents INTEGER NOT NULL CHECK (amount_cents >= 0),
+    paid INTEGER NOT NULL DEFAULT 0,
+    notes TEXT NOT NULL DEFAULT '',
+    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (raffle_id, ticket_number)
+  );
+
+  CREATE TABLE raffle_numbers (
+    raffle_id INTEGER NOT NULL REFERENCES raffles(id) ON DELETE CASCADE,
+    number INTEGER NOT NULL,
+    ticket_id INTEGER NOT NULL REFERENCES raffle_tickets(id) ON DELETE CASCADE,
+    PRIMARY KEY (raffle_id, number)
+  );
+  CREATE INDEX idx_raffle_numbers_ticket ON raffle_numbers(ticket_id);
+
+  CREATE TABLE raffle_draws (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    raffle_id INTEGER NOT NULL REFERENCES raffles(id) ON DELETE CASCADE,
+    position INTEGER NOT NULL,
+    number INTEGER NOT NULL,
+    ticket_id INTEGER REFERENCES raffle_tickets(id) ON DELETE SET NULL,
+    winner_name TEXT NOT NULL,
+    pool_size INTEGER NOT NULL,
+    include_unpaid INTEGER NOT NULL DEFAULT 0,
+    drawn_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    drawn_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (raffle_id, position)
+  );
+  `,
+  // 10. El número premiado de un sorteo puede venir de fuera (las últimas
+  // cifras del cupón de la ONCE, la lotería…) en vez de sacarse en el panel:
+  // method 'panel' | 'externo' y, en ese caso, qué sorteo fue (source). Un
+  // número de fuera que no se vendió queda apuntado sin papeleta.
+  `
+  ALTER TABLE raffle_draws ADD COLUMN method TEXT NOT NULL DEFAULT 'panel' CHECK (method IN ('panel', 'externo'));
+  ALTER TABLE raffle_draws ADD COLUMN source TEXT NOT NULL DEFAULT '';
+  `,
 ];
 
 /**

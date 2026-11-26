@@ -18,6 +18,7 @@ import {
   Menu,
   Package,
   Printer,
+  Ticket,
   UserCog,
   Users,
 } from 'lucide-react';
@@ -47,6 +48,8 @@ const Members = lazy(() => import('./Members.jsx'));
 const MemberDetail = lazy(() => import('./Members.jsx').then((m) => ({ default: m.MemberDetail })));
 const Papers = lazy(() => import('./Papers.jsx'));
 const Adopted = lazy(() => import('./Adopted.jsx'));
+const Raffles = lazy(() => import('./Raffles.jsx'));
+const RaffleDetail = lazy(() => import('./Raffles.jsx').then((m) => ({ default: m.RaffleDetail })));
 
 function Login({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -120,6 +123,7 @@ function useNavItems(user) {
     },
     { to: '/admin/socios', label: 'Socios y socias', icon: IdCard, badge: data?.members?.new },
     { to: '/admin/donaciones', label: 'Donaciones', icon: HandHeart },
+    { to: '/admin/sorteos', label: 'Sorteos', icon: Ticket },
     { to: '/admin/papeles', label: 'Papeles', icon: Printer },
     { to: '/admin/contenidos', label: 'Textos de la web', icon: FileText },
     isAdmin(user) && { to: '/admin/equipo', label: 'Equipo', icon: Users },
@@ -272,6 +276,8 @@ export default function AdminApp() {
           <Route path="socios" element={<Members />} />
           <Route path="socios/:id" element={<MemberDetail />} />
           <Route path="donaciones" element={<Donations />} />
+          <Route path="sorteos" element={<Raffles />} />
+          <Route path="sorteos/:id" element={<RaffleDetail />} />
           <Route path="papeles" element={<Papers />} />
           <Route path="contenidos" element={<Contents />} />
           {isAdmin(user) && <Route path="equipo" element={<Team />} />}
