@@ -466,7 +466,17 @@ function TicketSheet({ raffle, ticket, open, onClose, canDelete }) {
         </p>
         <TicketImage raffle={raffle} ticket={ticket} />
         {!ticket.paid && (
-          <Button size="lg" block loading={saving} onClick={() => update({ ...form, paid: true }, () => toast('Apuntado: ya ha pagado 💶'))}>
+          <Button
+            size="lg"
+            block
+            loading={saving}
+            onClick={() =>
+              update({ name: ticket.name, phone: ticket.phone, notes: ticket.notes, paid: true }, () => {
+                setForm((current) => ({ ...current, paid: true }));
+                toast('Apuntado: ya ha pagado 💶');
+              })
+            }
+          >
             Ya ha pagado
           </Button>
         )}
@@ -493,7 +503,15 @@ function TicketSheet({ raffle, ticket, open, onClose, canDelete }) {
             </Button>
           </form>
         ) : (
-          <Button variant="secondary" block onClick={() => setEditing(true)}>
+          <Button
+            variant="secondary"
+            block
+            onClick={() => {
+              // Siempre desde la papeleta como está ahora (por si se ha marcado pagada).
+              setForm({ name: ticket.name, phone: ticket.phone, paid: ticket.paid, notes: ticket.notes });
+              setEditing(true);
+            }}
+          >
             <Pencil className="size-4" /> Cambiar nombre, teléfono o pago
           </Button>
         )}
