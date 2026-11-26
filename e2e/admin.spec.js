@@ -443,3 +443,45 @@ test('socios: se apunta un pago y queda su recibo', async ({ page, request }) =>
   const preview = page.getByRole('dialog', { name: /^Recibo R-/ });
   await expect(preview.locator('canvas')).toBeVisible({ timeout: 20_000 });
 });
+
+test('sorteo de la cesta: papeleta con números al azar y ganador entre los dados', async ({ page }) => {
+  await login(page, 'cuidabigotes@bigotes.local');
+  await page.goto('/admin/sorteos');
+  await page.getByRole('button', { name: /Nuevo sorteo/ }).click();
+  const create = page.getByRole('dialog', { name: /Nuevo sorteo/ });
+  await expect(create.getByLabel('Nombre del sorteo')).toHaveValue('Sorteo de la cesta');
+  await expect(create.getByText(/Van del 000 al 999: da para 200 participaciones/)).toBeVisible();
+  await create.getByLabel(/¿Cuándo y cómo se sortea\?/).fill('en directo en Instagram el 20 de diciembre');
+  await create.getByRole('button', { name: 'Crear sorteo' }).click();
+
+  // Tres participaciones a 3 €: 15 números distintos y uno pedido a mano.
+  await page.getByRole('button', { name: /Dar papeleta/ }).click();
+  const sheet = page.getByRole('dialog', { name: /Nueva papeleta/ });
+  await sheet.getByLabel('Nombre').fill('María');
+  await sheet.getByRole('button', { name: 'Una más' }).click();
+  await sheet.getByRole('button', { name: 'Una más' }).click();
+  await expect(sheet.getByText('3 participaciones · 15 números · 9 €')).toBeVisible();
+  await sheet.getByLabel(/Números que pide/).fill('412');
+  await sheet.getByRole('button', { name: /Dar números al azar/ }).click();
+
+  const ticket = page.getByRole('dialog', { name: 'Papeleta n.º 1' });
+  await expect(ticket.getByRole('img', { name: 'Papeleta de María' })).toBeVisible({ timeout: 15_000 });
+  await expect(ticket.getByRole('link', { name: /Descargar/ })).toHaveAttribute('download', /papeleta-1-maria\.jpg/);
+  await page.screenshot({ path: 'test-results/sorteo-papeleta.png' });
+  await ticket.getByRole('button', { name: 'Cerrar' }).click();
+
+  // Se encuentra quién tiene un número.
+  await page.getByLabel(/Número \(3 cifras\)/).fill('412');
+  await expect(page.getByRole('button', { name: /El 412 lo tiene María · papeleta n\.º 1/ })).toBeVisible();
+
+  // El ganador sale entre los números dados.
+  await page.getByRole('button', { name: /Sacar el número ganador/ }).click();
+  await page.getByRole('button', { name: /¡Sí, a sortear!/ }).click();
+  const reveal = page.getByRole('dialog', { name: /número ganador/ });
+  await expect(reveal.getByText('🎉 María 🎉')).toBeVisible({ timeout: 15_000 });
+  await expect(reveal.getByText('Sacado entre 15 números pagados.')).toBeVisible();
+  await page.screenshot({ path: 'test-results/sorteo-ganador.png' });
+  await reveal.getByRole('button', { name: '¡Hecho!' }).click();
+  await expect(page.getByText(/🏆 Ganador: \d{3} · María/)).toBeVisible();
+  await expect(page.getByRole('button', { name: /Dar papeleta/ })).toHaveCount(0);
+});

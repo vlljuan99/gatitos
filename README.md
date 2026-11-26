@@ -109,6 +109,9 @@ se enamore de un gatito y lo adopte.
   Al apuntar un pago se crea su **recibo** (`R-2026-001`) con el importe y el
   periodo que cubre, y se le manda por correo con el PDF adjunto.
 - **Donaciones** de dinero y de material, con los totales del año.
+- **Sorteos** (la cesta de Navidad…): cada papeleta se lleva sus números al azar,
+  sin repetir, y sale en imagen para mandarla por WhatsApp; el ganador (y los
+  suplentes) se saca en el panel entre los números dados y pagados.
 - **Solicitudes** por etapas (nueva → entrevista → aprobada, que incluye la
   visita → adoptado / descartada), con notas internas y botones para llamar,
   WhatsApp o email. Cada solicitud nueva avisa al equipo por correo y, si está

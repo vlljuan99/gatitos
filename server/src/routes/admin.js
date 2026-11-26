@@ -12,6 +12,7 @@ import { adminFostersRouter } from './adminFosters.js';
 import { adminApplicationsRouter, adminMessagesRouter, adminTransportRouter, adminVolunteersRouter, adoptedCats } from './adminInbox.js';
 import { adminInventoryRouter, inventoryAlerts } from './adminInventory.js';
 import { adminMembersRouter } from './adminMembers.js';
+import { adminRafflesRouter } from './adminRaffles.js';
 import { memberAlerts } from '../members.js';
 import { adminTeamRouter } from './adminTeam.js';
 
@@ -94,6 +95,7 @@ export function adminRouter() {
   router.use('/inventario', adminInventoryRouter());
   router.use('/donaciones', adminDonationsRouter());
   router.use('/socios', adminMembersRouter());
+  router.use('/sorteos', adminRafflesRouter());
   router.use('/solicitudes', adminApplicationsRouter());
   router.use('/mensajes', adminMessagesRouter());
   router.use('/voluntariado', adminVolunteersRouter());
