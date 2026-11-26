@@ -134,15 +134,17 @@ describe('papeletas', () => {
 
   test('se pueden ampliar las participaciones a la venta, pero no dejar fuera un número dado', async () => {
     const raffle = await newRaffle({ totalNumbers: 20 });
-    await helper.post(`/api/admin/sorteos/${raffle.id}/papeletas`, { name: 'Ana', entries: 1, wanted: [17] });
+    const { data } = await helper.post(`/api/admin/sorteos/${raffle.id}/papeletas`, { name: 'Ana', entries: 1, wanted: [12] });
+    // El más alto de sus números (los demás salen al azar, del 0 al 19).
+    const highest = Math.max(...data.ticket.numbers);
     const bigger = await helper.put(`/api/admin/sorteos/${raffle.id}`, cesta({ totalNumbers: 1500 }));
     assert.equal(bigger.status, 200);
     assert.equal(bigger.data.raffle.totalNumbers, 1500);
     assert.equal(bigger.data.raffle.digits, 4);
-    const smaller = await helper.put(`/api/admin/sorteos/${raffle.id}`, cesta({ totalNumbers: 15 }));
+    const smaller = await helper.put(`/api/admin/sorteos/${raffle.id}`, cesta({ totalNumbers: highest }));
     assert.equal(smaller.status, 409);
-    assert.match(smaller.data.fields.totalNumbers, /18/);
-    assert.equal((await helper.put(`/api/admin/sorteos/${raffle.id}`, cesta({ totalNumbers: 18 }))).status, 200);
+    assert.match(smaller.data.fields.totalNumbers, new RegExp(`Como poco ${highest + 1} números`));
+    assert.equal((await helper.put(`/api/admin/sorteos/${raffle.id}`, cesta({ totalNumbers: highest + 1 }))).status, 200);
   });
 });
 
