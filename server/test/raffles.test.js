@@ -51,6 +51,16 @@ describe('utilidades', () => {
     assert.deepEqual(pickRandom(free, 2, () => 0), [3, 21]);
   });
 
+  test('nombres de los premiados y números de fuera', () => {
+    const d = (winnerName) => ({ winnerName });
+    assert.deepEqual(clientRaffles.drawLabels([d(''), d('Ana'), d('Luis')]), ['Sin vender', 'Ganador', 'Suplente 1']);
+    assert.equal(clientRaffles.externalNumber('34412', 3), 412);
+    assert.equal(clientRaffles.externalNumber('7', 3), 7);
+    assert.equal(clientRaffles.externalNumber('', 3), null);
+    assert.equal(clientRaffles.outsideSource('con el cupón de la ONCE del 18 de diciembre'), 'Cupón de la ONCE del 18 de diciembre');
+    assert.equal(clientRaffles.outsideSource('en directo en Instagram'), '');
+  });
+
   test('el texto para WhatsApp lleva los números y el sorteo', () => {
     const text = clientRaffles.ticketText(
       { title: 'Sorteo de la cesta', digits: 3, drawInfo: 'en directo el 20 de diciembre' },
@@ -154,7 +164,7 @@ describe('sorteo', () => {
     const paid = await helper.post(`/api/admin/sorteos/${raffle.id}/papeletas`, { name: 'Pagada', entries: 1, paid: true });
     await helper.post(`/api/admin/sorteos/${raffle.id}/papeletas`, { name: 'Debe', entries: 1, paid: false });
 
-    const first = await helper.post(`/api/admin/sorteos/${raffle.id}/sortear`, {});
+    const first = await helper.post(`/api/admin/sorteos/${raffle.id}/sortear`, { method: 'panel' });
     assert.equal(first.status, 201, JSON.stringify(first.data));
     const winner = first.data.raffle.draws[0];
     assert.equal(winner.position, 1);
@@ -170,7 +180,7 @@ describe('sorteo', () => {
     assert.equal(cancel.status, 409);
 
     // Suplente: nunca repite un número ya sacado.
-    const second = await helper.post(`/api/admin/sorteos/${raffle.id}/sortear`, { includeUnpaid: true });
+    const second = await helper.post(`/api/admin/sorteos/${raffle.id}/sortear`, { method: 'panel', includeUnpaid: true });
     assert.equal(second.status, 201);
     const [a, b] = second.data.raffle.draws;
     assert.equal(b.position, 2);
@@ -181,7 +191,7 @@ describe('sorteo', () => {
   test('sin números pagados no se puede sortear', async () => {
     const raffle = await newRaffle();
     await helper.post(`/api/admin/sorteos/${raffle.id}/papeletas`, { name: 'Debe', entries: 1, paid: false });
-    const res = await helper.post(`/api/admin/sorteos/${raffle.id}/sortear`, {});
+    const res = await helper.post(`/api/admin/sorteos/${raffle.id}/sortear`, { method: 'panel' });
     assert.equal(res.status, 409);
   });
 
@@ -190,5 +200,52 @@ describe('sorteo', () => {
     assert.equal((await helper.delete(`/api/admin/sorteos/${raffle.id}`)).status, 403);
     assert.equal((await admin.delete(`/api/admin/sorteos/${raffle.id}`)).status, 200);
     assert.equal((await admin.get(`/api/admin/sorteos/${raffle.id}`)).status, 404);
+  });
+
+  test('el número premiado puede venir de la ONCE: valen sus últimas cifras', async () => {
+    const raffle = await newRaffle();
+    const { data } = await helper.post(`/api/admin/sorteos/${raffle.id}/papeletas`, { name: 'Lucía', phone: '600 000 000', entries: 1, wanted: [412], paid: false });
+    // Un número que no se vendió: avisa y no se apunta salvo que se pida.
+    const unsold = String([...Array(1000).keys()].find((n) => !data.ticket.numbers.includes(n))).padStart(3, '0');
+    const once = { method: 'externo', source: 'Cupón de la ONCE del 20 de diciembre' };
+    const miss = await helper.post(`/api/admin/sorteos/${raffle.id}/sortear`, { ...once, number: `98${unsold}` });
+    assert.equal(miss.status, 409);
+    assert.match(miss.data.error, /no se ha vendido/);
+    assert.equal((await helper.get(`/api/admin/sorteos/${raffle.id}`)).data.raffle.draws.length, 0);
+
+    // El cupón 34412 → el 412, aunque la papeleta no esté pagada.
+    const hit = await helper.post(`/api/admin/sorteos/${raffle.id}/sortear`, { ...once, number: '34412' });
+    assert.equal(hit.status, 201, JSON.stringify(hit.data));
+    const [draw] = hit.data.raffle.draws;
+    assert.equal(draw.number, 412);
+    assert.equal(draw.winnerName, 'Lucía');
+    assert.equal(draw.method, 'externo');
+    assert.equal(draw.source, 'Cupón de la ONCE del 20 de diciembre');
+    assert.equal(hit.data.raffle.closed, true);
+    const again = await helper.post(`/api/admin/sorteos/${raffle.id}/sortear`, { ...once, number: '412' });
+    assert.equal(again.status, 409);
+
+    // Hace falta decir de qué sorteo es.
+    const noSource = await helper.post(`/api/admin/sorteos/${raffle.id}/sortear`, { method: 'externo', number: '1' });
+    assert.equal(noSource.status, 400);
+  });
+
+  test('un número de fuera sin vender se puede apuntar y luego sacarlo entre los vendidos', async () => {
+    const raffle = await newRaffle({ totalNumbers: 20 });
+    const { data } = await helper.post(`/api/admin/sorteos/${raffle.id}/papeletas`, { name: 'Ana', entries: 1 });
+    const unsold = [...Array(20).keys()].find((n) => !data.ticket.numbers.includes(n));
+    const res = await helper.post(`/api/admin/sorteos/${raffle.id}/sortear`, {
+      method: 'externo',
+      number: String(unsold),
+      source: 'Lotería del 22 de diciembre',
+      allowUnsold: true,
+    });
+    assert.equal(res.status, 201);
+    assert.equal(res.data.raffle.draws[0].ticketId, null);
+    assert.equal(res.data.raffle.draws[0].winnerName, '');
+    const panel = await helper.post(`/api/admin/sorteos/${raffle.id}/sortear`, { method: 'panel' });
+    assert.equal(panel.status, 201);
+    assert.equal(panel.data.raffle.draws[1].winnerName, 'Ana');
+    assert.equal(panel.data.raffle.draws[1].method, 'panel');
   });
 });

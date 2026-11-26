@@ -482,6 +482,14 @@ export const migrations = [
     UNIQUE (raffle_id, position)
   );
   `,
+  // 10. El número premiado de un sorteo puede venir de fuera (las últimas
+  // cifras del cupón de la ONCE, la lotería…) en vez de sacarse en el panel:
+  // method 'panel' | 'externo' y, en ese caso, qué sorteo fue (source). Un
+  // número de fuera que no se vendió queda apuntado sin papeleta.
+  `
+  ALTER TABLE raffle_draws ADD COLUMN method TEXT NOT NULL DEFAULT 'panel' CHECK (method IN ('panel', 'externo'));
+  ALTER TABLE raffle_draws ADD COLUMN source TEXT NOT NULL DEFAULT '';
+  `,
 ];
 
 /**

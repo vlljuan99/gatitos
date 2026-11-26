@@ -37,3 +37,33 @@ export function ticketText(raffle, ticket) {
     .filter((line, i, all) => line !== '' || (all[i - 1] !== '' && i > 0))
     .join('\n');
 }
+
+/**
+ * Cómo se llama cada número premiado: el primero que tiene dueño es el
+ * ganador y los siguientes, suplentes. Uno de fuera que no se vendió (la
+ * ONCE…) queda como «Sin vender».
+ */
+export function drawLabels(draws) {
+  let withOwner = 0;
+  return draws.map((draw) => {
+    if (!draw.winnerName) return 'Sin vender';
+    withOwner += 1;
+    return withOwner === 1 ? 'Ganador' : `Suplente ${withOwner - 1}`;
+  });
+}
+
+/** De lo que se escribe (el cupón entero vale) cuentan las últimas cifras. */
+export function externalNumber(text, digits) {
+  const clean = String(text ?? '').replace(/\D/g, '');
+  return clean ? Number(clean.slice(-digits)) : null;
+}
+
+/** «ONCE», «lotería»: el sorteo se hace fuera y aquí se apunta el número. */
+export const drawsOutside = (drawInfo) => /\bonce\b|loter/i.test(drawInfo ?? '');
+
+/** «con el cupón de la ONCE del 18 de diciembre» → «Cupón de la ONCE del 18 de diciembre». */
+export function outsideSource(drawInfo) {
+  if (!drawsOutside(drawInfo)) return '';
+  const text = drawInfo.trim().replace(/^(con|en)\s+(el|la)\s+/i, '').replace(/\.$/, '');
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}

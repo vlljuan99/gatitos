@@ -495,3 +495,32 @@ test('sorteo de la cesta: papeleta con números al azar y ganador entre los dado
   await expect(page.getByText(/🏆 Ganador: \d{4} · María/)).toBeVisible();
   await expect(page.getByRole('button', { name: /Dar papeleta/ })).toHaveCount(0);
 });
+
+test('sorteo con la ONCE: se apunta el cupón y cuentan sus últimas cifras', async ({ page }) => {
+  await login(page, 'cuidabigotes@bigotes.local');
+  await page.goto('/admin/sorteos');
+  await page.getByRole('button', { name: /Nuevo sorteo/ }).click();
+  const create = page.getByRole('dialog', { name: /Nuevo sorteo/ });
+  await create.getByLabel('Nombre del sorteo').fill('Sorteo de la cesta (ONCE)');
+  await create.getByLabel(/¿Cuándo y cómo se sortea\?/).fill('con el cupón de la ONCE del 18 de diciembre');
+  await create.getByRole('button', { name: 'Crear sorteo' }).click();
+
+  await page.getByRole('button', { name: /Dar papeleta/ }).click();
+  const sheet = page.getByRole('dialog', { name: /Nueva papeleta/ });
+  await sheet.getByLabel('Nombre').fill('Rocío');
+  await sheet.getByLabel(/Números que pide/).fill('412');
+  await sheet.getByRole('button', { name: /Dar números al azar/ }).click();
+  await page.getByRole('dialog', { name: 'Papeleta n.º 1' }).getByRole('button', { name: 'Cerrar' }).click();
+
+  // Viene elegido «Con la ONCE» y el sorteo ya rellenado.
+  await expect(page.getByLabel('¿Qué sorteo?')).toHaveValue('Cupón de la ONCE del 18 de diciembre');
+  await page.getByLabel('Número premiado').fill('34412');
+  await expect(page.getByText('Cuenta el 412: lo tiene Rocío (papeleta n.º 1).')).toBeVisible();
+  await page.screenshot({ path: 'test-results/sorteo-once.png' });
+  await page.getByRole('button', { name: 'Apuntar el número premiado' }).click();
+  await page.getByRole('button', { name: 'Sí, apuntarlo' }).click();
+  const reveal = page.getByRole('dialog', { name: /Número premiado en Cupón de la ONCE/ });
+  await expect(reveal.getByText('🎉 Rocío 🎉')).toBeVisible();
+  await reveal.getByRole('button', { name: '¡Hecho!' }).click();
+  await expect(page.getByText('🏆 Ganador: 412 · Rocío')).toBeVisible();
+});

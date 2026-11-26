@@ -10,8 +10,10 @@ import { parseBody, parseId, requiredDecimal, requiredText, text } from '../vali
 // participaciones y cada participación trae varios números al azar entre los
 // que siguen libres; la clave (raffle_id, number) impide repetir uno aunque
 // dos personas den papeletas a la vez. El ganador se saca aquí mismo entre los
-// números dados (así siempre hay premio, se vendan los que se vendan) y cada
-// extracción queda apuntada: la 1 es el premio y las siguientes, suplentes.
+// números dados (así siempre hay premio, se vendan los que se vendan) o se
+// apunta el que haya salido en un sorteo de fuera (las últimas cifras del
+// cupón de la ONCE…). Cada extracción queda apuntada: la primera con papeleta
+// es el premio y las siguientes, suplentes.
 // Con la primera extracción el sorteo se cierra: ya no se dan ni se anulan
 // papeletas. Borrar es cosa de un bigote mayor.
 
@@ -63,7 +65,17 @@ const ticketUpdateSchema = z.object({
   notes: text(500).default(''),
 });
 
-const drawSchema = z.object({ includeUnpaid: z.boolean().default(false) });
+const drawSchema = z.discriminatedUnion('method', [
+  z.object({ method: z.literal('panel'), includeUnpaid: z.boolean().default(false) }),
+  z.object({
+    method: z.literal('externo'),
+    // Tal cual sale (el cupón entero vale: se usan sus últimas cifras).
+    number: z.string().trim().regex(/^\d{1,10}$/, 'Escribe el número premiado, solo cifras'),
+    source: requiredText(120, 'Di de qué sorteo es, por ejemplo «Cupón de la ONCE del 20 de diciembre»'),
+    // Si no se vendió, apuntarlo igualmente (queda sin ganador).
+    allowUnsold: z.boolean().default(false),
+  }),
+]);
 
 function serializeRaffle(row) {
   const stats = db
@@ -85,6 +97,8 @@ function serializeRaffle(row) {
       winnerName: d.winner_name,
       poolSize: d.pool_size,
       includeUnpaid: Boolean(d.include_unpaid),
+      method: d.method,
+      source: d.source,
       drawnAt: d.drawn_at,
     }));
   return {
@@ -218,6 +232,37 @@ export const drawNext = db.transaction((raffle, { includeUnpaid }, userId, pick 
   return position;
 });
 
+/**
+ * Apunta el número premiado de un sorteo de fuera (ONCE, lotería…): de lo que
+ * se escriba valen las últimas cifras (con 1000 números, las 3 últimas). Si
+ * no lo tiene nadie, se avisa y solo se apunta si se pide (allowUnsold).
+ */
+export const recordExternal = db.transaction((raffle, { number, source, allowUnsold }, userId) => {
+  const digits = numberDigits(raffle.total_numbers);
+  const value = Number(number.slice(-digits));
+  const fmt = String(value).padStart(digits, '0');
+  if (db.prepare('SELECT 1 FROM raffle_draws WHERE raffle_id = ? AND number = ?').get(raffle.id, value)) {
+    throw new RaffleError(`El ${fmt} ya está apuntado como premiado.`, 409, { number: 'Ya está apuntado' });
+  }
+  const owner = db
+    .prepare('SELECT t.id, t.name FROM raffle_numbers n JOIN raffle_tickets t ON t.id = n.ticket_id WHERE n.raffle_id = ? AND n.number = ?')
+    .get(raffle.id, value);
+  if (!owner && !allowUnsold) {
+    throw new RaffleError(
+      value >= raffle.total_numbers ? `El ${fmt} no existe en este sorteo: nadie lo tiene.` : `El ${fmt} no se ha vendido: nadie lo tiene.`,
+      409,
+      { number: 'No lo tiene nadie' },
+    );
+  }
+  const sold = db.prepare('SELECT COUNT(*) FROM raffle_numbers WHERE raffle_id = ?').pluck().get(raffle.id);
+  const position = db.prepare('SELECT COALESCE(MAX(position), 0) + 1 FROM raffle_draws WHERE raffle_id = ?').pluck().get(raffle.id);
+  db.prepare(
+    `INSERT INTO raffle_draws (raffle_id, position, number, ticket_id, winner_name, pool_size, include_unpaid, drawn_by, method, source)
+     VALUES (?, ?, ?, ?, ?, ?, 1, ?, 'externo', ?)`,
+  ).run(raffle.id, position, value, owner?.id ?? null, owner?.name ?? '', sold, userId, source);
+  return position;
+});
+
 function sendRaffle(res, id, status = 200, extra = {}) {
   const row = getRaffleRow(id);
   res.status(status).json({ raffle: serializeRaffle(row), tickets: ticketsOf(id), ...extra });
@@ -338,7 +383,7 @@ export function adminRafflesRouter() {
     const data = parseBody(drawSchema, req, res);
     if (!data) return;
     handle(res, () => {
-      const position = drawNext(req.raffle, data, req.user.id);
+      const position = data.method === 'externo' ? recordExternal(req.raffle, data, req.user.id) : drawNext(req.raffle, data, req.user.id);
       sendRaffle(res, req.raffle.id, 201, { position });
     });
   });

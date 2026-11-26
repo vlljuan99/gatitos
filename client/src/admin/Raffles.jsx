@@ -8,7 +8,7 @@ import { useToast } from '../components/Toast.jsx';
 import { Button, Card, EmptyState, ErrorState, Spinner, Tag, buttonClass, cx } from '../components/ui.jsx';
 import { api, ApiError } from '../lib/api.js';
 import { useDraftState } from '../lib/drafts.js';
-import { entriesLabel, formatNumber, raffleEuros, ticketSummary, ticketText } from '../lib/raffles.js';
+import { drawLabels, entriesLabel, externalNumber, formatNumber, outsideSource, raffleEuros, ticketSummary, ticketText } from '../lib/raffles.js';
 import { AdminPage, formatDate, isAdmin, refreshAfterChange, shortDate, useAdminApi, useAuth, useConfirm } from './common.jsx';
 import { renderRaffleTicket } from './drawRaffleTicket.js';
 
@@ -31,6 +31,14 @@ const DESIGNS = [
   { value: 'cesta', label: 'Cesta de Navidad', emoji: '🎁' },
   { value: 'sencillo', label: 'Sencillo (logo)', emoji: '🐾' },
 ];
+
+/** «Ganador: 412 · María» en la lista de sorteos (o que aún no tiene dueño). */
+function winnerLine(raffle) {
+  const index = drawLabels(raffle.draws).indexOf('Ganador');
+  if (index === -1) return `Salió el ${formatNumber(raffle.draws[0].number, raffle.digits)}: sin vender`;
+  const draw = raffle.draws[index];
+  return `Ganador: ${formatNumber(draw.number, raffle.digits)} · ${draw.winnerName}`;
+}
 
 function rangeLabel(total, digits) {
   return `del ${formatNumber(0, digits)} al ${formatNumber(total - 1, digits)}`;
@@ -205,7 +213,7 @@ export default function Raffles() {
                   <span className="block truncate font-bold">{raffle.title}</span>
                   <span className="block truncate text-sm text-cacao-suave">
                     {raffle.closed
-                      ? `Ganador: ${formatNumber(raffle.draws[0].number, raffle.digits)} · ${raffle.draws[0].winnerName}`
+                      ? winnerLine(raffle)
                       : `${raffle.stats.tickets} papeletas · ${raffleEuros(raffle.stats.paid)} cobrados`}
                   </span>
                 </span>
@@ -530,11 +538,12 @@ function TicketSheet({ raffle, ticket, open, onClose, canDelete }) {
 const prefersReducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * El momento del sorteo, a pantalla grande para enseñarlo en directo: los
- * números dados pasan cada vez más despacio hasta pararse en el que ha salido
- * (que ya ha elegido el servidor).
+ * El momento del sorteo, a pantalla grande para enseñarlo en directo. Si se
+ * saca aquí, los números dados pasan cada vez más despacio hasta pararse en
+ * el que ha salido (ya elegido por el servidor); si viene de fuera (la ONCE),
+ * se enseña sin más.
  */
-function DrawReveal({ raffle, pool, draw, onClose }) {
+function DrawReveal({ raffle, pool, draw, label, onClose }) {
   const [shown, setShown] = useState(null);
   const [done, setDone] = useState(false);
   const timer = useRef();
@@ -542,7 +551,7 @@ function DrawReveal({ raffle, pool, draw, onClose }) {
   useEffect(() => {
     if (!draw) return undefined;
     setDone(false);
-    if (prefersReducedMotion() || pool.length < 2) {
+    if (draw.method === 'externo' || prefersReducedMotion() || pool.length < 2) {
       setShown(draw.number);
       setDone(true);
       return undefined;
@@ -562,7 +571,8 @@ function DrawReveal({ raffle, pool, draw, onClose }) {
     return () => clearTimeout(timer.current);
   }, [draw]);
 
-  const title = draw ? (draw.position === 1 ? '¡Y el número ganador es…!' : `Suplente ${draw.position - 1}…`) : '';
+  const winner = label === 'Ganador';
+  const title = !draw ? '' : draw.method === 'externo' ? `Número premiado en ${draw.source}` : winner ? '¡Y el número ganador es…!' : `${label}…`;
   return (
     <Sheet open={Boolean(draw)} onClose={done ? onClose : () => {}} title={title}>
       {draw && (
@@ -570,7 +580,7 @@ function DrawReveal({ raffle, pool, draw, onClose }) {
           <p
             className={cx(
               'rounded-[2rem] py-8 font-display text-7xl font-semibold tabular-nums transition sm:text-8xl',
-              done ? 'bg-mantequilla text-mantequilla-oscuro' : 'bg-canela-claro text-canela-oscuro',
+              done && draw.winnerName ? 'bg-mantequilla text-mantequilla-oscuro' : 'bg-canela-claro text-canela-oscuro',
             )}
             aria-live="polite"
           >
@@ -578,9 +588,15 @@ function DrawReveal({ raffle, pool, draw, onClose }) {
           </p>
           {done && (
             <>
-              <p className="font-display text-3xl font-semibold">{draw.position === 1 ? `🎉 ${draw.winnerName} 🎉` : draw.winnerName}</p>
+              <p className="font-display text-3xl font-semibold">
+                {!draw.winnerName ? 'No lo tiene nadie' : winner ? `🎉 ${draw.winnerName} 🎉` : draw.winnerName}
+              </p>
               <p className="text-cacao-suave">
-                Sacado entre {draw.poolSize} números {draw.includeUnpaid ? 'dados' : 'pagados'}.
+                {draw.method === 'externo'
+                  ? draw.winnerName
+                    ? `${label} · apuntado de ${draw.source}.`
+                    : 'Queda apuntado. Podéis sacar el ganador aquí entre los vendidos.'
+                  : `Sacado entre ${draw.poolSize} números ${draw.includeUnpaid ? 'dados' : 'pagados'}.`}
               </p>
               <Button size="lg" block onClick={onClose}>
                 ¡Hecho!
@@ -593,37 +609,82 @@ function DrawReveal({ raffle, pool, draw, onClose }) {
   );
 }
 
+const DRAW_METHODS = [
+  { value: 'externo', label: 'Con la ONCE u otro sorteo', emoji: '🎫' },
+  { value: 'panel', label: 'Lo sacamos aquí', emoji: '🎲' },
+];
+
 function DrawSection({ raffle, tickets }) {
   const toast = useToast();
   const [ask, dialog] = useConfirm();
+  const [method, setMethod] = useState(() => (outsideSource(raffle.drawInfo) ? 'externo' : 'panel'));
   const [includeUnpaid, setIncludeUnpaid] = useState(false);
+  const [external, setExternal] = useState({ number: '', source: outsideSource(raffle.drawInfo) });
+  const [errors, setErrors] = useState({});
   const [drawing, setDrawing] = useState(false);
   const [reveal, setReveal] = useState(null);
+  const labels = drawLabels(raffle.draws);
+  const hasWinner = labels.includes('Ganador');
   const drawn = new Set(raffle.draws.map((d) => d.number));
   const pool = tickets.filter((t) => includeUnpaid || t.paid).flatMap((t) => t.numbers).filter((n) => !drawn.has(n));
   const unpaidNumbers = tickets.filter((t) => !t.paid).reduce((sum, t) => sum + t.numbers.length, 0);
   const byId = new Map(tickets.map((t) => [t.id, t]));
-  const first = raffle.draws.length === 0;
+  const owners = useMemo(() => new Map(tickets.flatMap((t) => t.numbers.map((n) => [n, t]))), [tickets]);
+  const value = externalNumber(external.number, raffle.digits);
+  const owner = value === null ? null : owners.get(value);
+  const shownValue = value === null ? '' : formatNumber(value, raffle.digits);
 
-  async function draw() {
-    const ok = await ask({
-      title: first ? '¿Sacamos el número ganador?' : '¿Sacamos un suplente?',
-      body: first
-        ? `Sale uno al azar entre los ${pool.length} números ${includeUnpaid ? 'dados' : 'pagados'}. Queda apuntado y, desde ese momento, ya no se pueden dar ni anular papeletas.`
-        : `Por si no se puede entregar el premio: sale otro número entre los ${pool.length} que quedan. Queda apuntado.`,
-      confirmLabel: first ? '🎲 ¡Sí, a sortear!' : 'Sí, sacar suplente',
-    });
-    if (!ok) return;
+  async function send(body) {
     setDrawing(true);
+    setErrors({});
     try {
-      const result = await api(`/admin/sorteos/${raffle.id}/sortear`, { method: 'POST', body: { includeUnpaid } });
-      setReveal({ draw: result.raffle.draws.find((d) => d.position === result.position), pool });
+      const result = await api(`/admin/sorteos/${raffle.id}/sortear`, { method: 'POST', body });
+      const index = result.raffle.draws.findIndex((d) => d.position === result.position);
+      setReveal({ draw: result.raffle.draws[index], label: drawLabels(result.raffle.draws)[index], pool });
+      if (body.method === 'externo') setExternal({ ...external, number: '' });
       refreshAfterChange();
     } catch (err) {
+      if (err instanceof ApiError) setErrors(err.fields);
       toast(err.message, { tone: 'error' });
     } finally {
       setDrawing(false);
     }
+  }
+
+  async function drawHere() {
+    const ok = await ask({
+      title: hasWinner ? '¿Sacamos un suplente?' : '¿Sacamos el número ganador?',
+      body: hasWinner
+        ? `Por si no se puede entregar el premio: sale otro número entre los ${pool.length} que quedan. Queda apuntado.`
+        : `Sale uno al azar entre los ${pool.length} números ${includeUnpaid ? 'dados' : 'pagados'}. Queda apuntado y, desde ese momento, ya no se pueden dar ni anular papeletas.`,
+      confirmLabel: hasWinner ? 'Sí, sacar suplente' : '🎲 ¡Sí, a sortear!',
+    });
+    if (ok) send({ method: 'panel', includeUnpaid });
+  }
+
+  async function recordOutside() {
+    if (value === null || !external.source.trim()) {
+      setErrors({
+        number: value === null ? 'Escribe el número premiado' : undefined,
+        source: external.source.trim() ? undefined : 'Di de qué sorteo es',
+      });
+      return;
+    }
+    const choice = await ask(
+      owner
+        ? {
+            title: `El ${shownValue} es de ${owner.name}`,
+            body: `Papeleta n.º ${owner.ticketNumber}${owner.paid ? '' : ' (aún sin pagar)'}. Queda apuntado como ${hasWinner ? 'suplente' : 'ganador'} y, desde ese momento, ya no se pueden dar ni anular papeletas.`,
+            confirmLabel: 'Sí, apuntarlo',
+          }
+        : {
+            title: `El ${shownValue} no lo tiene nadie`,
+            body: 'Ese número no se ha vendido. Podéis apuntarlo igualmente (queda sin ganador) y luego sacar el ganador aquí entre los vendidos, o hacer lo que hayáis anunciado.',
+            options: [{ value: 'apuntar', label: 'Apuntarlo sin ganador', variant: 'secondary' }],
+          },
+    );
+    if (!choice) return;
+    send({ method: 'externo', number: String(external.number).replace(/\D/g, ''), source: external.source, allowUnsold: !owner });
   }
 
   return (
@@ -631,25 +692,27 @@ function DrawSection({ raffle, tickets }) {
       <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
         <Trophy className="size-5" aria-hidden /> El sorteo
       </h2>
-      {first ? (
+      {raffle.draws.length === 0 ? (
         <p className="text-cacao-suave">
-          Cuando acabéis de vender, sacad aquí el ganador (mejor en directo, enseñando la pantalla): sale al azar entre los números dados, así
-          siempre hay premio aunque no se vendan todos.
+          Dos formas: apuntar el número que salga en la ONCE (u otro sorteo), o sacarlo aquí al azar entre los números vendidos, que siempre
+          tiene premio aunque no se vendan todos.
         </p>
       ) : (
         <ol className="grid gap-2">
-          {raffle.draws.map((d) => {
+          {raffle.draws.map((d, i) => {
             const ticket = byId.get(d.ticketId);
+            const label = labels[i];
             return (
-              <li key={d.position} className={cx('rounded-2xl p-3', d.position === 1 ? 'bg-mantequilla text-mantequilla-oscuro' : 'bg-nata')}>
+              <li key={d.position} className={cx('rounded-2xl p-3', label === 'Ganador' ? 'bg-mantequilla text-mantequilla-oscuro' : 'bg-nata')}>
                 <p className="font-bold">
-                  {d.position === 1 ? '🏆 Ganador' : `Suplente ${d.position - 1}`}: {formatNumber(d.number, raffle.digits)} · {d.winnerName}
+                  {label === 'Ganador' ? '🏆 Ganador' : label}: {formatNumber(d.number, raffle.digits)}
+                  {d.winnerName ? ` · ${d.winnerName}` : ' · no lo tiene nadie'}
                 </p>
                 <p className="text-sm">
                   {ticket ? `Papeleta n.º ${ticket.ticketNumber}${ticket.phone ? ` · ${ticket.phone}` : ''} · ` : ''}
-                  {formatDate(d.drawnAt)}, entre {d.poolSize} números
+                  {d.method === 'externo' ? `${d.source} · apuntado el ${formatDate(d.drawnAt)}` : `${formatDate(d.drawnAt)}, sacado aquí entre ${d.poolSize} números`}
                 </p>
-                {ticket?.phone && d.position === 1 && (
+                {ticket?.phone && label === 'Ganador' && (
                   <a
                     href={whatsappUrl(ticket.phone, `🎉 ¡Hola, ${ticket.name}! Ha salido el ${formatNumber(d.number, raffle.digits)} en el ${raffle.title} de Bigotes: ¡te ha tocado! 🐾`)}
                     target="_blank"
@@ -664,17 +727,57 @@ function DrawSection({ raffle, tickets }) {
           })}
         </ol>
       )}
-      {unpaidNumbers > 0 && (
-        <Checkbox checked={includeUnpaid} onChange={setIncludeUnpaid}>
-          <strong>Que entren también las papeletas sin pagar</strong>
-          <span className="block text-sm text-cacao-suave">Hay {unpaidNumbers} números de papeletas sin pagar. Si no, no entran.</span>
-        </Checkbox>
+
+      <Choice label={hasWinner ? '¿Hace falta un suplente?' : '¿Cómo se saca el ganador?'} columns options={DRAW_METHODS} value={method} onChange={setMethod} />
+
+      {method === 'externo' ? (
+        <div className="grid gap-3">
+          <TextInput
+            label="Número premiado"
+            inputMode="numeric"
+            placeholder={raffle.digits === 3 ? '34412' : ''}
+            hint={`Escríbelo tal cual: cuentan las ${raffle.digits} últimas cifras.`}
+            value={external.number}
+            onChange={(number) => setExternal({ ...external, number })}
+            error={errors.number}
+            maxLength={10}
+          />
+          {value !== null && (
+            <p className={cx('rounded-2xl p-3 font-bold', owner ? 'bg-mantequilla text-mantequilla-oscuro' : 'bg-nata')}>
+              {owner
+                ? `Cuenta el ${shownValue}: lo tiene ${owner.name} (papeleta n.º ${owner.ticketNumber}${owner.paid ? '' : ', sin pagar'}).`
+                : drawn.has(value)
+                  ? `El ${shownValue} ya está apuntado.`
+                  : `Cuenta el ${shownValue}: no lo tiene nadie.`}
+            </p>
+          )}
+          <TextInput
+            label="¿Qué sorteo?"
+            placeholder="Cupón de la ONCE del 20 de diciembre"
+            value={external.source}
+            onChange={(source) => setExternal({ ...external, source })}
+            error={errors.source}
+            maxLength={120}
+          />
+          <Button size="lg" block variant={hasWinner ? 'secondary' : 'primary'} loading={drawing} onClick={recordOutside}>
+            {hasWinner ? 'Apuntar suplente' : 'Apuntar el número premiado'}
+          </Button>
+        </div>
+      ) : (
+        <div className="grid gap-3">
+          {unpaidNumbers > 0 && (
+            <Checkbox checked={includeUnpaid} onChange={setIncludeUnpaid}>
+              <strong>Que entren también las papeletas sin pagar</strong>
+              <span className="block text-sm text-cacao-suave">Hay {unpaidNumbers} números de papeletas sin pagar. Si no, no entran.</span>
+            </Checkbox>
+          )}
+          <Button size="lg" block variant={hasWinner ? 'secondary' : 'primary'} loading={drawing} disabled={pool.length === 0} onClick={drawHere}>
+            {hasWinner ? 'Sacar un suplente' : '🎲 Sacar el número ganador'}
+          </Button>
+          {pool.length === 0 && <p className="text-sm text-cacao-suave">No hay números {includeUnpaid ? 'dados' : 'pagados'} entre los que sortear.</p>}
+        </div>
       )}
-      <Button size="lg" block variant={first ? 'primary' : 'secondary'} loading={drawing} disabled={pool.length === 0} onClick={draw}>
-        {first ? '🎲 Sacar el número ganador' : 'Sacar un suplente'}
-      </Button>
-      {pool.length === 0 && <p className="text-sm text-cacao-suave">No hay números {includeUnpaid ? 'dados' : 'pagados'} entre los que sortear.</p>}
-      <DrawReveal raffle={raffle} pool={reveal?.pool ?? []} draw={reveal?.draw} onClose={() => setReveal(null)} />
+      <DrawReveal raffle={raffle} pool={reveal?.pool ?? []} draw={reveal?.draw} label={reveal?.label} onClose={() => setReveal(null)} />
       {dialog}
     </Card>
   );
